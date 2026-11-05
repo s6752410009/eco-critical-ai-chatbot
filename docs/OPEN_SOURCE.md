@@ -25,3 +25,7 @@ Educational sample references (original Thai summaries, not copied articles):
 - NASA: https://science.nasa.gov/climate-change/causes/
 
 These are sample teaching materials, not a clinically validated or school-approved curriculum.
+
+
+## Mentingo student dashboard source
+The owner selected Selleo/mentingo for UI reuse. MIT source snapshots pinned to `1490a8d56119cb78b2a5a781dfdfdaacf05cded9`, their hashes, copyright notice and the adaptation map are preserved in [third_party/mentingo](../third_party/mentingo/README.md). The adapted course card is used by the existing React dashboard. Course images have a separate Unsplash license recorded in `frontend/public/classroom/photos.json`. The dashboard uses system fonts for the requested Meta/Instagram feel; no proprietary Meta font files are bundled.

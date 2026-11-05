@@ -5,7 +5,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 const url=process.env.CLASSROOM_QA_URL || "http://127.0.0.1:3410";
 const out=new URL("../artifacts/classroom/",import.meta.url);await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true,...(process.env.CLASSROOM_QA_BROWSER==="chromium"?{}:{channel:"chrome"})});
-const context=await browser.newContext({viewport:{width:1440,height:1050},locale:"th-TH",reducedMotion:"reduce"});
+const context=await browser.newContext({viewport:{width:1440,height:900},locale:"th-TH",reducedMotion:"reduce"});
 const page=await context.newPage();const errors=[];const checks=[];
 page.on("pageerror",error=>errors.push(error.message));
 async function check(name,fn){await fn();checks.push({name,passed:true});console.log(`PASS ${name}`);}
@@ -13,13 +13,13 @@ async function nav(label){await page.locator(".learning-sidebar").getByRole("but
 async function ask(question){const chat=page.locator(".eco-chat").first();await chat.getByRole("textbox",{name:"คำถามถึง Eco AI"}).fill(question);await chat.getByRole("button",{name:"ส่งคำถาม",exact:true}).click();await expect(chat.locator(".chat-loading")).toHaveCount(0);return chat;}
 try{
   await page.goto(url+"/demo");
-  await expect(page.getByRole("heading",{name:/วันนี้อยากเรียนรู้/})).toBeVisible();await page.evaluate(()=>document.fonts.ready);
+  await expect(page.getByRole("heading",{name:/สวัสดี, นักเรียน/})).toBeVisible();await page.evaluate(()=>document.fonts.ready);
   await check("student dashboard has four visual modules, clear demo role and working classroom selection",async()=>{
     await expect(page.locator(".topic-card")).toHaveCount(4);await expect(page.getByLabel("ห้องเรียนที่ใช้งาน").locator("option")).toHaveCount(2);
     await page.screenshot({path:new URL("desktop.png",out).pathname,fullPage:true});
   });
   await check("suggested question prepares chat, local retrieval and clickable source details work",async()=>{
-    await page.locator(".entry-questions").getByRole("button",{name:/PM2.5/}).click();
+    await page.locator(".dashboard-tutor .suggested-questions").getByRole("button",{name:/PM2.5/}).click();
     await expect(page.getByRole("textbox",{name:"คำถามถึง Eco AI"})).toHaveValue("PM2.5 ส่งผลต่อร่างกายอย่างไร?");
     const chat=await ask("PM2.5 ส่งผลต่อร่างกายอย่างไร?");
     await expect(chat.locator(".chat-message.assistant")).toContainText("PM2.5");

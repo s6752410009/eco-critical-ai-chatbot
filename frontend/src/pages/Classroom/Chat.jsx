@@ -19,6 +19,7 @@ export default function EcoChat({
   documents,
   demo,
   compact = false,
+  dashboard = false,
   prepared = "",
   conversations = {},
   onConversation,
@@ -50,7 +51,7 @@ export default function EcoChat({
     }
   }, [prepared]);
   useEffect(() => {
-    if (messagesContainer.current)
+    if ((messages.length || busy) && messagesContainer.current)
       messagesContainer.current.scrollTop =
         messagesContainer.current.scrollHeight;
   }, [messages, busy]);
@@ -144,7 +145,7 @@ export default function EcoChat({
   }
   return (
     <section
-      className={`eco-chat ${compact ? "compact" : ""}`}
+      className={`eco-chat ${compact ? "compact" : ""} ${dashboard ? "dashboard-chat" : ""}`}
       aria-label="ผู้ช่วย Eco AI"
     >
       <header className="chat-heading">
@@ -152,8 +153,16 @@ export default function EcoChat({
           <Sparkles size={19} />
         </span>
         <div>
-          <h2>Eco AI</h2>
-          <p>{lesson ? "ผู้ช่วยประจำบทเรียน" : "ถามจากบทเรียนของคุณครู"}</p>
+          <h2>
+            Eco AI{dashboard && <span className="tutor-name-label">TUTOR</span>}
+          </h2>
+          <p>
+            {dashboard
+              ? "ผู้ช่วยเรียนรู้ของคุณ"
+              : lesson
+                ? "ผู้ช่วยประจำบทเรียน"
+                : "ถามจากบทเรียนของคุณครู"}
+          </p>
         </div>
         <span className={`chat-mode ${demo ? "is-demo" : ""}`}>
           {demo ? "สาธิต" : "ระบบจริง"}
@@ -174,12 +183,21 @@ export default function EcoChat({
         {!messages.length && (
           <div className="chat-empty">
             <MessageCircle size={28} />
-            <h3>มีคำถามจากบทเรียนไหม?</h3>
+            <h3>
+              {dashboard ? "ติดตรงไหน ถามได้เลย" : "มีคำถามจากบทเรียนไหม?"}
+            </h3>
             <p>
               {demo
-                ? "ทดลองค้นคำตอบจากเอกสารสาธิตของคุณครู"
+                ? dashboard
+                  ? "ลองค้นคำตอบจากเอกสารของคุณครู แล้วมาคิดต่อด้วยกัน"
+                  : "ทดลองค้นคำตอบจากเอกสารสาธิตของคุณครู"
                 : "คำถามจะค้นจากเอกสารในห้องเรียนที่เลือก"}
             </p>
+            {dashboard && (
+              <span className="dashboard-suggestion-label">
+                ลองเริ่มจากคำถามนี้
+              </span>
+            )}
             <div className="suggested-questions">
               {(lesson?.topic === "air"
                 ? [SUGGESTIONS[0], "เราจะตรวจสอบแหล่งกำเนิดฝุ่นได้อย่างไร?"]

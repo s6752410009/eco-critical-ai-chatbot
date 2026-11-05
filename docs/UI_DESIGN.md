@@ -1,10 +1,21 @@
-# Product design decisions
+# Student dashboard — Mentingo adaptation
 
-- Confirmed audience: Thai ม.4–6 and teachers. React/Vite retained from the existing open-source project.
-- Tone: readable, curious, grounded. Compact task-oriented shell, not a marketing page.
-- Signature: every topic opens a visual lesson, an activity and an adjacent document-grounded tutor.
-- Four illustrated topic cards, 232px sidebar, role-specific navigation, mobile student bottom navigation. Source references remain directly inspectable.
-- Sarabun reading text and Bai Jamjuree headings. User-specified forest/mint/sky palette; 8px spacing rhythm and restrained 6–10px radii. No decorative entrance choreography.
-- Installed and used UI/UX Pro Max from nextlevelbuilder/ui-ux-pro-max-skill, alongside existing ui-design and impeccable. Search outputs that proposed a marketplace, childlike claymorphism or purple were rejected as mismatches for the creator's explicit brief. Applicable React form/accessibility guidance was used; the product layout follows the creator's brief.
-- Targeted component reference: https://21st.dev/@21st/components/input-bar/with-attachments. Screenshot captured and reviewed for composer structure, staged context and send/stop control hierarchy only. Custom code and styling; no source copied.
-- Accessibility: semantic form labels, visible focus, 44px primary controls, reduced-motion, explicit demo/source states. Validate 390, 1024, 1440px.
+The owner selected [Selleo/Mentingo](https://github.com/Selleo/mentingo) as the concrete source and rejected the earlier warm, earthy dashboard. Implementation stays in the existing React/Vite project and keeps the current backend unchanged.
+
+The five problems addressed: welcome text dominated the working surface; continuation was visually weak; topic rows lacked useful media; progress was hard to scan; the tutor was below the main content.
+
+The revised dashboard uses Mentingo's media-led catalog composition and adapted card code, a compact continuation surface, four environmental image covers, an accessible navigation rail, and the existing functioning tutor beside lessons. On phones the top-level AI action opens the existing chat screen; the inline tutor is also available below the courses. The primary actions and topic titles remain visible in the first viewport. Palette: white/cool gray/slate, forest actions, sky context accents. No cream canvas or earthy card fills. Typography: the native social-app sans stack.
+
+Source, exact revision, adaptations and MIT attribution: [third_party/mentingo](../third_party/mentingo/README.md). No claim is made that the complete Mentingo LMS or its backend has been migrated.
+
+## Visual verification
+
+`node scripts/capture-classroom-dashboard.mjs` opens the actual app with Playwright/Chrome, fresh storage and no API interception. It captures 1440×900 and 390×844 viewports plus full-page evidence and a real local-retrieval citation interaction. It verifies loaded cover assets, all four modules, no horizontal overflow, continuation visibility, an initially unscrolled empty chat, and the desktop composer inside the first viewport.
+
+The compiled-app runner invokes the same capture after the existing ten browser regression flows. Screenshots below are copied from that final production run and inspected visually, not generated mockups.
+
+- [Desktop](screenshots/desktop.png)
+- [Mobile](screenshots/mobile.png)
+- [Citation interaction](screenshots/dashboard-citation.png)
+
+The demo is explicitly local extractive retrieval. Gemini inference is not part of this visual verification.

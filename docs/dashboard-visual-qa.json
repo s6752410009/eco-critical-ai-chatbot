@@ -1,0 +1,30 @@
+{
+  "url": "http://127.0.0.1:3415",
+  "checks": [
+    {
+      "width": 1440,
+      "height": 900,
+      "passed": true,
+      "overflow": false,
+      "composerBottom": 845.53125,
+      "continueTop": 361.765625,
+      "chatScroll": 0,
+      "canvas": "rgb(247, 249, 252)",
+      "font": "-apple-system, \"system-ui\", \"Segoe UI\", Roboto, Helvetica, Arial, Thonburi, sans-serif",
+      "browserErrors": []
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "passed": true,
+      "overflow": false,
+      "composerBottom": 1485.84375,
+      "continueTop": 322.671875,
+      "chatScroll": 0,
+      "canvas": "rgb(247, 249, 252)",
+      "font": "-apple-system, \"system-ui\", \"Segoe UI\", Roboto, Helvetica, Arial, Thonburi, sans-serif",
+      "browserErrors": []
+    }
+  ],
+  "liveGeminiTested": false
+}

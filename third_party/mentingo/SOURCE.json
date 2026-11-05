@@ -1,0 +1,31 @@
+{
+  "repository": "https://github.com/Selleo/mentingo",
+  "commit": "1490a8d56119cb78b2a5a781dfdfdaacf05cded9",
+  "license": "MIT",
+  "files": [
+    {
+      "path": "LICENSE",
+      "sha256": "ceb97717de1f3cc08e3e39775e8536e2ccc8391662e330cf6860a88871cfb6d4"
+    },
+    {
+      "path": "apps/web/app/modules/Courses/components/modern/ModernCourseCard.tsx",
+      "sha256": "0a55136f5769246d718395e73aaa39d51562547d8df5e105bc02bd9de346d8b8"
+    },
+    {
+      "path": "apps/web/app/modules/Courses/components/modern/HeroBanner.tsx",
+      "sha256": "cdc194cb30165924ead09acb4d444e0ebd24b3770824e07d308fdfcb99fb5a4f"
+    },
+    {
+      "path": "apps/web/app/modules/Dashboard/Home/widgets/student-continue-learning.tsx",
+      "sha256": "93e9c0dc856eb27842abebd3125548309690f8571fb2ca980a6866851f3ebbec"
+    },
+    {
+      "path": "apps/web/app/modules/Courses/components/modern/utils.ts",
+      "sha256": "1c3e7e9e4e521339e43e9facdad663088a370982dbfe24647fa264fb45b0c9cc"
+    },
+    {
+      "path": "apps/web/app/components/Navigation/NavigationMenuButton.tsx",
+      "sha256": "b578903f952dff40f48d7f446cb1747a7c4d929d262eeb4e43b126aa695f18dd"
+    }
+  ]
+}

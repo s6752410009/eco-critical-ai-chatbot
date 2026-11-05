@@ -1,6 +1,6 @@
 # Eco-Critical AI Chatbot
 
-Thai-first environmental EdTech for ม.4–ม.6 and teachers. **React/Vite**, adapted in the same codebase from [AnythingLLM](https://github.com/Mintplex-Labs/anything-llm), MIT. Green/blue visual lessons, contextual Eco AI, source inspection, classroom tools and working learning activities.
+Thai-first environmental EdTech for ม.4–ม.6 and teachers. **React/Vite**, adapted in the same codebase from [AnythingLLM](https://github.com/Mintplex-Labs/anything-llm), MIT. The student dashboard adapts MIT [Mentingo](https://github.com/Selleo/mentingo) learner catalog components with Eco-Critical branding, environmental course covers, contextual Eco AI and source inspection. [Source attribution](third_party/mentingo/README.md).
 
 ![Student dashboard](docs/screenshots/desktop.png)
 
@@ -28,7 +28,7 @@ Open [localhost:3415/demo](http://localhost:3415/demo). `frontend/dist-demo/` is
 
 ## Implemented experience
 
-- Compact student dashboard with four illustrated topics, genuine per-browser progress, continue learning and suggested AI questions.
+- Mentingo-based student dashboard with four environmental image covers, cool-white surfaces, native social-app typography, genuine per-browser progress, continue learning and a working inline tutor.
 - Two sample classrooms and four visual lessons: air pollution, water pollution, plastic waste, climate change. Air and water include full explanations and comprehension checks; plastic includes waste sorting.
 - PM2.5 conceptual slider, waste sorting with immediate feedback, quizzes with correct-answer explanations. Values are explicitly illustrative, not live sensor readings or health thresholds.
 - Contextual tutor beside lessons on desktop; an explicit tutor view on narrow screens. Source references open the actual retrieved passage and section. No fabricated page numbers.

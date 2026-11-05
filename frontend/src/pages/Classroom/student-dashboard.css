@@ -1,0 +1,1019 @@
+/* Mentingo learner catalog adaptation. Source and MIT license: third_party/mentingo. */
+.learning-app.student-dashboard-view {
+  --social-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, "Thonburi", sans-serif;
+  --canvas: #f7f9fc;
+  --surface: #ffffff;
+  --ink: #182735;
+  --muted: #647183;
+  --line: #e4e9ef;
+  --mint: #eef6f3;
+  --pale-blue: #edf6fc;
+  color: var(--ink);
+  background: var(--canvas);
+  font:
+    400 16px/1.6 "Eco UI",
+    sans-serif;
+}
+.learning-app.student-dashboard-view h1,
+.learning-app.student-dashboard-view h2,
+.learning-app.student-dashboard-view h3 {
+  font-family: var(--social-font);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+.student-dashboard-view .learning-sidebar {
+  width: 76px;
+  padding: 21px 10px 16px;
+  background: #fff;
+  gap: 28px;
+  border-color: #e4e9ef;
+}
+.student-dashboard-view .product-brand {
+  padding: 0;
+  justify-content: center;
+  gap: 0;
+  min-height: 34px;
+}
+.student-dashboard-view .product-brand > div,
+.student-dashboard-view .workspace-label,
+.student-dashboard-view .nav-ai,
+.student-dashboard-view .demo-note,
+.student-dashboard-view .workspace-user > div {
+  display: none;
+}
+.student-dashboard-view .product-monogram {
+  font-size: 30px;
+  letter-spacing: -5px;
+  width: 32px;
+  color: #205840;
+}
+.student-dashboard-view .learning-sidebar nav {
+  gap: 12px;
+  margin-top: 6px;
+}
+.student-dashboard-view .learning-sidebar nav button {
+  width: 48px;
+  min-height: 48px;
+  margin: 0 auto;
+  justify-content: center;
+  gap: 0;
+  padding: 12px;
+  font-size: 0;
+  border-radius: 8px;
+  color: #738091;
+}
+.student-dashboard-view .learning-sidebar nav button > svg {
+  width: 22px;
+  height: 22px;
+}
+.student-dashboard-view .learning-sidebar nav button.active {
+  background: #edf6f1;
+  color: #205840;
+  border-color: #c7dfd0;
+}
+.student-dashboard-view .learning-sidebar nav button:hover {
+  background: #f0f4f8;
+  color: #205840;
+}
+.student-dashboard-view .sidebar-bottom {
+  gap: 20px;
+  align-items: center;
+}
+.student-dashboard-view .sidebar-help {
+  font-size: 0;
+  gap: 0;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 10px;
+}
+.student-dashboard-view .sidebar-help > svg {
+  width: 21px;
+  height: 21px;
+}
+.student-dashboard-view .workspace-user {
+  padding: 20px 0 0;
+  width: 100%;
+  justify-content: center;
+  border-color: #e4e9ef;
+}
+.student-dashboard-view .workspace-user > span {
+  background: #edf3fa;
+  color: #324a68;
+  border: 1px solid #dce6f1;
+  font-size: 12px;
+  width: 36px;
+  height: 36px;
+}
+.student-dashboard-view .learning-topbar {
+  height: 64px;
+  padding: 0 32px;
+  background: #fff;
+  border-color: #e4e9ef;
+}
+.student-dashboard-view .breadcrumbs {
+  gap: 16px;
+  font-size: 14px;
+  color: #738091;
+}
+.student-dashboard-view .breadcrumbs button {
+  font-family: var(--social-font);
+  color: #182735;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.7px;
+}
+.student-dashboard-view .role-switch,
+.student-dashboard-view .role-switch select {
+  font-size: 13px;
+}
+.student-dashboard-view .role-switch select {
+  background: #fff;
+  color: #344455;
+  border-color: #e0e6ed;
+}
+.student-dashboard-view .demo-badge {
+  color: #526476;
+  background: #f0f4f8;
+  border-color: #dfe7ef;
+  font-size: 10px;
+}
+.student-dashboard-view .learning-main {
+  max-width: 1550px;
+  padding: 14px 32px 28px;
+}
+.student-dashboard-view .classroom-context {
+  margin-bottom: 10px;
+  min-height: 32px;
+  color: #738091;
+}
+.student-dashboard-view .classroom-context select {
+  font-size: 14px;
+  color: #43556a;
+}
+.student-dashboard-view .classroom-context > span:last-child {
+  font-size: 12px;
+  color: #7c8796;
+}
+.dashboard-greeting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.learning-app .dashboard-greeting h1 {
+  font-size: 27px;
+  line-height: 1.45;
+  color: #182735;
+  letter-spacing: -0.7px;
+}
+.dashboard-greeting p {
+  font-size: 14px;
+  color: #6d7989;
+  margin-top: 2px;
+}
+.dashboard-course-progress {
+  display: flex;
+  gap: 11px;
+  align-items: center;
+  padding-right: 4px;
+}
+.course-progress-ring {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #205840;
+  background: conic-gradient(#205840 var(--course-progress), #e1e8ef 0);
+  position: relative;
+  isolation: isolate;
+}
+.course-progress-ring::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: #f7f9fc;
+  z-index: -1;
+}
+.dashboard-course-progress strong {
+  display: block;
+  font-size: 19px;
+  line-height: 1.2;
+  font-weight: 600;
+  color: #2d4054;
+}
+.dashboard-course-progress strong span {
+  font-weight: 400;
+  color: #8b96a3;
+  font-size: 14px;
+}
+.dashboard-course-progress small {
+  display: block;
+  font-size: 12px;
+  color: #6d7989;
+  margin-top: 3px;
+}
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 334px;
+  gap: 26px;
+  align-items: start;
+}
+.dashboard-learning {
+  min-width: 0;
+}
+.dashboard-feature {
+  min-height: 237px;
+  position: relative;
+  color: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  background: #1b2c3c;
+}
+.feature-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 65% 58%;
+}
+/* Purposeful image contrast, derived from Mentingo's cover overlay. */
+.feature-photo-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    #101f2aee 0%,
+    #101f2ab8 42%,
+    #101f2a28 80%
+  );
+}
+.feature-copy {
+  position: relative;
+  padding: 24px 28px;
+  width: 100%;
+  z-index: 1;
+}
+.feature-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #c3e4f5;
+  letter-spacing: 0.15px;
+}
+.feature-eyebrow > span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #69b5db;
+}
+.learning-app .dashboard-feature h2 {
+  color: #fff;
+  font-size: 27px;
+  line-height: 1.5;
+  margin: 8px 0 10px;
+  max-width: 460px;
+  text-wrap: balance;
+  letter-spacing: -0.5px;
+}
+.feature-meta {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 13px;
+  color: #d5dee7;
+}
+.feature-meta > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.feature-actions {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding-top: 23px;
+}
+.feature-start {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #fff;
+  border-radius: 6px;
+  padding: 10px 17px;
+  color: #1b3449;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  min-height: 44px;
+  transition:
+    transform 150ms ease-out,
+    background 150ms ease-out;
+}
+.feature-start:hover {
+  background: #edf6fc;
+  transform: translateY(-1px);
+}
+.feature-progress {
+  width: 156px;
+}
+.feature-progress > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #d0dce6;
+  margin-bottom: 7px;
+}
+.feature-progress strong {
+  font-weight: 400;
+  color: #fff;
+}
+.feature-progress [role="progressbar"] {
+  height: 4px;
+  background: #ffffff35;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.feature-progress i {
+  display: block;
+  height: 100%;
+  background: #69b5db;
+  border-radius: inherit;
+}
+.dashboard-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 21px 0 13px;
+}
+.learning-app .dashboard-section-heading h2 {
+  font-size: 21px;
+  color: #182735;
+}
+.dashboard-section-heading > button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 0;
+  color: #415a6d;
+  font-size: 13px;
+  min-height: 32px;
+  padding: 2px 0;
+}
+.dashboard-section-heading > button:hover {
+  color: #205840;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.dashboard-topic-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.learning-app .mentingo-course-card {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  background: #fff;
+  color: #182735;
+  padding: 0;
+  border: 1px solid #dfe5ec;
+  border-radius: 8px;
+  text-align: left;
+  overflow: hidden;
+  box-shadow: 0 2px 3px #152c4010;
+  transition:
+    transform 180ms ease-out,
+    box-shadow 180ms ease-out;
+}
+.learning-app .mentingo-course-card:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px #152c401a;
+  border-color: #b8c9d8;
+}
+.learning-app .mentingo-course-card:disabled {
+  opacity: 0.55;
+}
+.course-card-media {
+  position: relative;
+  height: 133px;
+  background: #d9e2ec;
+  overflow: hidden;
+}
+.course-card-media > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mentingo-course-card:hover .course-card-media > img {
+  transform: scale(1.035);
+}
+.course-air .course-card-media > img {
+  object-position: 50% 57%;
+}
+.course-plastic .course-card-media > img {
+  object-position: 50% 53%;
+}
+.course-climate .course-card-media > img {
+  object-position: 50% 62%;
+}
+.course-card-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, #101c29ed 0%, #101c2980 32%, #101c2908 76%);
+}
+.course-category {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  font-weight: 600;
+  color: #fff;
+  background: #15293891;
+  padding: 3px 6px;
+  border: 1px solid #ffffff25;
+  border-radius: 3px;
+}
+.course-card-open {
+  position: absolute;
+  top: 12px;
+  right: 13px;
+  color: #fff;
+}
+.course-card-overlay {
+  position: absolute;
+  left: 16px;
+  right: 48px;
+  bottom: 14px;
+  z-index: 1;
+}
+.learning-app .course-card-overlay h3 {
+  font-size: 19px;
+  color: #fff;
+  line-height: 1.4;
+}
+.course-card-overlay > span {
+  display: block;
+  font-size: 12px;
+  color: #e2e9f1;
+  line-height: 1.6;
+  margin-top: 3px;
+}
+.course-card-play {
+  position: absolute;
+  right: 14px;
+  bottom: 17px;
+  width: 28px;
+  height: 28px;
+  color: #fff;
+  border: 1px solid #ffffff80;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #ffffff10;
+}
+.course-card-play > svg {
+  margin-left: 1px;
+}
+.course-card-details {
+  padding: 10px 14px 12px;
+}
+.course-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 11px;
+  color: #647183;
+}
+.course-card-meta > span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.course-card-meta > strong {
+  margin-left: auto;
+  color: #44596e;
+  font-weight: 400;
+}
+.course-card-progress {
+  margin-top: 8px;
+  height: 3px;
+  border-radius: 2px;
+  background: #e8edf3;
+  overflow: hidden;
+}
+.course-card-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #205840;
+}
+.dashboard-learning-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #7c8796;
+  font-size: 11px;
+  padding: 14px 0 0;
+}
+.dashboard-ai-shortcut {
+  display: none;
+}
+.dashboard-tutor {
+  min-width: 0;
+}
+.learning-app .dashboard-chat {
+  display: flex;
+  flex-direction: column;
+  height: max(620px, calc(100dvh - 222px));
+  max-height: 766px;
+  min-height: 0;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #dce4ed;
+  box-shadow: 0 3px 8px #182e4410;
+  overflow: hidden;
+}
+.dashboard-chat .chat-heading {
+  padding: 18px;
+  border-color: #e7edf3;
+  gap: 10px;
+}
+.dashboard-chat .ai-mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: #eaf5fb;
+  color: #217aab;
+}
+.dashboard-chat .chat-heading h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 19px;
+  line-height: 1.4;
+  color: #182735;
+}
+.tutor-name-label {
+  color: #6a8195;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+}
+.dashboard-chat .chat-heading p {
+  font-size: 12px;
+  color: #738091;
+}
+.dashboard-chat .chat-mode,
+.dashboard-chat .chat-mode.is-demo {
+  font-size: 10px;
+  padding: 3px 6px;
+  color: #526476;
+  background: #f0f4f8;
+  border: 1px solid #e0e7f0;
+  border-radius: 3px;
+}
+.dashboard-chat .chat-context {
+  padding: 10px 18px;
+  background: #f6f9fc;
+  border-color: #e7edf3;
+  color: #5c7185;
+  font-size: 12px;
+}
+.dashboard-chat .chat-messages {
+  padding: 20px 18px;
+  scrollbar-width: thin;
+}
+.dashboard-chat .chat-empty {
+  padding: 4px 0;
+  text-align: left;
+}
+.dashboard-chat .chat-empty > svg {
+  display: none;
+}
+.dashboard-chat .chat-empty h3 {
+  font-size: 19px;
+  line-height: 1.5;
+  color: #213b50;
+}
+.dashboard-chat .chat-empty > p {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #6b7b8c;
+  margin: 9px 0 20px;
+  max-width: 30ch;
+}
+.dashboard-suggestion-label {
+  display: block;
+  color: #8491a0;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+.dashboard-chat .suggested-questions {
+  gap: 9px;
+}
+.dashboard-chat .suggested-questions button {
+  font-size: 14px;
+  line-height: 1.65;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #fff;
+  color: #38526a;
+  border-color: #dfe7ef;
+  min-height: 50px;
+}
+.dashboard-chat .suggested-questions button > svg {
+  transform: rotate(45deg);
+  color: #718aa1;
+}
+.dashboard-chat .suggested-questions button:hover {
+  background: #f2f8fc;
+  border-color: #9ac6e0;
+}
+.dashboard-chat .chat-composer {
+  background: #fff;
+  margin: 10px 14px 0;
+  border: 1px solid #bfcfdd;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 3px #182e4406;
+}
+.dashboard-chat .chat-composer:focus-within {
+  border-color: #438eae;
+  box-shadow: 0 0 0 2px #e3f1fa;
+}
+.dashboard-chat .chat-composer textarea {
+  font-size: 15px;
+  line-height: 1.65;
+  background: transparent;
+  padding: 0;
+  min-height: 60px;
+  color: #20364a;
+}
+.dashboard-chat .chat-composer textarea::placeholder {
+  color: #8a98a8;
+}
+.dashboard-chat .chat-composer textarea:focus-visible {
+  outline: none;
+}
+.dashboard-chat .chat-composer > div {
+  padding-top: 6px;
+}
+.dashboard-chat .chat-composer > div > span {
+  font-size: 11px;
+  color: #738397;
+  gap: 4px;
+}
+.dashboard-chat .send-button {
+  background: #205840;
+  color: #fff;
+  border-radius: 6px;
+  width: 34px;
+  height: 34px;
+}
+.dashboard-chat .send-button:disabled {
+  background: #e9eef3;
+  color: #93a4b3;
+  opacity: 1;
+}
+.dashboard-chat .chat-disclosure {
+  font-size: 10px;
+  color: #7c8999;
+  line-height: 1.7;
+  text-align: center;
+  padding: 10px 14px 12px;
+  margin: 0;
+}
+.dashboard-chat .message-text {
+  font-size: 14px;
+  line-height: 1.85;
+  color: #24394b;
+}
+.dashboard-chat .message-author {
+  font-size: 11px;
+  color: #8090a0;
+}
+.dashboard-chat .chat-message.user .message-text {
+  background: #edf5fc;
+  border: 1px solid #d5e5f0;
+  border-radius: 8px 8px 2px 8px;
+}
+.dashboard-chat .chat-message.assistant .message-text {
+  padding: 0;
+  background: transparent;
+}
+.dashboard-chat .message-sources button {
+  font-size: 11px;
+  background: #f0f7fc;
+  border-color: #cee2f0;
+  border-radius: 5px;
+}
+.dashboard-chat .source-detail {
+  padding: 12px;
+  margin-top: 12px;
+  border-color: #d2e4f0;
+  background: #f1f8fd;
+}
+.dashboard-chat .source-detail p {
+  font-size: 14px;
+}
+@media (min-width: 1700px) {
+  .course-card-media {
+    height: 174px;
+  }
+  .dashboard-feature {
+    min-height: 270px;
+  }
+}
+@media (max-width: 1200px) and (min-width: 761px) {
+  .student-dashboard-view .learning-main {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .dashboard-layout {
+    grid-template-columns: minmax(0, 1fr) 302px;
+    gap: 20px;
+  }
+  .learning-app .dashboard-feature h2 {
+    font-size: 25px;
+    max-width: 370px;
+  }
+  .feature-copy {
+    padding: 24px;
+  }
+  .course-card-media {
+    height: 145px;
+  }
+  .learning-app .course-card-overlay h3 {
+    font-size: 17px;
+  }
+  .course-card-overlay > span {
+    display: none;
+  }
+  .course-card-meta {
+    gap: 9px;
+  }
+  .course-category {
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+  .dashboard-chat .chat-heading {
+    padding: 16px 14px;
+  }
+  .dashboard-chat .chat-messages {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
+@media (max-width: 1000px) and (min-width: 761px) {
+  .dashboard-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .learning-app .dashboard-chat {
+    height: 580px;
+    max-height: none;
+  }
+  .dashboard-ai-shortcut {
+    display: inline-flex;
+  }
+  .dashboard-course-progress {
+    display: none;
+  }
+  .course-card-media {
+    height: 165px;
+  }
+}
+@media (max-width: 760px) {
+  .student-dashboard-view .learning-sidebar {
+    width: 76px;
+  }
+  .student-dashboard-view .learning-topbar {
+    height: 56px;
+    padding: 0 16px;
+  }
+  .student-dashboard-view .breadcrumbs button {
+    font-size: 16px;
+  }
+  .student-dashboard-view .role-switch select {
+    font-size: 12px;
+  }
+  .student-dashboard-view .learning-main {
+    padding: 10px 16px 98px;
+  }
+  .student-dashboard-view .classroom-context {
+    min-height: 30px;
+    margin-bottom: 12px;
+  }
+  .student-dashboard-view .classroom-context select {
+    font-size: 13px;
+    min-height: 30px;
+  }
+  .dashboard-greeting {
+    margin-bottom: 18px;
+    gap: 8px;
+  }
+  .learning-app .dashboard-greeting h1 {
+    font-size: 23px;
+    letter-spacing: -0.6px;
+  }
+  .dashboard-greeting p {
+    font-size: 12px;
+    margin-top: 3px;
+  }
+  .dashboard-course-progress {
+    display: none;
+  }
+  .dashboard-ai-shortcut {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 42px;
+    border: 1px solid #cadde9;
+    border-radius: 6px;
+    background: #edf6fc;
+    color: #276282;
+    padding: 9px 10px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  .dashboard-ai-shortcut > svg:first-child {
+    width: 16px;
+  }
+  .dashboard-ai-shortcut > svg:last-child {
+    display: none;
+  }
+  .dashboard-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .dashboard-feature {
+    min-height: 223px;
+    border-radius: 8px;
+  }
+  .feature-copy {
+    padding: 21px 20px;
+  }
+  .feature-photo {
+    object-position: 63% 50%;
+  }
+  .feature-photo-shade {
+    background: linear-gradient(
+      90deg,
+      #101f2aed 0%,
+      #101f2a99 65%,
+      #101f2a50 100%
+    );
+  }
+  .feature-eyebrow {
+    font-size: 11px;
+  }
+  .learning-app .dashboard-feature h2 {
+    font-size: 23px;
+    line-height: 1.5;
+    max-width: 285px;
+    margin: 7px 0 9px;
+  }
+  .feature-meta {
+    gap: 12px;
+    font-size: 11px;
+  }
+  .feature-actions {
+    padding-top: 20px;
+    gap: 18px;
+  }
+  .feature-start {
+    font-size: 14px !important;
+    min-height: 40px;
+    padding: 8px 13px;
+    gap: 7px;
+  }
+  .feature-start > svg {
+    width: 13px;
+  }
+  .feature-progress {
+    width: 119px;
+  }
+  .feature-progress > span {
+    font-size: 10px;
+  }
+  .dashboard-section-heading {
+    margin: 20px 0 12px;
+  }
+  .learning-app .dashboard-section-heading h2 {
+    font-size: 19px;
+  }
+  .dashboard-section-heading > button {
+    font-size: 12px;
+    gap: 4px;
+  }
+  .dashboard-topic-grid {
+    gap: 12px;
+  }
+  .learning-app .mentingo-course-card {
+    border-radius: 6px;
+  }
+  .course-card-media {
+    height: 130px;
+  }
+  .course-category {
+    top: 9px;
+    left: 9px;
+    font-size: 7px;
+    letter-spacing: 0.7px;
+    padding: 2px 4px;
+  }
+  .course-card-open {
+    right: 9px;
+    top: 9px;
+  }
+  .course-card-open > svg {
+    width: 14px;
+    height: 14px;
+  }
+  .course-card-overlay {
+    left: 11px;
+    right: 10px;
+    bottom: 10px;
+  }
+  .learning-app .course-card-overlay h3 {
+    font-size: 16px;
+    line-height: 1.45;
+  }
+  .course-card-overlay > span {
+    display: none;
+  }
+  .course-card-play {
+    display: none;
+  }
+  .course-card-details {
+    padding: 9px 10px 10px;
+  }
+  .course-card-meta {
+    gap: 6px;
+    font-size: 10px;
+  }
+  .course-card-meta > span {
+    gap: 3px;
+  }
+  .course-card-meta > span > svg {
+    width: 10px;
+    height: 10px;
+  }
+  .course-card-meta > span:nth-child(2) {
+    display: none;
+  }
+  .course-card-progress {
+    margin-top: 7px;
+  }
+  .dashboard-learning-note {
+    font-size: 10px;
+    padding-top: 14px;
+  }
+  .learning-app .dashboard-chat {
+    height: 640px;
+    max-height: none;
+  }
+  .dashboard-chat .chat-disclosure {
+    font-size: 11px;
+  }
+  .student-dashboard-view .student-bottom-nav {
+    background: #fff;
+    border-color: #dfe7ef;
+    box-shadow: 0 -2px 14px #16345107;
+    padding-top: 6px;
+  }
+  .student-dashboard-view .student-bottom-nav button {
+    font-size: 10px;
+    min-height: 50px;
+    gap: 4px;
+    color: #84909e;
+    border-radius: 5px;
+  }
+  .student-dashboard-view .student-bottom-nav button.active {
+    background: #edf6f1;
+    color: #205840;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mentingo-course-card,
+  .course-card-media > img,
+  .feature-start {
+    transition: none !important;
+  }
+}

@@ -27,10 +27,11 @@ import {
 import useUser from "@/hooks/useUser";
 import useMultiUserMode from "@/hooks/useMultiUserMode";
 import { classroomRequest } from "./api";
-import { TOPICS, SUGGESTIONS, readDemo, saveDemo } from "./data";
+import { TOPICS, readDemo, saveDemo } from "./data";
 import { TopicArt } from "./Visuals";
 import { KnowledgeCheck, PollutionExplorer, WasteSorting } from "./Activities";
 import EcoChat from "./Chat";
+import StudentDashboard from "./StudentDashboard";
 import Teacher from "./Teacher";
 import "./classroom.css";
 
@@ -273,7 +274,9 @@ export default function Classroom({ demo = false }) {
     </div>
   );
   return (
-    <div className={`learning-app ${sidebarOpen ? "sidebar-open" : ""}`}>
+    <div
+      className={`learning-app ${sidebarOpen ? "sidebar-open" : ""} ${role === "student" && screen === "dashboard" ? "student-dashboard-view" : ""}`}
+    >
       <a className="skip-link" href="#learning-main">
         ข้ามไปยังเนื้อหา
       </a>
@@ -294,6 +297,8 @@ export default function Classroom({ demo = false }) {
           {nav.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
+              aria-label={label}
+              title={label}
               onClick={() => go(id)}
               aria-current={
                 screen === id || (screen === "lesson" && id === "lessons")
@@ -331,7 +336,12 @@ export default function Classroom({ demo = false }) {
               ตั้งค่า Gemini และระบบ
             </Link>
           )}
-          <button className="sidebar-help" onClick={() => go("guide")}>
+          <button
+            title="วิธีใช้งาน"
+            aria-label="วิธีใช้งาน"
+            className="sidebar-help"
+            onClick={() => go("guide")}
+          >
             <HelpCircle size={17} />
             วิธีใช้งาน
           </button>
@@ -482,98 +492,19 @@ export default function Classroom({ demo = false }) {
               ) : (
                 <>
                   {screen === "dashboard" && (
-                    <>
-                      <section className="student-welcome">
-                        <div>
-                          <span className="section-kicker">
-                            พื้นที่เรียนรู้ของฉัน
-                          </span>
-                          <h1>
-                            วันนี้อยากเรียนรู้อะไร
-                            <br className="mobile-only" />
-                            เกี่ยวกับสิ่งแวดล้อม?
-                          </h1>
-                          <p>
-                            เริ่มจากสิ่งใกล้ตัว แล้วค้นคำตอบจากบทเรียนของคุณครู
-                          </p>
-                        </div>
-                        <div>
-                          <button className="button" onClick={resume}>
-                            <BookOpen size={17} />
-                            เรียนต่อ
-                          </button>
-                          <button
-                            className="button secondary"
-                            onClick={() => ask("")}
-                          >
-                            <Sparkles size={17} />
-                            ถาม AI
-                          </button>
-                        </div>
-                      </section>
-                      <div className="section-heading">
-                        <h2>สำรวจหัวข้อการเรียนรู้</h2>
-                        <button onClick={() => go("lessons")}>
-                          บทเรียนทั้งหมด
-                          <ArrowRight size={16} />
-                        </button>
-                      </div>
-                      {topicCards}
-                      {data.lastLesson && (
-                        <section className="continue-card">
-                          <TopicArt
-                            topic={
-                              data.lessons.find(
-                                (entry) => entry.id === data.lastLesson.lessonId
-                              )?.topic || "air"
-                            }
-                            small
-                          />
-                          <div>
-                            <span className="section-kicker">
-                              เรียนต่อจากครั้งล่าสุด
-                            </span>
-                            <h3>
-                              {
-                                data.lessons.find(
-                                  (entry) =>
-                                    entry.id === data.lastLesson.lessonId
-                                )?.title
-                              }
-                            </h3>
-                            <p>กลับมาทบทวนและทำกิจกรรมต่อได้เลย</p>
-                          </div>
-                          <button className="button secondary" onClick={resume}>
-                            เรียนต่อ
-                            <ArrowRight size={16} />
-                          </button>
-                        </section>
-                      )}
-                      <section className="ask-entry">
-                        <div>
-                          <span className="ai-mark">
-                            <Sparkles size={20} />
-                          </span>
-                          <h2>
-                            สงสัยเรื่องสิ่งแวดล้อม?
-                            <br />
-                            ถาม Eco AI ได้เลย
-                          </h2>
-                          <p>เลือกคำถาม หรือพิมพ์สิ่งที่อยากเข้าใจ</p>
-                        </div>
-                        <div className="entry-questions">
-                          {SUGGESTIONS.map((question) => (
-                            <button
-                              key={question}
-                              onClick={() => ask(question)}
-                            >
-                              {question}
-                              <ArrowRight size={16} />
-                            </button>
-                          ))}
-                        </div>
-                      </section>
-                    </>
+                    <StudentDashboard
+                      data={data}
+                      classroom={classroom}
+                      available={available}
+                      name={demo ? "นักเรียน" : user?.username || "นักเรียน"}
+                      demo={demo}
+                      progress={progress}
+                      onResume={resume}
+                      onOpenLesson={openLesson}
+                      onLessons={() => go("lessons")}
+                      onAsk={() => ask("")}
+                      onConversation={conversation}
+                    />
                   )}
                   {screen === "classrooms" && (
                     <>

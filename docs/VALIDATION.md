@@ -25,6 +25,10 @@ Browser retrieval and role-switch tests are **demo behavior**, not production se
 
 Storage key: `eco-critical-demo-v2`. Saved data is local to the browser and origin, may be cleared by the browser, and is not suitable for personal/student data. TXT/MD upload size is bounded to 1 MB. Actual processing is text extraction + section chunking + exact Thai word matching; no model or embedding is represented as having run.
 
-## GitHub workflow publishing
+## Dashboard redesign and CI revision
 
-The app source and local test evidence can be published using the active account. GitHub rejected workflow-file updates because that account lacks workflow scope. Automatic approval review also rejected extracting a credential from another account to address that restriction. No credential was extracted. Publishing therefore uses a normal source-only branch preserving all upstream history and unchanged workflow files. The full classroom CI recipe is included as a non-active example for an authorized owner to enable later.
+The owner selected Mentingo UI source, then requested cool-white surfaces and Meta/Instagram-like system typography. The dashboard ports the pinned MIT course-card composition and retains the existing lessons, progress, retrieval and backend. Source details are in `third_party/mentingo/README.md`.
+
+Playwright captures and layout checks cover 1440×900 and 390×844, loaded course photographs, continuation visibility, no horizontal overflow, an initially unscrolled chat, and the desktop composer inside the first viewport. The actual captures were visually inspected, including local-retrieval source details. A production run regenerates these files before publication.
+
+The requested GitHub Actions replacement is prepared in `.github/workflows/eco-critical-ui.yml`, with upstream vendor jobs archived as reference. Publishing/activation depends on GitHub workflow authorization. See [CI details](CI.md); local tests do not imply a successful hosted Actions run.
