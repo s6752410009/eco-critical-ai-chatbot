@@ -1,15 +1,19 @@
-import React from "react";
+import React, { lazy } from "react";
 import ReactDOM from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import {
+  createBrowserRouter,
+  RouterProvider,
+  redirect,
+} from "react-router-dom";
 import App from "@/App.jsx";
 import PrivateRoute, {
   AdminRoute,
   ManagerRoute,
   SingleUserRoute,
 } from "@/components/PrivateRoute";
-import Login from "@/pages/Login";
-import SimpleSSOPassthrough from "@/pages/Login/SSO/simple";
-import OnboardingFlow from "@/pages/OnboardingFlow";
+const Login = lazy(() => import("@/pages/Login"));
+const SimpleSSOPassthrough = lazy(() => import("@/pages/Login/SSO/simple"));
+const OnboardingFlow = lazy(() => import("@/pages/OnboardingFlow"));
 import "@/index.css";
 
 const isDev = import.meta.env.DEV;
@@ -23,17 +27,25 @@ const router = createBrowserRouter([
       {
         path: "/",
         lazy: async () => {
-          const { default: Classroom } = await import("@/pages/Classroom");
-          return { element: <Classroom demo /> };
+          const { default: SchoolApp } = await import(
+            "@/pages/Classroom/SchoolApp"
+          );
+          return { element: <SchoolApp /> };
         },
       },
       {
         path: "/demo",
-        lazy: async () => {
-          const { default: Classroom } = await import("@/pages/Classroom");
-          return { element: <Classroom demo /> };
-        },
+        loader: ({ request }) => redirect("/app" + new URL(request.url).search),
       },
+      ...["/app", "/login", "/register"].map((path) => ({
+        path,
+        lazy: async () => {
+          const { default: SchoolApp } = await import(
+            "@/pages/Classroom/SchoolApp"
+          );
+          return { element: <SchoolApp /> };
+        },
+      })),
       {
         path: "/live",
         lazy: async () => {
@@ -44,7 +56,7 @@ const router = createBrowserRouter([
         },
       },
       {
-        path: "/login",
+        path: "/system-login",
         element: <Login />,
       },
       {

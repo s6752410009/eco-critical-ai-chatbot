@@ -1,3 +1,19 @@
+# Current school UI audit — 6 November 2026
+
+Reviewed the actual rendered page and captured screenshots, not only source code. Current evidence is in [VALIDATION](VALIDATION.md) and [school-app-qa.json](school-app-qa.json).
+
+The five largest issues in the rejected screen were a plain blue visual plane, slogan-like Thai copy, oversized text relative to the form, no photographic identity, and a layout that did not translate clearly to mobile.
+
+Implemented a real locally served meadow photograph with licensed attribution, a short “ภูมิศาสตร์ เรื่องใกล้ตัว” headline, a compact sign-in form, green actions and a cropped photo strip for narrow screens. Retained the owner-requested platform sans typography, native Mentingo components and existing account functionality. No proprietary Meta font is redistributed.
+
+Further inspection found a wrapped account label in the narrow desktop rail and school upload feedback incorrectly describing browser-only storage. Both were corrected and the compiled app was retested. School discussion ownership copy now correctly refers to the account. The existing chat stop control aborts the client request; this is not a guarantee that a remote provider cancels billing after receiving a request.
+
+Current checks: 9 browser flows, 13 viewport sizes and zero axe violations in 9 snapshots; screenshots include desktop 1440×900 and mobile 390×844. Remaining limitations are physical-device verification, real Gemini responses, large upstream code chunks and the pending authenticated Cloudflare release. No invented quantitative visual-quality score is assigned.
+
+---
+
+## Historical prototype audit (superseded)
+
 # UI audit — native Mentingo integration
 
 Date: 5 November 2026. Scope: student and teacher browser demo. Audit/fix pass uses imported source, not screenshots as mockups. Scores are engineering judgments, not certification.

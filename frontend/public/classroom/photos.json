@@ -26,5 +26,12 @@
     "asset": "photo-1636956727622-9db7ad996434",
     "license": "https://unsplash.com/license",
     "sha256": "caf8b09096a5fa314ea1cbed83c10bb26a76537d631a48c0d0a411a08f82a971"
+  },
+  "meadow": {
+    "author": "Bernd Dittrich",
+    "source": "https://unsplash.com/photos/7fQwXbLZXf0",
+    "asset": "photo-1717057227103-06d95b2fdd98",
+    "license": "https://unsplash.com/license",
+    "sha256": "45846ff066ebd191e89dfcf24968ecfeb14bfed36c6621f06aea46bf21e82441"
   }
 }

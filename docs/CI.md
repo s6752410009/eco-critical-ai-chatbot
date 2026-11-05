@@ -1,14 +1,13 @@
-# Eco-Critical UI CI
+# Eco-Critical checks and GitHub Actions
 
-The requested replacement is `.github/workflows/eco-critical-ui.yml`. The original vendor workflows are preserved under `docs/upstream-workflows/` and are no longer active workflow definitions.
+The runnable recipe is [classroom-ci.example.yml](classroom-ci.example.yml). It uses Node 24, the npm lockfile, scoped lint, the Node regression/security suite, both frontend artifacts, server-secret canary checks, and compiled-app browser QA on a fresh temporary Worker/D1. No production credential, deployment, remote D1 fixture or live Gemini call is part of CI.
 
-Triggers: pushes to `codex/eco-critical-source` or `main`, pull requests and manual dispatch. Node 24; locked npm install using the existing lockfile; scoped lint; 18 classroom regression cases; server and static client production builds; server-secret canary checks in both client outputs; Chromium installation; ten browser flows against compiled assets; 1440×900 and 390×844 student/teacher captures with axe, plus 13 responsive viewport sizes. Screenshots and JSON reports are retained as a run artifact for 14 days, including failures where available.
+Browser QA covers registration and pending approval, roster/approval, persisted quiz progress, teacher-authored text and uploads readable by another account, reading-only completion, shared discussion and moderation, restricted settings, role changes/session revocation, logout, accessibility snapshots and 13 viewport sizes. Generated screenshots and JSON are retained for 14 days.
 
-Actions are pinned to official commit SHAs. Job permissions are `contents: read`, concurrent runs for the same ref are cancelled, and the job has a 20-minute timeout. No deploy, registry push, privileged runner, live Gemini request or repository secret is used.
+Official Actions are pinned to commit SHAs. Permissions are `contents: read`; concurrent obsolete runs are cancelled. The job has a 20-minute timeout.
 
-## Publishing status
+## Hosted workflow status
 
-Workflow source is prepared and its commands are validated locally. Publishing a workflow requires `workflow` authorization on the account used for GitHub writes. The existing CLI credential can push application source but previously lacked that scope; the connected GitHub app has read-only access to this repository. No alternate stored account is used to bypass that restriction. Actions remain disabled until the new workflow can be published and the owner grants the required GitHub authorization.
+Application source can be pushed with the current GitHub account; workflow publication needs that account's `workflow` authorization. A previous OAuth refresh returned a different account and was rejected. No alternate credential is used to bypass that restriction. Actions remain disabled; **no hosted successful run is claimed**.
 
-
-The normal OAuth refresh for workflow scope returned `Markrock342` while the repository's active CLI writer is `s6752410009`; GitHub rejected the mismatched refresh. The original writer is retained. The workflow is ready locally, but the correct repository account must authorize `workflow` before it can be published.
+The `.github/workflows/` replacement and original vendor-workflow archives remain local pending that authorization. Do not stage or push those changes as part of ordinary application-source commits. The example under `docs/` is the reviewable intended job.

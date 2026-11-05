@@ -29,3 +29,9 @@ collector/outputs/*
 !collector/outputs/.gitkeep
 
 frontend/dist-demo/
+
+# Cloudflare local databases and deployment cache
+.wrangler/
+
+.dev.vars
+.dev.vars.*

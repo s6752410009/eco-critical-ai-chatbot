@@ -14,8 +14,8 @@ async function ask(question){const chat=page.locator(".eco-chat").first();await 
 try{
   await page.goto(url+"/demo");
   await expect(page.locator(".native-catalog-view .group\\/hero h1")).toBeVisible();await page.evaluate(()=>document.fonts.ready);
-  await check("student dashboard has four visual modules, clear demo role and working classroom selection",async()=>{
-    await expect(page.locator('[data-testid="modern-course-card-link"]')).toHaveCount(4);await expect(page.getByLabel("ห้องเรียนที่ใช้งาน").locator("option")).toHaveCount(2);
+  await check("student dashboard has six cases and four supporting lessons, clear demo role and working classroom selection",async()=>{
+    await expect(page.locator('[data-testid="modern-course-card-link"]')).toHaveCount(10);await expect(page.getByLabel("ห้องเรียนที่ใช้งาน").locator("option")).toHaveCount(1);
     await page.screenshot({path:new URL("desktop.png",out).pathname,fullPage:true});
   });
   await check("suggested question prepares chat, local retrieval and clickable source details work",async()=>{
@@ -38,7 +38,7 @@ try{
     const questions=page.locator(".quiz-question");await questions.nth(0).locator(".quiz-options button").nth(1).click();await questions.nth(1).locator(".quiz-options button").nth(2).click();
     await expect(page.locator(".quiz-explanation")).toHaveCount(2);await page.getByRole("button",{name:"บันทึกผลและจบบทเรียน"}).click();
     await page.reload();await expect(page.getByRole("heading",{level:1,name:"มลพิษทางอากาศกับชีวิตของเรา",exact:true})).toHaveText("มลพิษทางอากาศกับชีวิตของเรา");
-    await nav("ความก้าวหน้า");await expect(page.locator(".progress-lessons article").first()).toContainText("100%");
+    await nav("ความก้าวหน้า");await expect(page.locator(".progress-lessons article").filter({hasText:"มลพิษทางอากาศกับชีวิตของเรา"})).toContainText("100%");
   });
   await check("water lesson expands causal explanations and has a complete knowledge check",async()=>{
     await nav("บทเรียน");await page.locator('[data-testid="modern-course-card-link"][href*="lesson=water-1"]').click();
@@ -51,15 +51,12 @@ try{
     await activity.getByRole("button",{name:"รีไซเคิล",exact:true}).click();await activity.locator(".item-selector button").nth(1).click();await activity.getByRole("button",{name:"อินทรีย์",exact:true}).click();await activity.locator(".item-selector button").nth(2).click();await activity.getByRole("button",{name:"อันตราย",exact:true}).click();await expect(activity).toContainText("สำเร็จ 3/3");await nav("ภาพรวม");await expect(page.locator(".native-catalog-view h1")).toHaveText("พลาสติกไม่ได้หายไปไหน");
   });
   let newClass;
-  await check("teacher creates and edits classroom, adds lesson, uploads and previews a real text document",async()=>{
-    await page.getByLabel("บทบาทสาธิต").selectOption("teacher");await page.getByRole("button",{name:"สร้างห้องเรียน",exact:true}).click();
-    await page.getByLabel("ชื่อห้องเรียน",{exact:true}).fill("ห้องทดสอบ Eco QA");await page.getByLabel("คำอธิบายสั้นๆ").fill("ทดสอบ flow ครูและนักเรียน");await page.getByRole("button",{name:"บันทึก",exact:true}).click();
+  await check("teacher edits the single classroom, adds lesson, uploads and previews a real text document",async()=>{
+    await page.getByLabel("บทบาทสาธิต").selectOption("teacher");await expect(page.getByRole("button",{name:"สร้างห้องเรียน",exact:true})).toHaveCount(0);
     newClass=await page.getByLabel("ห้องเรียนที่ใช้งาน").inputValue();
-    await nav("จัดการห้องเรียน");
-    await page.getByRole("button",{name:"แก้ไข ห้องทดสอบ Eco QA",exact:true}).click();
-    await page.getByLabel("ชื่อห้องเรียน",{exact:true}).fill("ห้องทดสอบ Eco QA ปรับปรุง");
-    await page.getByRole("button",{name:"บันทึก",exact:true}).click();
-    await expect(page.getByLabel("ห้องเรียนที่ใช้งาน").locator("option:checked")).toHaveText("ห้องทดสอบ Eco QA ปรับปรุง");
+    await nav("จัดการห้องเรียน");await page.getByRole("button",{name:"แก้ไข ภูมิศาสตร์ มัธยมศึกษาตอนปลาย",exact:true}).click();
+    await page.getByLabel("คำอธิบายสั้นๆ").fill("กรณีศึกษาฝุ่นและควันพิษสำหรับภูมิศาสตร์ ม.ปลาย");await page.getByRole("button",{name:"บันทึก",exact:true}).click();
+    await expect(page.getByLabel("ห้องเรียนที่ใช้งาน").locator("option")).toHaveCount(1);
     await page.getByRole("button",{name:"เพิ่มบทเรียน",exact:true}).click();await page.getByLabel("ชื่อบทเรียน",{exact:true}).fill("บทเรียนเอกสารของคุณครู");await page.getByLabel("คำอธิบายสั้นๆ").fill("เนื้อหาจากไฟล์ที่ครูนำเข้า");await page.getByRole("button",{name:"บันทึก",exact:true}).click();
     await expect(page.locator(".teacher-lesson-list")).toContainText("บทเรียนเอกสารของคุณครู");
     await nav("AI Knowledge Base");await page.getByLabel("เชื่อมกับบทเรียน").selectOption({label:"บทเรียนเอกสารของคุณครู"});
@@ -71,17 +68,17 @@ try{
     await page.screenshot({path:new URL("teacher-knowledge-error.png",out).pathname,fullPage:true});
   });
   await check("teacher preview leads to student contextual retrieval of newly uploaded material",async()=>{
-    await nav("เนื้อหาบทเรียน");await page.getByRole("button",{name:"ดูแบบนักเรียน",exact:true}).click();await page.getByRole("button",{name:"ดูแบบนักเรียน",exact:true}).click();
+    await nav("เนื้อหาบทเรียน");await page.locator(".teacher-lesson-list tr").filter({hasText:"บทเรียนเอกสารของคุณครู"}).getByRole("button",{name:"ดูแบบนักเรียน",exact:true}).click();await page.getByRole("button",{name:"ดูแบบนักเรียน",exact:true}).click();
     await expect(page.getByLabel("บทบาทสาธิต")).toHaveValue("student");
     const chat=await ask("สารทดลองเบต้าใช้สอนอะไร");await expect(chat.locator(".chat-message.assistant")).toContainText("การตรวจสอบหลักฐาน");await expect(chat.locator(".message-sources")).toContainText("teacher-qa.txt");
     await page.reload();await expect(page.getByLabel("ห้องเรียนที่ใช้งาน")).toHaveValue(newClass);
     await expect(page.locator(".eco-chat").first().locator(".chat-message.assistant")).toContainText("การตรวจสอบหลักฐาน");
   });
-  await check("other classrooms cannot retrieve the newly uploaded private demo content",async()=>{
-    await page.getByLabel("ห้องเรียนที่ใช้งาน").selectOption("eco-m6");await nav("ถาม AI");const chat=await ask("สารทดลองเบต้า");await expect(chat.locator(".chat-message.assistant").last()).toContainText("ยังไม่พบข้อมูลที่เพียงพอ");
+  await check("other lessons cannot retrieve a document scoped to the uploaded lesson",async()=>{
+    await page.goto(url+"/demo?screen=lesson&class=eco-m5&lesson=air-1");const chat=await ask("สารทดลองเบต้า");await expect(chat.locator(".chat-message.assistant").last()).toContainText("ยังไม่พบข้อมูลที่เพียงพอ");
   });
   await check("teacher can remove a document and it stops being retrievable",async()=>{
-    await page.getByLabel("บทบาทสาธิต").selectOption("teacher");await page.getByLabel("ห้องเรียนที่ใช้งาน").selectOption(newClass);await nav("AI Knowledge Base");await page.getByRole("button",{name:"นำออก teacher-qa.txt",exact:true}).click();await expect(page.locator(".knowledge-list article")).toHaveCount(0);
+    await page.getByLabel("บทบาทสาธิต").selectOption("teacher");await page.getByLabel("ห้องเรียนที่ใช้งาน").selectOption(newClass);await nav("AI Knowledge Base");await page.getByRole("button",{name:"นำออก teacher-qa.txt",exact:true}).click();await expect(page.getByRole("button",{name:"นำออก teacher-qa.txt",exact:true})).toHaveCount(0);
     await page.getByLabel("บทบาทสาธิต").selectOption("student");await nav("ถาม AI");const chat=await ask("สารทดลองเบต้า");await expect(chat.locator(".chat-message.assistant").last()).toContainText("ยังไม่พบข้อมูลที่เพียงพอ");
   });
   await check("primary student and teacher views are responsive at 390, 1024 and 1440px",async()=>{
@@ -90,7 +87,7 @@ try{
       await page.setViewportSize({width,height:950});
       for(const role of ["student","teacher"]){
         await page.getByLabel("บทบาทสาธิต").selectOption(role);
-        for(const screen of role==="student"?["dashboard","classrooms","lessons","chat","progress"]:["dashboard","classrooms","lessons","knowledge","questions"]){
+        for(const screen of role==="student"?["dashboard","classrooms","lessons","chat","progress","cases"]:["dashboard","classrooms","lessons","knowledge","questions"]){
           await page.goto(`${url}/demo?screen=${screen}&class=eco-m5`);
           if(role==="teacher")await page.getByLabel("บทบาทสาธิต").selectOption("teacher");
           // Role selection navigates to its dashboard; direct navigation below preserves the mounted role.

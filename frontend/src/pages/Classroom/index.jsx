@@ -17,12 +17,17 @@ import {
   ListChecks,
   LoaderCircle,
   MessageCircle,
+  Globe2,
+  MessagesSquare,
   PanelLeftClose,
   PanelLeftOpen,
   Search,
   Settings2,
   Sparkles,
   Upload,
+  UserRound,
+  Users,
+  Settings,
 } from "lucide-react";
 import useUser from "@/hooks/useUser";
 import useMultiUserMode from "@/hooks/useMultiUserMode";
@@ -32,6 +37,8 @@ import { TopicArt } from "./Visuals";
 import { KnowledgeCheck, PollutionExplorer, WasteSorting } from "./Activities";
 import EcoChat from "./Chat";
 import StudentDashboard from "./StudentDashboard";
+import CaseStudies from "./CaseStudiesView";
+import Discussions from "./Discussions";
 import NativeLessonPage from "@/mentingo/modules/Courses/Lesson/Lesson.page";
 import { NativeDataProvider } from "@/mentingo-bridge/context";
 import { NativeNavigation } from "@/mentingo-bridge/NativeNavigation";
@@ -42,6 +49,7 @@ import "@/mentingo-bridge/i18n";
 import "@/mentingo-native.css";
 import "./native-brand.css";
 import Teacher from "./Teacher";
+import { Members, AISettings, Account } from "./SchoolManagement";
 import "./classroom.css";
 
 const STUDENT_NAV = [
@@ -50,6 +58,8 @@ const STUDENT_NAV = [
   { id: "lessons", label: "บทเรียน", icon: BookOpen },
   { id: "chat", label: "ถาม AI", icon: MessageCircle },
   { id: "progress", label: "ความก้าวหน้า", icon: ListChecks },
+  { id: "cases", label: "กรณีศึกษา", icon: Globe2 },
+  { id: "discussions", label: "บอร์ดสนทนา", icon: MessagesSquare },
 ];
 const TEACHER_NAV = [
   { id: "dashboard", label: "ภาพรวม", icon: LayoutDashboard },
@@ -57,6 +67,8 @@ const TEACHER_NAV = [
   { id: "lessons", label: "เนื้อหาบทเรียน", icon: BookOpen },
   { id: "knowledge", label: "AI Knowledge Base", icon: FolderOpen },
   { id: "questions", label: "คำถามนักเรียน", icon: MessageCircle },
+  { id: "cases", label: "กรณีศึกษา", icon: Globe2 },
+  { id: "discussions", label: "บอร์ดสนทนา", icon: MessagesSquare },
 ];
 const emptyData = {
   classrooms: [],
@@ -66,17 +78,31 @@ const emptyData = {
   lastLesson: null,
   conversations: {},
 };
-export default function Classroom({ demo = false }) {
+export default function Classroom({
+  demo: browserDemo = false,
+  school = null,
+}) {
+  const demo = browserDemo || !!school;
   const { user } = useUser();
   const multiUser = useMultiUserMode();
   const [params, setParams] = useSearchParams();
   const [demoRole, setDemoRole] = useState("student");
-  const role = demo
-    ? demoRole
-    : !multiUser || ["admin", "manager"].includes(user?.role)
+  const role = school
+    ? ["admin", "teacher"].includes(school.user.role)
       ? "teacher"
-      : "student";
-  const [data, setData] = useState(() => (demo ? readDemo() : emptyData));
+      : "student"
+    : demo
+      ? demoRole
+      : !multiUser || ["admin", "manager"].includes(user?.role)
+        ? "teacher"
+        : "student";
+  const [data, setData] = useState(
+    () => school?.data || (browserDemo ? readDemo() : emptyData)
+  );
+  const incomingSchoolData = school?.data;
+  useEffect(() => {
+    if (incomingSchoolData) setData(incomingSchoolData);
+  }, [incomingSchoolData]);
   const [status, setStatus] = useState(demo ? "ready" : "loading");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -95,7 +121,21 @@ export default function Classroom({ demo = false }) {
         entry.id === params.get("lesson") &&
         classroom?.lessonIds.includes(entry.id)
     ) || null;
-  const nav = role === "teacher" ? TEACHER_NAV : STUDENT_NAV;
+  const nav = [
+    ...(role === "teacher" ? TEACHER_NAV : STUDENT_NAV),
+    ...(school && role === "teacher"
+      ? [
+          {
+            id: "members",
+            label: school.user.role === "admin" ? "จัดการผู้ใช้" : "นักเรียน",
+            icon: Users,
+          },
+        ]
+      : []),
+    ...(school?.user.role === "admin"
+      ? [{ id: "ai-settings", label: "ตั้งค่า AI", icon: Settings }]
+      : []),
+  ];
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [screen, lesson?.id]);
@@ -109,6 +149,19 @@ export default function Classroom({ demo = false }) {
     []
   );
   useEffect(() => {
+    if (school) {
+      if (["admin", "teacher"].includes(school.user.role))
+        school
+          .persist(data)
+          .then((changed) => {
+            if (changed) setNotice("บันทึกข้อมูลห้องเรียนบนเซิร์ฟเวอร์แล้ว");
+          })
+          .catch((failure) => {
+            setError(failure.message);
+            school.reload();
+          });
+      return;
+    }
     if (!demo) return;
     try {
       saveDemo(data);
@@ -117,7 +170,7 @@ export default function Classroom({ demo = false }) {
         "พื้นที่จัดเก็บในเบราว์เซอร์เต็ม การเปลี่ยนแปลงล่าสุดยังไม่ได้บันทึก กรุณาลดขนาดเอกสาร"
       );
     }
-  }, [data, demo]);
+  }, [data, demo, school]);
   useEffect(() => {
     if (!notice) return;
     const timer = setTimeout(() => setNotice(""), 6000);
@@ -174,7 +227,18 @@ export default function Classroom({ demo = false }) {
     setParams({ screen: screen === "lesson" ? "lessons" : screen, class: id });
     setPrepared("");
   }
-  function openLesson(id) {
+  async function openLesson(id) {
+    if (school) {
+      try {
+        await school.request("/progress", {
+          method: "POST",
+          body: { lessonId: id },
+        });
+      } catch (failure) {
+        setError(failure.message);
+        return;
+      }
+    }
     if (demo)
       update((previous) => ({
         ...previous,
@@ -202,7 +266,23 @@ export default function Classroom({ demo = false }) {
       conversations: { ...previous.conversations, [key]: messages },
     }));
   }
-  function finish(score, total) {
+  async function finish(score, total, answers) {
+    if (school) {
+      try {
+        const result = await school.request("/progress", {
+          method: "POST",
+          body: {
+            lessonId: lesson.id,
+            answers: lesson.quiz.map((_, index) => answers[index]),
+          },
+        });
+        score = result.score;
+        total = result.total;
+      } catch (failure) {
+        setError(failure.message);
+        return;
+      }
+    }
     update((previous) => ({
       ...previous,
       progress: {
@@ -215,7 +295,11 @@ export default function Classroom({ demo = false }) {
         },
       },
     }));
-    setNotice("บันทึกผลการเรียนในเบราว์เซอร์แล้ว");
+    setNotice(
+      school
+        ? "บันทึกผลการเรียนตามบัญชีแล้ว"
+        : "บันทึกผลการเรียนในเบราว์เซอร์แล้ว"
+    );
   }
   function resume() {
     const last = data.lastLesson;
@@ -291,6 +375,7 @@ export default function Classroom({ demo = false }) {
         lesson,
         available,
         demo,
+        school,
         progress,
         onFinish: finish,
         onOpenLesson: openLesson,
@@ -305,7 +390,10 @@ export default function Classroom({ demo = false }) {
             ข้ามไปยังเนื้อหา
           </a>
           <aside className="learning-sidebar">
-            <Link to={demo ? "/demo" : "/live"} className="product-brand">
+            <Link
+              to={school ? "/app" : demo ? "/demo" : "/live"}
+              className="product-brand"
+            >
               <span className="product-monogram">
                 e<span>c</span>
               </span>
@@ -350,12 +438,21 @@ export default function Classroom({ demo = false }) {
               )}
             </nav>
             <div className="sidebar-bottom">
-              {demo ? (
+              {school ? (
+                <button
+                  className="sidebar-settings"
+                  onClick={() => go("account")}
+                  aria-label="บัญชีของฉัน"
+                  title="บัญชีของฉัน"
+                >
+                  <UserRound size={18} /> <span>บัญชีของฉัน</span>
+                </button>
+              ) : demo ? (
                 <div className="demo-note">
                   <FlaskConical size={16} />
                   <div>
                     <strong>พื้นที่ทดลองใช้งาน</strong>
-                    <span>ข้อมูลบันทึกในเบราว์เซอร์นี้</span>
+                    <span>บทเรียนบันทึกในเครื่อง · บอร์ดใช้ร่วมกัน</span>
                   </div>
                 </div>
               ) : (
@@ -380,11 +477,13 @@ export default function Classroom({ demo = false }) {
                 <span>{role === "teacher" ? "ครู" : "นร."}</span>
                 <div>
                   <strong>
-                    {demo
-                      ? role === "teacher"
-                        ? "คุณครูสาธิต"
-                        : "นักเรียนสาธิต"
-                      : user?.username || "ผู้ดูแล"}
+                    {school
+                      ? school.user.displayName
+                      : demo
+                        ? role === "teacher"
+                          ? "คุณครูสาธิต"
+                          : "นักเรียนสาธิต"
+                        : user?.username || "ผู้ดูแล"}
                   </strong>
                   <small>
                     {role === "teacher"
@@ -436,7 +535,29 @@ export default function Classroom({ demo = false }) {
                     <span className="native-ai-label">ถาม Eco AI</span>
                   </NativeButton>
                 )}
-                {demo && (
+                {school && (
+                  <>
+                    <span className="school-role-badge">
+                      {
+                        {
+                          admin: "แอดมิน",
+                          teacher: "ครู",
+                          student: "นักเรียน",
+                        }[school.user.role]
+                      }
+                    </span>
+                    <NativeButton
+                      variant="outline"
+                      className="school-header-account"
+                      aria-label="บัญชีของฉัน"
+                      onClick={() => go("account")}
+                    >
+                      <UserRound size={18} />
+                      <span>{school.user.displayName}</span>
+                    </NativeButton>
+                  </>
+                )}
+                {demo && !school && (
                   <>
                     <span className="demo-badge">DEMO</span>
                     <label className="role-switch">
@@ -503,11 +624,33 @@ export default function Classroom({ demo = false }) {
                     </select>
                     <span className="context-divider" />
                     <span>
-                      {demo
-                        ? "เนื้อหาสาธิตสำหรับ ม.4–ม.6"
-                        : "เข้าถึงตามสิทธิ์บัญชี"}
+                      {school
+                        ? "ภูมิศาสตร์สำหรับ ม.4–ม.6"
+                        : demo
+                          ? "เนื้อหาสาธิตสำหรับ ม.4–ม.6"
+                          : "เข้าถึงตามสิทธิ์บัญชี"}
                     </span>
                   </div>
+                  {screen === "cases" && (
+                    <CaseStudies
+                      lessons={data.lessons}
+                      onOpenLesson={openLesson}
+                      onDiscuss={(caseId) =>
+                        go("discussions", caseId ? { case: caseId } : {})
+                      }
+                    />
+                  )}
+                  {screen === "discussions" && (
+                    <Discussions school={school} onOpenLesson={openLesson} />
+                  )}
+                  {school && screen === "members" && (
+                    <Members school={school} lessons={data.lessons} />
+                  )}
+                  {school?.user.role === "admin" &&
+                    screen === "ai-settings" && <AISettings />}
+                  {school && screen === "account" && (
+                    <Account school={school} />
+                  )}
                   {role === "teacher" &&
                   [
                     "dashboard",
@@ -524,6 +667,7 @@ export default function Classroom({ demo = false }) {
                       classroom={classroom}
                       setClassroom={setClassroom}
                       demo={demo}
+                      school={school}
                       openLesson={(id) => openLesson(id)}
                       onCreated={(id) =>
                         setParams({ screen: "lessons", class: id })
@@ -539,9 +683,14 @@ export default function Classroom({ demo = false }) {
                           classroom={classroom}
                           available={available}
                           name={
-                            demo ? "นักเรียน" : user?.username || "นักเรียน"
+                            school
+                              ? school.user.displayName
+                              : demo
+                                ? "นักเรียน"
+                                : user?.username || "นักเรียน"
                           }
                           demo={demo}
+                          school={school}
                           progress={progress}
                           onResume={resume}
                           onOpenLesson={openLesson}
@@ -644,9 +793,11 @@ export default function Classroom({ demo = false }) {
                           {!available.length && (
                             <p className="empty-state">
                               ยังไม่มีบทเรียนแบบภาพในห้องเรียนนี้{" "}
-                              {demo
-                                ? "คุณครูสามารถเพิ่มบทเรียนและเอกสารได้"
-                                : "ใช้หน้าถาม AI เพื่อค้นจากเอกสารในห้องเรียนจริง"}
+                              {school
+                                ? "ความก้าวหน้าผูกกับบัญชีและบันทึกบนเซิร์ฟเวอร์"
+                                : demo
+                                  ? "คุณครูสามารถเพิ่มบทเรียนและเอกสารได้"
+                                  : "ใช้หน้าถาม AI เพื่อค้นจากเอกสารในห้องเรียนจริง"}
                             </p>
                           )}
                         </>
@@ -715,7 +866,15 @@ export default function Classroom({ demo = false }) {
                     (demo ? (
                       <>
                         <div className="native-preview-toolbar">
-                          {role === "teacher" && (
+                          {role === "teacher" && school && (
+                            <NativeButton
+                              variant="outline"
+                              onClick={() => go("lessons")}
+                            >
+                              กลับไปจัดการบทเรียน
+                            </NativeButton>
+                          )}
+                          {role === "teacher" && !school && (
                             <NativeButton
                               variant="outline"
                               onClick={() => setDemoRole("student")}
@@ -743,7 +902,7 @@ export default function Classroom({ demo = false }) {
                               ? `${lesson.minutes} นาที`
                               : "บทเรียนของคุณครู"}
                           </span>
-                          {role === "teacher" && demo && (
+                          {role === "teacher" && demo && !school && (
                             <button
                               className="button secondary"
                               onClick={() => setDemoRole("student")}
@@ -866,7 +1025,7 @@ export default function Classroom({ demo = false }) {
                             <div className="lesson-reference">
                               {demo && (
                                 <span>
-                                  เนื้อหาสาธิตเพื่อทดลองระบบ ·
+                                  เนื้อหาบทเรียนสำหรับการเรียนรู้ ·
                                   ควรให้ครูตรวจเนื้อหาก่อนใช้สอนจริง
                                 </span>
                               )}
@@ -910,6 +1069,7 @@ export default function Classroom({ demo = false }) {
                               lesson={lesson}
                               documents={data.documents}
                               demo={demo}
+                              school={school}
                               compact
                               conversations={data.conversations}
                               onConversation={conversation}
@@ -926,6 +1086,7 @@ export default function Classroom({ demo = false }) {
                         lesson={lesson}
                         documents={data.documents}
                         demo={demo}
+                        school={school}
                         prepared={prepared}
                         conversations={data.conversations}
                         onConversation={conversation}
@@ -937,7 +1098,9 @@ export default function Classroom({ demo = false }) {
                         </div>
                         <p>
                           {lesson
-                            ? "ค้นเฉพาะเอกสารที่เชื่อมกับบทเรียนนี้ในโหมดสาธิต"
+                            ? school
+                              ? "อ้างอิงเอกสารและเนื้อหาที่ครูเชื่อมกับบทเรียนนี้"
+                              : "ค้นเฉพาะเอกสารที่เชื่อมกับบทเรียนนี้ในโหมดสาธิต"
                             : "ใช้เอกสารของห้องเรียนที่กำลังเลือก"}
                         </p>
                         {data.documents
@@ -969,52 +1132,84 @@ export default function Classroom({ demo = false }) {
                             </details>
                           ))}
                         <small className="source-footnote">
-                          {demo
+                          {school
+                            ? "คำตอบจาก Gemini ใช้เอกสารและเนื้อหาบทเรียนที่ครูบันทึกเป็นหลักฐาน"
+                            : demo
                             ? "ค้นข้อความที่ตรงกับคำถามในเครื่อง ไม่ได้ใช้ embedding หรือ Gemini"
                             : "โหมดระบบจริงค้นด้วย embeddings จาก workspace ที่มีสิทธิ์"}
                         </small>
                       </aside>
                     </div>
                   )}
-                  {screen === "guide" && (
-                    <section className="app-guide">
-                      <h1>เริ่มใช้งานในหนึ่งนาที</h1>
-                      <div>
-                        <h2>สำหรับนักเรียน</h2>
-                        <p>
-                          เลือกห้องเรียน → เปิดบทเรียน → ทดลองกิจกรรม → ถาม Eco
-                          AI → กดดูข้อความอ้างอิง
-                        </p>
-                      </div>
-                      <div>
-                        <h2>สำหรับคุณครู</h2>
-                        <p>
-                          สลับมุมมองเป็นคุณครู → สร้างห้องเรียน → เพิ่มบทเรียน →
-                          อัปโหลด TXT/Markdown ใน AI Knowledge Base →
-                          ดูแบบนักเรียน
-                        </p>
-                      </div>
-                      <div>
-                        <h2>โหมดสาธิตและระบบจริงต่างกันอย่างไร?</h2>
-                        <p>
-                          โหมดสาธิตบันทึกข้อมูลในเบราว์เซอร์และตอบด้วยข้อความที่ค้นพบ
-                          ไม่เรียกโมเดลภาษา ระบบจริงต้องมี backend, collector
-                          และ Gemini API key ที่ตั้งค่าโดยผู้ดูแลก่อน
-                        </p>
-                      </div>
-                      {demo ? (
-                        <Link className="button secondary" to="/live">
-                          เปิดการตั้งค่าระบบจริง
-                          <ArrowRight size={17} />
-                        </Link>
-                      ) : (
-                        <Link className="button secondary" to="/demo">
-                          เปิดโหมดสาธิต
-                          <ArrowRight size={17} />
-                        </Link>
-                      )}
-                    </section>
-                  )}
+                  {screen === "guide" &&
+                    (school ? (
+                      <section className="school-management">
+                        <h1>เริ่มใช้งานห้องเรียน</h1>
+                        <ol className="school-guide">
+                          <li>
+                            นักเรียนสมัครบัญชี แล้วรอครูอนุมัติการเข้าห้องเรียน
+                          </li>
+                          <li>
+                            เลือกกรณีศึกษา หรือกดเรียนต่อ
+                            ความก้าวหน้าบันทึกตามบัญชี
+                          </li>
+                          <li>ทำแบบทดสอบให้ครบแล้วกดบันทึกผลและจบบทเรียน</li>
+                          <li>
+                            ถาม Eco AI จากบทเรียน
+                            แล้วตรวจสอบข้อความอ้างอิงที่ใช้ตอบ
+                          </li>
+                          <li>
+                            เปิดบอร์ดเพื่อแลกเปลี่ยนหลักฐานกับเพื่อนร่วมชั้น
+                          </li>
+                          <li>
+                            ครูจัดการเนื้อหาและเอกสารได้จากเมนูบทเรียนและ AI
+                            Knowledge Base
+                          </li>
+                          <li>
+                            ผู้ดูแลจัดการสิทธิ์บัญชีและตั้งค่า Gemini
+                            ได้จากเมนูเฉพาะ
+                          </li>
+                        </ol>
+                      </section>
+                    ) : (
+                      <section className="app-guide">
+                        <h1>เริ่มใช้งานในหนึ่งนาที</h1>
+                        <div>
+                          <h2>สำหรับนักเรียน</h2>
+                          <p>
+                            เลือกห้องเรียน → เปิดบทเรียน → ทดลองกิจกรรม → ถาม
+                            Eco AI → กดดูข้อความอ้างอิง
+                          </p>
+                        </div>
+                        <div>
+                          <h2>สำหรับคุณครู</h2>
+                          <p>
+                            สลับมุมมองเป็นคุณครู → สร้างห้องเรียน → เพิ่มบทเรียน
+                            → อัปโหลด TXT/Markdown ใน AI Knowledge Base →
+                            ดูแบบนักเรียน
+                          </p>
+                        </div>
+                        <div>
+                          <h2>โหมดสาธิตและระบบจริงต่างกันอย่างไร?</h2>
+                          <p>
+                            โหมดสาธิตบันทึกข้อมูลในเบราว์เซอร์และตอบด้วยข้อความที่ค้นพบ
+                            ไม่เรียกโมเดลภาษา ระบบจริงต้องมี backend, collector
+                            และ Gemini API key ที่ตั้งค่าโดยผู้ดูแลก่อน
+                          </p>
+                        </div>
+                        {demo ? (
+                          <Link className="button secondary" to="/live">
+                            เปิดการตั้งค่าระบบจริง
+                            <ArrowRight size={17} />
+                          </Link>
+                        ) : (
+                          <Link className="button secondary" to="/demo">
+                            เปิดโหมดสาธิต
+                            <ArrowRight size={17} />
+                          </Link>
+                        )}
+                      </section>
+                    ))}
                 </>
               )}
             </main>
@@ -1024,20 +1219,46 @@ export default function Classroom({ demo = false }) {
               className="student-bottom-nav"
               aria-label="เมนูนักเรียนบนมือถือ"
             >
-              {STUDENT_NAV.map(({ id, label, icon: Icon }) => (
-                <button
-                  key={id}
-                  className={
-                    screen === id || (screen === "lesson" && id === "lessons")
-                      ? "active"
-                      : ""
-                  }
-                  onClick={() => go(id)}
-                >
-                  <Icon size={20} />
-                  <span>{label}</span>
-                </button>
-              ))}
+              {STUDENT_NAV.filter((item) =>
+                [
+                  "dashboard",
+                  "cases",
+                  "lessons",
+                  "discussions",
+                  "chat",
+                ].includes(item.id)
+              )
+                .sort(
+                  (a, b) =>
+                    [
+                      "dashboard",
+                      "cases",
+                      "lessons",
+                      "discussions",
+                      "chat",
+                    ].indexOf(a.id) -
+                    [
+                      "dashboard",
+                      "cases",
+                      "lessons",
+                      "discussions",
+                      "chat",
+                    ].indexOf(b.id)
+                )
+                .map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    className={
+                      screen === id || (screen === "lesson" && id === "lessons")
+                        ? "active"
+                        : ""
+                    }
+                    onClick={() => go(id)}
+                  >
+                    <Icon size={20} />
+                    <span>{label}</span>
+                  </button>
+                ))}
             </nav>
           )}
         </div>

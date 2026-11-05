@@ -1,3 +1,13 @@
+# Current implementation direction
+
+The current source uses native Mentingo learner/catalog/lesson components and teacher UI primitives in the existing React app. Cool white/blue working surfaces, actual photography, platform sans typography and a real green meadow on account entry follow the latest owner instructions. The public account flow has no demo badge or role switch; server roles determine access.
+
+The login composition uses brief everyday Thai, “ภูมิศาสตร์ เรื่องใกล้ตัว”, green actions and a responsive photo strip. See [.impeccable.md](../.impeccable.md) for the ordered design decisions and [screenshots](screenshots/school-login-desktop.png) for actual rendering.
+
+Earlier notes below describe superseded prototypes and must not be used to restore the rejected cream/earth-tone style or generic promotional hero.
+
+---
+
 # Eco-Critical native Mentingo UI
 
 The latest client direction is to use the actual Selleo/Mentingo frontend source in the existing React application. Both student and teacher screens now render imported native components. The native photographic catalog replaces the rejected custom dashboard. Teacher management uses native tables and forms rather than oversized empty classroom cards.

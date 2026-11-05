@@ -1,0 +1,144 @@
+{
+  "url": "http://127.0.0.1:3415",
+  "checks": [
+    {
+      "name": "school-login-desktop",
+      "violations": []
+    },
+    {
+      "name": "school-register-mobile",
+      "violations": []
+    },
+    {
+      "name": "real registration, pending approval and no public demo role switch",
+      "passed": true
+    },
+    {
+      "name": "school-members-desktop",
+      "violations": []
+    },
+    {
+      "name": "school-student-mobile",
+      "violations": []
+    },
+    {
+      "name": "admin sees registered student and approves real classroom access",
+      "passed": true
+    },
+    {
+      "name": "existing interactive lessons and server-scored progress survive a new browser context",
+      "passed": true
+    },
+    {
+      "name": "school-materials-mobile",
+      "violations": []
+    },
+    {
+      "name": "school-knowledge-desktop",
+      "violations": []
+    },
+    {
+      "name": "teacher authors real lesson and uploads material, visible to another student's account",
+      "passed": true
+    },
+    {
+      "name": "school-board-mobile",
+      "violations": []
+    },
+    {
+      "name": "school-board-desktop",
+      "violations": []
+    },
+    {
+      "name": "authenticated board shares replies across accounts and admin can moderate",
+      "passed": true
+    },
+    {
+      "name": "school-ai-settings-desktop",
+      "violations": []
+    },
+    {
+      "name": "student cannot use admin APIs and AI setup is explicit instead of fabricated answers",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "passed": true
+    },
+    {
+      "width": 360,
+      "height": 740,
+      "passed": true
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "passed": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "passed": true
+    },
+    {
+      "width": 414,
+      "height": 896,
+      "passed": true
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "passed": true
+    },
+    {
+      "width": 640,
+      "height": 360,
+      "passed": true
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "passed": true
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "passed": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "passed": true
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "passed": true
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "passed": true
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "passed": true
+    },
+    {
+      "name": "responsive authenticated teacher/student screens at 13 viewport sizes",
+      "passed": true
+    },
+    {
+      "name": "admin grants teacher and admin roles, revokes old sessions and restores student access",
+      "passed": true
+    },
+    {
+      "name": "logout revokes the actual cookie session",
+      "passed": true
+    }
+  ],
+  "browserErrors": [],
+  "liveGeminiTested": false
+}

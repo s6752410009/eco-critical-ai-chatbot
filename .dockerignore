@@ -22,3 +22,8 @@ artifacts
 **/test-results
 
 **/dist-demo/
+
+# Private Cloudflare credentials and local D1 state
+**/.dev.vars
+**/.dev.vars.*
+**/.wrangler/

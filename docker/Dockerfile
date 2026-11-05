@@ -147,6 +147,7 @@ WORKDIR /app/frontend
 COPY ./frontend/package.json ./frontend/package-lock.json ./
 RUN npm ci --legacy-peer-deps --no-audit --no-fund && npm cache clean --force
 COPY ./frontend/ ./
+COPY ./scripts/build-mentingo-styles.mjs /app/scripts/build-mentingo-styles.mjs
 RUN npm run build
 WORKDIR /app
 

@@ -1,0 +1,6 @@
+{
+ "name":"eco-critical-ai-chatbot",
+ "main":"redirect.mjs",
+ "compatibility_date":"2026-10-30",
+ "workers_dev":true
+}

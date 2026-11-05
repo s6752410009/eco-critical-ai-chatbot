@@ -18,7 +18,7 @@ import ErrorBoundaryFallback from "./components/ErrorBoundaryFallback";
 
 export default function App() {
   const location = useLocation();
-  const publicDemo = ["/", "/demo"].includes(location.pathname);
+  const publicDemo = ["/", "/demo", "/app", "/login", "/register"].includes(location.pathname);
   return (
     <ErrorBoundary
       FallbackComponent={ErrorBoundaryFallback}

@@ -29,6 +29,7 @@ export { default as UploadIllustration } from "./upload-illustration.svg?react";
 export { default as UploadImageIcon } from "./upload-image.svg?react";
 export {
   Bot,
+  Globe,
   Building,
   MailWarning,
   MessagesSquare,

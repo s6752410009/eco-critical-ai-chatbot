@@ -1,0 +1,16 @@
+{
+  "name": "eco-critical",
+  "compatibility_date": "2026-10-30",
+  "pages_build_output_dir": "../../frontend/dist-demo",
+  "d1_databases": [
+    {
+      "binding": "BOARD_DB",
+      "database_name": "eco-critical-discussions",
+      "database_id": "d9126a97-68c8-4e76-a4c6-ffd26a59f416",
+      "migrations_dir": "../migrations"
+    }
+  ],
+  "vars": {
+    "SCHOOL_AUTH_REQUIRED": "true"
+  }
+}

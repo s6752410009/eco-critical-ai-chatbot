@@ -1,34 +1,27 @@
-# Validation — 5 November 2026 (Asia/Bangkok)
+# Validation — 6 November 2026, Asia/Bangkok
 
-## Executed
+This record describes the **current authenticated school build**, tested locally. Earlier browser-demo reports remain historical and are not evidence of production account authorization.
 
-- Scoped ESLint and React Hook checks: pass, no errors/warnings.
-- Node regression suite: 18 pass. Includes real workspace-model creation with mocked persistence, role middleware denial for students, server file allowlist, failed processing/embedding, pending-status honesty, exact upload-to-embedding handoff, demo document provenance, class/lesson scoping, missing evidence, and demo persistence.
-- Native server syntax checks: workspace model, workspace endpoints and upload middleware pass.
-- Browser end-to-end: 10 flows pass against the running app with **no API interception**. Includes two classrooms, four topics, prompt preparation, source details, refusal, two lesson quizzes, PM slider, waste sorting, create/edit classroom, lesson creation, TXT upload, preview/reindex, explicit unsupported-PDF error, newly uploaded content retrieval, cross-class isolation in demo, deletion and responsive student/teacher views at 390/1024/1440px.
-- React/Vite production build succeeds. The upstream build retains its large-chunk and dependency optimization warnings; they are not claimed resolved by this redesign.
-- Final static production demo: build passed; all 10 browser flows passed against its compiled assets. Environment canary absent from both server and static client bundles. See [browser report](browser-qa.json).
+## Executed checks
 
-## Scope of evidence
+- Scoped classroom/bridge ESLint and React Hooks checks: pass.
+- Node suite: **40 passed**, including owner bootstrap/forced password change, pending-account denial, server-enforced teacher/admin roles, session revocation, CSRF origin checks, encrypted Gemini settings, private forum moderation, optimistic curriculum revision, protected document reading, server-scored quizzes, reading-only completion and stable completion timestamps.
+- React/Vite **8.3.6** builds: both the retained upstream server frontend and the static Pages client plus bundled Worker compile successfully.
+- Client secret-canary scanner: absent in both generated outputs. This is a check for the designated marker, not a claim that every possible secret was scanned.
+- Same-origin local development proxy: `/api/school/auth/me` returns JSON; an invalid local login produces the intended 401 rather than a proxy/Origin error. `npm run dev` starts React + local Worker/D1 together.
+- **Nine integrated browser flows passed** against the compiled app and a fresh local Workerd/D1 instance, without API interception: register/pending, admin approval, persisted progress across independent browser contexts, authored lesson/TXT readable by the student including reading-only completion, shared forum/moderation, restricted settings and explicit missing Gemini key, 13 viewport sizes, teacher/admin role grants and old-session revocation, logout.
+- Nine accessibility screenshot cases: **zero axe violations** for the selected WCAG 2 A/AA and WCAG 2.1 AA tags. No browser page errors. This automated result is not WCAG certification.
+- Desktop 1440×900 and mobile 390×844 screenshots were captured and actually inspected. The desktop account rail label and misleading browser-only upload notification found in inspection were fixed; a second compiled run passed and its screenshots were inspected.
+- Responsive layout checks: 320, 360, 375, 390, 414, 430, 640 landscape, 768, 820, 1024, 1280, 1440 and 1920 pixels. No page overflow or off-screen topbar controls in the tested screens. This does not assert every possible device/browser size was tested.
+- Dependency audit at this checkpoint: **0 critical, 0 high, 9 moderate**. Remaining findings include upstream routing/rendering and build-tool dependencies; the repository is not described as vulnerability-free.
 
-Browser retrieval and role-switch tests are **demo behavior**, not production security tests. Server policy tests use isolated dependency doubles; they do not replace tests against an authenticated, deployed server. The live adapter uses the existing upstream API but no Gemini response was invoked or claimed verified.
+Evidence: [authenticated browser JSON](school-app-qa.json), [desktop login](screenshots/school-login-desktop.png), [mobile login](screenshots/school-login-mobile.png), [student mobile](screenshots/school-student-mobile.png), [member management](screenshots/school-members-desktop.png), [document reader](screenshots/school-materials-mobile.png).
 
-## Not verified / prerequisites
+## Limits and pending release checks
 
-- Live Gemini: no API key was provided, therefore no live inference, model accuracy or paid API call was tested.
-- Full upstream server/collector runtime: local install encountered disk exhaustion and was removed; Docker Engine is not running and Docker Compose v2 is unavailable on this host. Docker build/launch was not executed; Compose syntax was not validated by Compose here.
-- Complete upstream lint requires server dependencies, which are not installed. The new UI has an independent scoped lint configuration and passes it.
-- Visual lesson metadata, upload-to-lesson mapping, student progress and question overview are local demo data, not live server tables. Live RAG currently scopes to workspace, not individual lesson.
-- Multi-school tenancy, manager isolation, actual student access-integration, OCR, rate limits, backup recovery and live data-retention acceptance remain production rollout work.
-
-## Demo persistence
-
-Storage key: `eco-critical-demo-v2`. Saved data is local to the browser and origin, may be cleared by the browser, and is not suitable for personal/student data. TXT/MD upload size is bounded to 1 MB. Actual processing is text extraction + section chunking + exact Thai word matching; no model or embedding is represented as having run.
-
-## Dashboard redesign and CI revision
-
-The owner selected Mentingo UI source, then requested cool-white surfaces and Meta/Instagram-like system typography. The dashboard ports the pinned MIT course-card composition and retains the existing lessons, progress, retrieval and backend. Source details are in `third_party/mentingo/README.md`.
-
-Playwright captures and layout checks cover 1440×900 and 390×844, loaded course photographs, continuation visibility, no horizontal overflow, an initially unscrolled chat, and the desktop composer inside the first viewport. The actual captures were visually inspected, including local-retrieval source details. A production run regenerates these files before publication.
-
-The requested GitHub Actions replacement is prepared in `.github/workflows/eco-critical-ui.yml`, with upstream vendor jobs archived as reference. Publishing/activation depends on GitHub workflow authorization. See [CI details](CI.md); local tests do not imply a successful hosted Actions run.
+- The authenticated build has **not yet been deployed** to the primary Pages hostname. Cloudflare secret transfer is pending explicit owner approval after automatic approval review rejected it. Production smoke checks must follow the deployment.
+- No test administrator was seeded remotely; full browser fixtures use a temporary local database, random secrets and local accounts only.
+- No real Gemini key was provided. Missing-key handling, encryption and permissions are tested; actual inference, answer accuracy and paid requests are not verified.
+- Docker/collector runtime and physical iOS/Android devices were not tested. Pages does not deploy the retained Express/collector stack.
+- TXT/Markdown only on Pages; no claim of PDF/DOCX/OCR support there. No SMTP email recovery, multi-school tenancy or vector search.
+- Hosted GitHub Actions has not run; correct-account workflow authorization remains pending.

@@ -1,0 +1,600 @@
+.school-loading {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #25435d;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.mentingo-root.school-auth {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, "Thonburi", sans-serif;
+  min-height: 100dvh;
+  display: flex;
+  background: #f6f8fb;
+  color: #1c344c;
+}
+.school-auth-story {
+  width: 44%;
+  min-height: 100dvh;
+  background: #15503a;
+  color: #fff;
+  padding: 40px 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 48px;
+}
+.school-auth-brand {
+  font-size: 24px;
+  font-weight: 650;
+  color: white;
+  text-decoration: none;
+}
+.school-auth-brand span {
+  font-size: 13px;
+  font-weight: 400;
+  display: block;
+  opacity: 0.8;
+  margin-top: 4px;
+  letter-spacing: 1px;
+}
+.school-auth-story h2 {
+  font-size: clamp(32px, 3.8vw, 56px);
+  line-height: 1.5;
+  font-weight: 600;
+  letter-spacing: -1px;
+  margin: 20px 0;
+}
+.school-auth-story p {
+  font-size: 16px;
+  line-height: 1.9;
+  max-width: 38ch;
+  color: #fff;
+}
+.school-auth-story small {
+  font-size: 13px;
+  color: #e7f5eb;
+}
+.school-auth-entry {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 32px;
+}
+.mentingo-root .school-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: min(100%, 440px);
+  margin: auto;
+  color: #1c344c;
+  padding: 28px 0;
+}
+.mentingo-root .school-form h1 {
+  font-size: 30px;
+  line-height: 1.45;
+  font-weight: 650;
+  margin: 0;
+}
+.mentingo-root .school-form h2 {
+  font-size: 22px;
+}
+.mentingo-root .school-form p {
+  font-size: 15px;
+  line-height: 1.85;
+  color: #536a80;
+  margin: 0;
+}
+.mentingo-root .school-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 500;
+}
+.mentingo-root .school-form input {
+  font: inherit;
+  min-height: 46px;
+  background: white;
+}
+.mentingo-root .school-form button {
+  min-height: 46px;
+  gap: 9px;
+}
+.mentingo-root .school-form small {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #536a80;
+}
+.school-error {
+  background: #fff0ef;
+  border: 1px solid #f0beb9;
+  color: #9a2922;
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.8;
+  border-radius: 6px;
+}
+.school-notice {
+  background: #e8f6ef;
+  border: 1px solid #b1ddc8;
+  color: #155d3d;
+  padding: 12px 14px;
+  line-height: 1.8;
+  border-radius: 6px;
+}
+.school-auth-switch a {
+  color: #0867ce;
+  font-weight: 600;
+  margin-left: 6px;
+}
+.school-setup-field {
+  font-size: 14px;
+  line-height: 1.8;
+}
+.school-setup-field label {
+  margin-top: 10px;
+}
+.school-form-symbol {
+  color: #0867ce;
+}
+.school-auth > .school-form {
+  padding: 32px 24px;
+  background: white;
+  border: 1px solid #d5dfec;
+  border-radius: 8px;
+}
+.school-management,
+.school-account {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 28px 32px 60px;
+}
+.school-user-search {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.school-user-search input {
+  min-height: 44px;
+  background: white;
+}
+.school-user-search button {
+  min-height: 44px;
+  gap: 8px;
+}
+.school-users-list {
+  background: white;
+  border: 1px solid #d1ddea;
+  border-radius: 8px;
+}
+.school-user-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  border-bottom: 1px solid #dce5ee;
+  flex-wrap: wrap;
+}
+.school-user-row:last-child {
+  border-bottom: 0;
+}
+.school-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 180px;
+  overflow-wrap: anywhere;
+}
+.school-user-info strong {
+  font-size: 17px;
+}
+.school-user-info span {
+  font-size: 14px;
+  color: #536a80;
+}
+.school-user-info small {
+  font-size: 12px;
+  color: #536a80;
+}
+.school-user-progress {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  gap: 3px;
+}
+.school-user-progress strong {
+  font-size: 20px;
+  color: #0867ce;
+}
+.school-user-progress small {
+  font-size: 12px;
+  color: #536a80;
+}
+.school-user-progress button {
+  height: auto;
+  min-height: 40px;
+}
+.school-user-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.school-user-actions button {
+  min-height: 44px;
+  gap: 6px;
+}
+.school-role-control {
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #536a80;
+}
+.school-role-control select {
+  min-height: 44px;
+  border: 1px solid #cbd9e8;
+  border-radius: 5px;
+  background: white;
+  font-size: 14px;
+  padding: 6px 10px;
+  color: #25435d;
+}
+.school-status {
+  font-size: 12px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.school-status.active {
+  background: #e6f6ee;
+  color: #136b46;
+}
+.school-status.pending {
+  background: #fff2d9;
+  color: #835000;
+}
+.school-status.suspended {
+  background: #ffebe9;
+  color: #a32d28;
+}
+.school-self {
+  font-size: 13px;
+  color: #536a80;
+}
+.school-temp-password,
+.school-member-detail {
+  background: #fff;
+  border: 1px solid #cbd9e8;
+  border-radius: 6px;
+  padding: 24px;
+  margin: 20px 0;
+}
+.school-temp-password h2,
+.school-member-detail h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 12px;
+}
+.school-temp-password code {
+  font-size: 18px;
+  overflow-wrap: anywhere;
+  background: #edf5ff;
+  padding: 8px;
+  display: block;
+}
+.school-temp-password p {
+  line-height: 1.8;
+  color: #536a80;
+  font-size: 14px;
+}
+.school-member-lesson {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 0;
+  border-bottom: 1px solid #e0e8f1;
+  font-size: 15px;
+}
+.school-member-lesson span:last-child {
+  white-space: nowrap;
+  color: #0867ce;
+}
+.mentingo-root .school-settings {
+  margin: 0;
+  max-width: 600px;
+  width: 100%;
+  background: white;
+  border: 1px solid #d5e0ed;
+  border-radius: 8px;
+  padding: 24px;
+}
+.school-account h1 {
+  font-size: 28px;
+  margin: 0 0 8px;
+}
+.school-account > div p {
+  color: #536a80;
+  line-height: 1.8;
+}
+.school-account > .school-form {
+  margin: 24px 0;
+  background: white;
+  border: 1px solid #d5e0ed;
+  padding: 24px;
+  border-radius: 8px;
+}
+.school-header-account {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 200px;
+}
+.school-header-account span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.school-role-badge {
+  color: #075fbd;
+  background: #e7f1ff;
+  padding: 4px 7px;
+  font-size: 12px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.school-save-status {
+  font-size: 12px;
+  color: #536a80;
+}
+@media (max-width: 760px) {
+  .school-auth-story {
+    display: none;
+  }
+  .mentingo-root.school-auth {
+    display: block;
+  }
+  .school-auth-entry {
+    padding: 30px 22px;
+    min-height: 100dvh;
+  }
+  .mentingo-root .school-form h1 {
+    font-size: 26px;
+  }
+  .school-management,
+  .school-account {
+    padding: 22px 16px 40px;
+  }
+  .school-user-row {
+    padding: 18px 16px;
+    gap: 16px;
+  }
+  .school-user-info {
+    min-width: 100%;
+    flex: 1;
+  }
+  .school-user-actions {
+    width: 100%;
+  }
+  .school-header-account {
+    max-width: 44px;
+  }
+  .school-header-account span {
+    display: none;
+  }
+  .school-role-badge {
+    font-size: 10px;
+  }
+  .school-account > .school-form {
+    padding: 20px 16px;
+  }
+  .school-member-lesson {
+    font-size: 14px;
+  }
+  .school-member-lesson span:last-child {
+    white-space: normal;
+    min-width: 64px;
+  }
+  .school-auth > .school-form {
+    border: 0;
+    border-radius: 0;
+    min-height: 100dvh;
+    justify-content: center;
+  }
+  .school-user-search button {
+    font-size: 0;
+    padding: 10px;
+  }
+  .school-user-search button svg {
+    font-size: 16px;
+  }
+}
+/* Requested real green meadow: the photograph carries the identity, copy stays brief. */
+.school-auth-story {
+  position: relative;
+  isolation: isolate;
+  background: #15503a url("/classroom/meadow.jpg") center/cover no-repeat;
+  overflow: hidden;
+}
+.school-auth-story::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(5, 29, 20, 0.43) 0%,
+    rgba(5, 29, 20, 0.12) 35%,
+    rgba(5, 29, 20, 0.7) 100%
+  );
+  z-index: -1;
+}
+.school-auth-story > div {
+  margin-top: auto;
+  margin-bottom: 30px;
+}
+.school-auth-story h2 {
+  font-size: clamp(32px, 3.6vw, 52px);
+  line-height: 1.45;
+  letter-spacing: -0.7px;
+  margin: 20px 0;
+}
+.school-auth-story p {
+  color: #fff;
+  text-shadow: 0 1px 8px #082f2566;
+}
+.school-photo-credit {
+  font-size: 11px;
+  color: #e7f5eb;
+  text-decoration: none;
+  align-self: flex-start;
+}
+.school-auth-story .school-auth-brand {
+  color: white;
+  text-shadow: 0 1px 8px #082f2566;
+}
+@media (max-width: 760px) {
+  .school-auth-entry {
+    position: relative;
+    isolation: isolate;
+    background: #f6f8fb;
+  }
+  .school-auth-entry::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 116px;
+    background: #215d3f url("/classroom/meadow.jpg") center 58% / cover
+      no-repeat;
+    z-index: -1;
+  }
+  .school-auth-entry > .school-form {
+    margin-top: 72px;
+    background: #f6f8fb;
+    padding: 28px 18px 10px;
+    border-radius: 8px;
+    box-shadow: 0 -2px 20px #133a2820;
+  }
+  .school-auth-entry {
+    padding: 24px 10px;
+  }
+}
+.school-auth .school-form > button[type="submit"] {
+  background: #176b48;
+  color: #fff;
+}
+.school-auth .school-form > button[type="submit"]:hover {
+  background: #115538;
+}
+.school-auth .geography-eyebrow,
+.school-auth .school-auth-switch a {
+  color: #176b48;
+}
+.school-auth h1,
+.school-auth h2,
+.school-auth input,
+.school-auth button {
+  font-family: inherit;
+}
+.teacher-quiz-draft {
+  padding: 20px;
+  border: 1px solid #d4e1ee;
+  border-radius: 6px;
+  display: grid;
+  gap: 14px;
+  margin-bottom: 16px;
+  background: #fff;
+}
+.teacher-quiz-editor > h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.school-guide {
+  display: grid;
+  gap: 18px;
+  font-size: 16px;
+  line-height: 1.9;
+  padding-left: 24px;
+}
+
+@media (min-width: 761px) {
+  .school-auth-story {
+    background-size: auto 130%;
+    background-position: 50% 74%;
+  }
+}
+
+@media (max-width: 760px) {
+  .mentingo-root :is(input, textarea, select) {
+    font-size: 16px !important;
+  }
+}
+.mentingo-root .lesson-documents {
+  margin: 28px 0;
+  border-top: 1px solid #d8e3ee;
+  padding-top: 24px;
+}
+.mentingo-root .lesson-documents > h2 {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+.mentingo-root .lesson-documents > p {
+  font-size: 14px;
+  color: #536a80;
+  line-height: 1.8;
+  margin-bottom: 16px;
+}
+.mentingo-root .lesson-documents article {
+  border-bottom: 1px solid #d8e3ee;
+}
+.mentingo-root .lesson-document-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 0;
+  background: transparent;
+  border: 0;
+  color: #075fbd;
+  font-size: 15px;
+}
+.mentingo-root .lesson-document-toggle > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.mentingo-root .lesson-document-toggle > svg {
+  flex-shrink: 0;
+}
+.mentingo-root .lesson-document-toggle[aria-expanded="true"] > svg:last-child {
+  transform: rotate(180deg);
+}
+.mentingo-root .lesson-document-content {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: min(420px, 60dvh);
+  overflow: auto;
+  background: #fff;
+  padding: 18px;
+  border: 1px solid #d8e3ee;
+  border-radius: 5px;
+  margin-bottom: 16px;
+  font-size: 16px;
+  line-height: 1.9;
+}
+.mentingo-root .lesson-document-content > p {
+  margin: 0;
+}

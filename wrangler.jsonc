@@ -1,10 +1,28 @@
 {
   "$schema": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/packages/wrangler/config-schema.json",
   "name": "eco-critical-ai-chatbot",
-  "compatibility_date": "2026-11-05",
+  "compatibility_date": "2026-10-30",
   "workers_dev": true,
   "assets": {
     "directory": "./frontend/dist-demo",
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "single-page-application",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api/discussions",
+      "/api/discussions/*",
+      "/api/school/*"
+    ]
+  },
+  "main": "cloudflare/worker.mjs",
+  "d1_databases": [
+    {
+      "binding": "BOARD_DB",
+      "database_name": "eco-critical-discussions",
+      "database_id": "d9126a97-68c8-4e76-a4c6-ffd26a59f416",
+      "migrations_dir": "cloudflare/migrations"
+    }
+  ],
+  "vars": {
+    "SCHOOL_AUTH_REQUIRED": "true"
   }
 }

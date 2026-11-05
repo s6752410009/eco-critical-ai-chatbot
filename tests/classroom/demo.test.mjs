@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { makeSeed, retrieve, chunkText, readDemo, saveDemo } from "../../frontend/src/pages/Classroom/data.js";
-test("demo includes two classrooms, four visual topics and valid lesson/document relationships", () => {
-  const data=makeSeed();assert.equal(data.classrooms.length,2);assert.equal(new Set(data.lessons.map((lesson)=>lesson.topic)).size,4);
+import { makeSeed, retrieve, chunkText, readDemo, saveDemo, migrateDemo } from "../../frontend/src/pages/Classroom/data.js";
+test("demo includes one geography classroom, historical cases and four supporting topics and valid lesson/document relationships", () => {
+  const data=makeSeed();assert.equal(data.classrooms.length,1);assert.equal(new Set(data.lessons.map((lesson)=>lesson.topic)).size,4);
   for(const classroom of data.classrooms) for(const id of classroom.lessonIds) assert.ok(data.lessons.find((lesson)=>lesson.id===id));
   for(const doc of data.documents) {assert.ok(data.classrooms.find((classroom)=>classroom.id===doc.classroomId));assert.ok(doc.chunks.length);}
 });
@@ -25,5 +25,14 @@ test("pending and removed documents cannot be cited", () => {
 test("demo storage preserves actual progress and uploads and recovers corrupt state", () => {
   const map=new Map();const storage={getItem:key=>map.get(key),setItem:(key,value)=>map.set(key,value)};
   const state=makeSeed();state.progress["eco-m5:air-1"]={percent:100};saveDemo(state,storage);assert.equal(readDemo(storage).progress["eco-m5:air-1"].percent,100);
-  storage.setItem("eco-critical-demo-v2","invalid json");assert.equal(readDemo(storage).classrooms.length,2);
+  storage.setItem("eco-critical-demo-v2","invalid json");assert.equal(readDemo(storage).classrooms.length,1);
+});
+
+test("old demo merges classrooms while retaining uploads, custom lessons and best progress", () => {
+ const seed=makeSeed();const old={...seed,version:2,classrooms:[{id:"eco-m5",lessonIds:["air-1"]},{id:"eco-m6",lessonIds:["custom"]}],lessons:[...seed.lessons,{id:"custom",title:"ครูเพิ่มเอง"}],documents:[...seed.documents,{id:"upload-keep",classroomId:"eco-m6",text:"เอกสารครู",chunks:[]}],progress:{"eco-m5:air-1":{percent:20},"eco-m6:air-1":{percent:100}},lastLesson:{classroomId:"eco-m6",lessonId:"custom"}};
+ const value=migrateDemo(old);assert.equal(value.classrooms.length,1);assert.equal(value.classrooms[0].name,"ภูมิศาสตร์ มัธยมศึกษาตอนปลาย");assert.ok(value.classrooms[0].lessonIds.includes("custom"));assert.equal(value.documents.find(d=>d.id==="upload-keep").classroomId,"eco-m5");assert.equal(value.progress["eco-m5:air-1"].percent,100);assert.equal(value.lastLesson.classroomId,"eco-m5");assert.deepEqual(migrateDemo(value),value);
+});
+test("six chronological dust/smoke cases have primary references and searchable teaching documents",()=>{
+ const value=makeSeed();const cases=value.lessons.filter(l=>l.caseStudyId);assert.equal(cases.length,6);assert.ok(cases.some(l=>l.id==="thailand-2026"));for(const lesson of cases){assert.match(lesson.reference,/^https:/);assert.ok(value.documents.some(d=>d.lessonId===lesson.id&&d.text.includes(lesson.reference)));}
+ assert.ok(retrieve(value.documents,"ลอนดอน ถ่านหิน อุณหภูมิผกผัน","eco-m5","london-1952").length);
 });

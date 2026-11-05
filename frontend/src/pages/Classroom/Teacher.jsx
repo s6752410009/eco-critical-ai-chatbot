@@ -35,6 +35,7 @@ export default function Teacher({
   classroom,
   setClassroom,
   demo,
+  school = null,
   openLesson,
   onCreated,
   onNotice,
@@ -42,6 +43,8 @@ export default function Teacher({
   const [form, setForm] = useState(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [lessonBody, setLessonBody] = useState("");
+  const [quizDraft, setQuizDraft] = useState([]);
   const [topic, setTopic] = useState("air");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -54,11 +57,23 @@ export default function Teacher({
   const docs = data.documents.filter(
     (doc) => doc.classroomId === classroom?.id
   );
+  async function commit(callback) {
+    if (school) {
+      const next = callback(data);
+      await school.persist(next);
+      update(() => next);
+    } else update(callback);
+  }
   function begin(kind, item) {
+    if (busy) return;
     setForm({ kind, id: item?.id });
     setName(item?.name || item?.title || "");
     setDescription(item?.description || "");
     setTopic(item?.topic || "air");
+    setLessonBody(
+      (item?.concepts || []).map((c) => `${c.title}\n${c.body}`).join("\n\n")
+    );
+    setQuizDraft(item?.quiz ? structuredClone(item.quiz) : []);
     setError("");
   }
   async function submit(event) {
@@ -70,7 +85,7 @@ export default function Teacher({
       if (form.kind === "classroom") {
         if (demo) {
           const id = form.id || crypto.randomUUID();
-          update((previous) => ({
+          await commit((previous) => ({
             ...previous,
             classrooms: form.id
               ? previous.classrooms.map((entry) =>
@@ -97,7 +112,7 @@ export default function Teacher({
             description: "",
             lessonIds: [],
           };
-          update((previous) => ({
+          await commit((previous) => ({
             ...previous,
             classrooms: form.id
               ? previous.classrooms.map((entry) =>
@@ -109,12 +124,37 @@ export default function Teacher({
         }
       } else {
         const id = form.id || crypto.randomUUID();
-        update((previous) => ({
+        const concepts = lessonBody.trim()
+          ? lessonBody
+              .trim()
+              .split(/\n\s*\n/)
+              .map((text, index) => {
+                const lines = text.trim().split("\n");
+                return lines.length > 1
+                  ? {
+                      title: lines.shift().slice(0, 160),
+                      body: lines.join("\n"),
+                    }
+                  : { title: `ส่วนที่ ${index + 1}`, body: text.trim() };
+              })
+          : [];
+        const quiz = quizDraft.map((q) => ({
+          ...q,
+          explanation: q.explanation || "ทบทวนเนื้อหาบทเรียนแล้วลองใหม่",
+        }));
+        await commit((previous) => ({
           ...previous,
           lessons: form.id
             ? previous.lessons.map((entry) =>
                 entry.id === id
-                  ? { ...entry, title: name.trim(), description, topic }
+                  ? {
+                      ...entry,
+                      title: name.trim(),
+                      description,
+                      topic,
+                      concepts,
+                      quiz,
+                    }
                   : entry
               )
             : [
@@ -126,8 +166,8 @@ export default function Teacher({
                   topic,
                   minutes: null,
                   objectives: [],
-                  concepts: [],
-                  quiz: [],
+                  concepts,
+                  quiz,
                 },
               ],
           classrooms: previous.classrooms.map((entry) =>
@@ -138,7 +178,7 @@ export default function Teacher({
         }));
       }
       setForm(null);
-      onNotice("บันทึกแล้ว");
+      onNotice(school ? "บันทึกข้อมูลบนเซิร์ฟเวอร์แล้ว" : "บันทึกแล้ว");
     } catch (failure) {
       setError(failure.message);
     } finally {
@@ -155,10 +195,12 @@ export default function Teacher({
       if (demo) {
         if (!/\.(txt|md)$/i.test(file.name))
           throw new Error(
-            "โหมดสาธิตอ่าน TXT และ Markdown ในเบราว์เซอร์เท่านั้น PDF/DOCX ใช้ตัวประมวลผลในโหมดระบบจริง"
+            school
+              ? "รองรับ TXT และ Markdown ไม่เกิน 1 MB กรุณาแปลง PDF/DOCX เป็นข้อความก่อนอัปโหลด"
+              : "โหมดสาธิตอ่าน TXT และ Markdown ในเบราว์เซอร์เท่านั้น PDF/DOCX ใช้ตัวประมวลผลในโหมดระบบจริง"
           );
         if (file.size > 1024 * 1024)
-          throw new Error("เอกสารสาธิตต้องไม่เกิน 1 MB เพื่อเก็บในเบราว์เซอร์");
+          throw new Error(school ? "เอกสารต้องไม่เกิน 1 MB ต่อไฟล์" : "เอกสารสาธิตต้องไม่เกิน 1 MB เพื่อเก็บในเบราว์เซอร์");
         const text = await file.text();
         const chunks = chunkText(text);
         if (!chunks.length)
@@ -174,16 +216,18 @@ export default function Teacher({
           lessonId: uploadLessonId || null,
           sample: false,
         };
-        update((previous) => ({
+        await commit((previous) => ({
           ...previous,
           documents: [...previous.documents, document],
         }));
         onNotice(
-          `อ่านและสร้างดัชนีข้อความ ${chunks.length} ส่วนแล้ว · เก็บเฉพาะในเบราว์เซอร์ ไม่ได้ส่ง Gemini`
+          school
+            ? `บันทึกเอกสารบนเซิร์ฟเวอร์แล้ว · พร้อมค้นหา ${chunks.length} ส่วนข้อความ`
+            : `อ่านและสร้างดัชนีข้อความ ${chunks.length} ส่วนแล้ว · เก็บเฉพาะในเบราว์เซอร์ ไม่ได้ส่ง Gemini`
         );
       } else {
         const result = await uploadLesson(classroom.id, file, setStage);
-        update((previous) => ({
+        await commit((previous) => ({
           ...previous,
           documents: [
             ...previous.documents.filter(
@@ -223,27 +267,40 @@ export default function Teacher({
         if (result.message || !result.workspace)
           throw new Error(result.message || "นำเอกสารออกไม่สำเร็จ");
       }
-      update((previous) => ({
+      await commit((previous) => ({
         ...previous,
         documents: previous.documents.filter((entry) => entry.id !== doc.id),
       }));
       onNotice(
-        demo ? "นำเอกสารออกจากคลังสาธิตแล้ว" : "นำเอกสารออกจากดัชนี AI แล้ว"
+        school
+          ? "นำเอกสารออกจากเซิร์ฟเวอร์แล้ว"
+          : demo
+            ? "นำเอกสารออกจากคลังสาธิตแล้ว"
+            : "นำเอกสารออกจากดัชนี AI แล้ว"
       );
     } catch (failure) {
       setError(failure.message);
     }
   }
-  function reindex(doc) {
-    update((previous) => ({
-      ...previous,
-      documents: previous.documents.map((entry) =>
-        entry.id === doc.id
-          ? { ...entry, chunks: chunkText(entry.text), status: "ready" }
-          : entry
-      ),
-    }));
-    onNotice("สร้างดัชนีข้อความในเบราว์เซอร์ใหม่แล้ว");
+  async function reindex(doc) {
+    setError("");
+    try {
+      await commit((previous) => ({
+        ...previous,
+        documents: previous.documents.map((entry) =>
+          entry.id === doc.id
+            ? { ...entry, chunks: chunkText(entry.text), status: "ready" }
+            : entry
+        ),
+      }));
+      onNotice(
+        school
+          ? "จัดส่วนข้อความสำหรับค้นหาใหม่แล้ว"
+          : "สร้างดัชนีข้อความในเบราว์เซอร์ใหม่แล้ว"
+      );
+    } catch (failure) {
+      setError(failure.message);
+    }
   }
   return (
     <PageWrapper isBarebones className="teacher-view native-teacher-workspace">
@@ -266,7 +323,7 @@ export default function Teacher({
               : "จัดเตรียมเนื้อหา แล้วดูประสบการณ์ที่นักเรียนจะได้รับ"}
           </p>
         </div>
-        {["dashboard", "classrooms"].includes(screen) && (
+        {["dashboard", "classrooms"].includes(screen) && !demo && (
           <NativeButton className="button" onClick={() => begin("classroom")}>
             <Plus size={17} />
             สร้างห้องเรียน
@@ -334,6 +391,134 @@ export default function Teacher({
                 ))}
               </select>
             </label>
+          )}
+          {form.kind === "lesson" && (
+            <>
+              <label>
+                เนื้อหาบทเรียน
+                <NativeTextarea
+                  rows={8}
+                  maxLength={50000}
+                  value={lessonBody}
+                  onChange={(event) => setLessonBody(event.target.value)}
+                  placeholder="หัวข้อส่วนแรก แล้วขึ้นบรรทัดใหม่เพื่อเขียนเนื้อหา เว้นบรรทัดว่างเพื่อเริ่มส่วนถัดไป"
+                />
+              </label>
+              <section className="teacher-quiz-editor">
+                <h3>แบบทดสอบท้ายบท</h3>
+                {quizDraft.map((question, index) => (
+                  <div className="teacher-quiz-draft" key={index}>
+                    <label>
+                      คำถามที่ {index + 1}
+                      <NativeInput
+                        required
+                        maxLength={1000}
+                        value={question.question}
+                        onChange={(e) =>
+                          setQuizDraft((current) =>
+                            current.map((q, i) =>
+                              i === index
+                                ? { ...q, question: e.target.value }
+                                : q
+                            )
+                          )
+                        }
+                      />
+                    </label>
+                    {question.options.map((option, optionIndex) => (
+                      <label key={optionIndex}>
+                        ตัวเลือก {optionIndex + 1}
+                        <NativeInput
+                          required
+                          maxLength={1000}
+                          value={option}
+                          onChange={(e) =>
+                            setQuizDraft((current) =>
+                              current.map((q, i) =>
+                                i === index
+                                  ? {
+                                      ...q,
+                                      options: q.options.map((old, j) =>
+                                        j === optionIndex ? e.target.value : old
+                                      ),
+                                    }
+                                  : q
+                              )
+                            )
+                          }
+                        />
+                      </label>
+                    ))}
+                    <label>
+                      คำตอบที่ถูกต้อง
+                      <select
+                        value={question.answer}
+                        onChange={(e) =>
+                          setQuizDraft((current) =>
+                            current.map((q, i) =>
+                              i === index
+                                ? { ...q, answer: Number(e.target.value) }
+                                : q
+                            )
+                          )
+                        }
+                      >
+                        {question.options.map((_, i) => (
+                          <option key={i} value={i}>
+                            ตัวเลือก {i + 1}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      คำอธิบายเฉลย
+                      <NativeTextarea
+                        maxLength={2000}
+                        value={question.explanation}
+                        onChange={(e) =>
+                          setQuizDraft((current) =>
+                            current.map((q, i) =>
+                              i === index
+                                ? { ...q, explanation: e.target.value }
+                                : q
+                            )
+                          )
+                        }
+                      />
+                    </label>
+                    <NativeButton
+                      type="button"
+                      variant="ghost"
+                      onClick={() =>
+                        setQuizDraft((current) =>
+                          current.filter((_, i) => i !== index)
+                        )
+                      }
+                    >
+                      นำคำถามนี้ออก
+                    </NativeButton>
+                  </div>
+                ))}
+                <NativeButton
+                  type="button"
+                  variant="outline"
+                  disabled={quizDraft.length >= 30}
+                  onClick={() =>
+                    setQuizDraft((current) => [
+                      ...current,
+                      {
+                        question: "",
+                        options: ["", "", ""],
+                        answer: 0,
+                        explanation: "",
+                      },
+                    ])
+                  }
+                >
+                  <Plus size={16} /> เพิ่มคำถาม
+                </NativeButton>
+              </section>
+            </>
           )}
           <NativeButton className="button" disabled={busy || !name.trim()}>
             {busy ? (
@@ -423,7 +608,10 @@ export default function Teacher({
                             onCreated(entry.id);
                           }}
                         >
-                          <span className="native-action-label">เปิดห้องเรียน</span><ArrowRight size={16}/>
+                          <span className="native-action-label">
+                            เปิดห้องเรียน
+                          </span>
+                          <ArrowRight size={16} />
                         </NativeButton>
                       </div>
                     </TableCell>
@@ -495,7 +683,9 @@ export default function Teacher({
                           onClick={() => openLesson(lesson.id)}
                         >
                           <Eye size={16} />
-                          <span className="native-action-label">ดูแบบนักเรียน</span>
+                          <span className="native-action-label">
+                            ดูแบบนักเรียน
+                          </span>
                         </NativeButton>
                       </div>
                     </TableCell>
@@ -519,7 +709,9 @@ export default function Teacher({
               <h2>เพิ่มเอกสารการสอน</h2>
               <p>
                 {demo
-                  ? "TXT, Markdown · ไม่เกิน 1 MB · ประมวลผลในเครื่อง"
+                  ? school
+                    ? "TXT, Markdown · ไม่เกิน 1 MB ต่อไฟล์ · บันทึกบนเซิร์ฟเวอร์"
+                    : "TXT, Markdown · ไม่เกิน 1 MB · ประมวลผลในเครื่อง"
                   : "PDF, DOCX, TXT, Markdown · ไม่เกิน 20 MB · ใช้ collector และ embedding จริง"}
               </p>
             </div>
@@ -668,39 +860,63 @@ export default function Teacher({
           )}
         </>
       )}
-      {screen === "questions" && (
-        <>
-          <p className="notice-panel">
-            {demo
-              ? "ประวัติการทดลองถามที่บันทึกในเบราว์เซอร์นี้"
-              : "ดูประวัติบทสนทนาในหน้าผู้ดูแลของระบบจริง"}
-          </p>
-          {Object.entries(data.conversations || {}).flatMap(([key, messages]) =>
-            messages
-              .filter((message) => message.role === "user")
-              .map((message) => (
-                <article className="student-question" key={message.id}>
-                  <span>คำถามจากห้องเรียนสาธิต</span>
-                  <h3>{message.text}</h3>
-                  <small>
-                    {
-                      data.classrooms.find((entry) =>
-                        key.startsWith(entry.id + ":")
-                      )?.name
-                    }
-                  </small>
-                </article>
-              ))
-          )}
-          {!Object.values(data.conversations || {}).some((messages) =>
-            messages.some((message) => message.role === "user")
-          ) && (
-            <p className="empty-state">
-              ยังไม่มีคำถาม ลองเปิดแบบนักเรียนและถาม Eco AI ก่อน
+      {screen === "questions" &&
+        (school ? (
+          <section>
+            <p className="notice-panel">
+              คำถามจริงจากบัญชีสมาชิกห้องเรียน · รีเฟรชหน้าเพื่อดูข้อมูลล่าสุด
             </p>
-          )}
-        </>
-      )}
+            {(data.teacherQuestions || []).map((item) => (
+              <article className="student-question" key={item.id}>
+                <span>
+                  {item.displayName} · @{item.username}
+                </span>
+                <h3>{item.text}</h3>
+                <small>
+                  {data.lessons.find((lesson) => lesson.id === item.lessonId)
+                    ?.title || "ถามจากห้องเรียน"}{" "}
+                  · {new Date(item.createdAt).toLocaleString("th-TH")}
+                </small>
+              </article>
+            ))}
+            {!data.teacherQuestions?.length && (
+              <p>ยังไม่มีคำถามที่บันทึกจากสมาชิกห้องเรียน</p>
+            )}
+          </section>
+        ) : (
+          <>
+            <p className="notice-panel">
+              {demo
+                ? "ประวัติการทดลองถามที่บันทึกในเบราว์เซอร์นี้"
+                : "ดูประวัติบทสนทนาในหน้าผู้ดูแลของระบบจริง"}
+            </p>
+            {Object.entries(data.conversations || {}).flatMap(
+              ([key, messages]) =>
+                messages
+                  .filter((message) => message.role === "user")
+                  .map((message) => (
+                    <article className="student-question" key={message.id}>
+                      <span>คำถามจากห้องเรียนสาธิต</span>
+                      <h3>{message.text}</h3>
+                      <small>
+                        {
+                          data.classrooms.find((entry) =>
+                            key.startsWith(entry.id + ":")
+                          )?.name
+                        }
+                      </small>
+                    </article>
+                  ))
+            )}
+            {!Object.values(data.conversations || {}).some((messages) =>
+              messages.some((message) => message.role === "user")
+            ) && (
+              <p className="empty-state">
+                ยังไม่มีคำถาม ลองเปิดแบบนักเรียนและถาม Eco AI ก่อน
+              </p>
+            )}
+          </>
+        ))}
     </PageWrapper>
   );
 }

@@ -1,84 +1,55 @@
 # Eco-Critical AI Chatbot
 
-Thai-first environmental EdTech for ม.4–ม.6 and teachers. **React/Vite**, adapted in the same codebase from [AnythingLLM](https://github.com/Mintplex-Labs/anything-llm), MIT. The student catalog and lesson pages directly render original MIT [Mentingo](https://github.com/Selleo/mentingo) frontend components, with native teacher tables/forms, Eco-Critical branding, real environmental course photographs and source inspection. [Source attribution](third_party/mentingo/README.md).
+ห้องเรียนภูมิศาสตร์สำหรับนักเรียน ม.ปลาย: กรณีศึกษาฝุ่นและควันพิษจากหลายประเทศ บทเรียนสิ่งแวดล้อม ผู้ช่วยตอบจากเอกสารครู และบอร์ดสนทนาร่วมกัน
 
-**Public demo:** [https://eco-critical-ai-chatbot.demo-agent-jum.workers.dev/demo](https://eco-critical-ai-chatbot.demo-agent-jum.workers.dev/demo) — browser-local teacher/student preview; no live Gemini calls.
+React/Vite ใน repository เดิม ใช้ **ซอร์ส Mentingo จริง** สำหรับหน้าบทเรียน แค็ตตาล็อก และองค์ประกอบหน้าครู พร้อม backend บัญชีและข้อมูลบน Cloudflare Pages + D1. เก็บซอร์ส AnythingLLM/collector เดิมไว้เป็นอีกเส้นทางหนึ่ง ดู [ที่มาและใบอนุญาต](third_party/mentingo/README.md).
 
-![Student dashboard](docs/screenshots/desktop.png)
+**สถานะรุ่นนี้:** ระบบบัญชีจริงผ่านการทดสอบกับ Worker/D1 ภายในเครื่องแล้ว การเผยแพร่รุ่นบัญชีจริงที่ `eco-critical.pages.dev` ยังรออนุญาตบันทึก secrets บน Cloudflare; อย่าใช้ public deployment รุ่นก่อนหน้าเป็นหลักฐานว่ารุ่นนี้ขึ้นระบบแล้ว ดู [สถานะเผยแพร่](docs/DEPLOYMENT.md).
 
-## Run the client demo
+![หน้าทางเข้าห้องเรียน](docs/screenshots/school-login-desktop.png)
 
-Node.js 24 and npm are sufficient. No Gemini key or backend is required for the explicitly labeled demo.
+## เริ่มพัฒนา
 
-```bash
-cd frontend
-npm ci --legacy-peer-deps
-npm run dev
-```
-
-Open [localhost:3000/demo](http://localhost:3000/demo). The root route also opens the demo. Switch **มุมมอง → คุณครู** to demonstrate teacher tools. Demo changes are saved in this browser; they are not shared with other users.
-
-### Production demo artifact
+ใช้ Node.js 24 และ npm:
 
 ```bash
-cd frontend
-npm run build:demo
-npm run preview:demo
+npm --prefix frontend ci --legacy-peer-deps
+npm --prefix frontend run dev
 ```
 
-Open [localhost:3415/demo](http://localhost:3415/demo). `frontend/dist-demo/` is a static production artifact from the same application. Use an SPA fallback when hosting it. The separate `npm run build` produces the upstream server artifact with `_index.html`, as AnythingLLM expects.
+เปิด [127.0.0.1:3410](http://127.0.0.1:3410). คำสั่งเดียวเริ่ม React, API และ D1 **ภายในเครื่อง** พร้อม migrations. ข้อมูล local อยู่ใน `.classroom-local/worker-state/`; คำสั่งนี้ไม่เขียนฐานข้อมูล Cloudflare จริง.
 
-## Implemented experience
+ข้อมูลตั้งค่าบัญชีเจ้าของอยู่ใน `.classroom-local/admin-setup.txt` ซึ่งเป็นไฟล์ส่วนตัว ไม่ส่งขึ้น Git. บัญชีตั้งต้นต้องใช้รหัสตั้งค่าเจ้าของและเปลี่ยนรหัสผ่านก่อนใช้หน้าจัดการ. สคริปต์รักษา secrets เดิมไว้ ไม่สร้างทับทุกครั้ง.
 
-- Mentingo-based student dashboard with four environmental image covers, cool-white surfaces, native social-app typography, genuine per-browser progress, continue learning and access to the working contextual tutor.
-- Two sample classrooms and four visual lessons: air pollution, water pollution, plastic waste, climate change. Air and water include full explanations and comprehension checks; plastic includes waste sorting.
-- PM2.5 conceptual slider, waste sorting with immediate feedback, quizzes with correct-answer explanations. Values are explicitly illustrative, not live sensor readings or health thresholds.
-- Contextual tutor beside lessons on desktop; an explicit tutor view on narrow screens. Source references open the actual retrieved passage and section. No fabricated page numbers.
-- Distinct teacher navigation: create/edit classrooms, add/edit lesson title/description/topic, associate uploaded text with a classroom and lesson, inspect/remove/reindex documents, preview as student and inspect demo questions.
-- Responsive shell, student bottom navigation, Lucide icons, local Thai fonts and visible keyboard focus.
+## การใช้งาน
 
-## AI status: demo versus live
+- สมัครบัญชี → รอครูหรือแอดมินอนุมัติ → เข้าห้องเรียนเดียวกัน. ไม่มีสวิตช์เปลี่ยนบทบาทสาธารณะ.
+- อ่าน 6 กรณีศึกษาประวัติศาสตร์–ปัจจุบันและ 4 บทเรียนพื้นฐาน ทำกิจกรรม/แบบทดสอบ และดูความก้าวหน้าที่ผูกบัญชี.
+- ครูแก้เนื้อหาและแบบทดสอบ อัปโหลด TXT/Markdown อ่านเอกสารจริง และตรวจรายชื่อนักเรียนกับผลเรียน.
+- แอดมินมอบสิทธิ์ครู/แอดมิน ระงับบัญชี และรีเซ็ตรหัสผ่าน. การเปลี่ยนสิทธิ์ยกเลิกเซสชันเดิม.
+- สมาชิกที่อนุมัติแล้วตั้งกระทู้/ตอบร่วมกัน เจ้าของลบข้อความตนเองได้ ครูและแอดมินดูแลข้อความได้.
+- ตั้ง Gemini key จากหน้า **ตั้งค่า AI** ของแอดมิน. Key เข้ารหัสฝั่งเซิร์ฟเวอร์และไม่ส่งกลับ React. คำตอบอิงข้อความที่ค้นจากเอกสาร/เนื้อหาครู พร้อมแหล่งอ้างอิง. ไม่อ้างว่าใช้ vector embeddings.
 
-**Demo (`/` and `/demo`)** extracts text from actual sample/uploaded TXT or Markdown in the browser, splits it into sections and performs Thai word-matching retrieval. Answers show exact retrieved text with clickable sources. It does **not** call Gemini, generate embeddings, perform semantic search or authenticate users. It is labeled on every chat and in the app shell. Uploaded demo files are limited to 1 MB to fit browser storage. PDF/DOCX are rejected clearly in demo rather than pretending to parse them.
+รายละเอียด workflow และข้อจำกัด: [FEATURES](docs/FEATURES.md).
 
-**Live (`/live`)** retains the upstream Express/collector/SQLite/LanceDB RAG backend and streamed chat. It checks backend availability, then uses native authentication and workspace membership. New workspaces default to Query mode and a Thai environmental-education prompt. Teacher uploads support PDF/DOCX/TXT/Markdown up to 20 MB with server validation; document processing chains into real embeddings. API keys remain on the server. The new live adapter supports actual classrooms, document indexing and chat; the visual lesson authoring metadata, quiz progress and teacher question overview are browser-demo features in this release and still require a server data model for production.
-
-No live Gemini accuracy, OCR performance, server deployment or production authorization integration is implied by frontend tests. Review [validation and limits](docs/VALIDATION.md).
-
-## Live setup
-
-Use Docker Engine + **Docker Compose v2** with several GB free for the upstream build:
-
-```bash
-node scripts/setup-classroom.mjs
-docker compose -f compose.classroom.yaml up --build -d
-```
-
-Open [localhost:3001/live](http://localhost:3001/live), complete onboarding, configure Gemini keys for both LLM and embeddings, and enable multi-user mode. Defaults prepared by setup: `gemini-3.8-flash` and `gemini-embedding-001`; choose models available to the account. Keep `.classroom-local/runtime.env` private. It is excluded from Git and Docker build context. Setup preserves existing env files and never prints keys.
-
-The Compose build uses **this customized source**, not a prebuilt upstream image missing the educational UI. It binds only to loopback until accounts and HTTPS are configured. Named volumes hold data; do not use `down -v` if data must be preserved. Browser agents requiring SYS_ADMIN are outside this classroom configuration.
-
-For native Node development, run `node scripts/setup-classroom.mjs`, install upstream dependencies with `corepack yarn setup`, then run `yarn dev:server`, `yarn dev:collector`, `yarn dev:frontend` in separate terminals. Native canvas/ONNX dependencies may require compiler/system libraries. Vite proxies `/api` to port 3001.
-
-### Access and rollout
-
-- Admin: school operator. Manager: trusted teacher. Default: student assigned to a workspace.
-- **Upstream managers can access every workspace**. This is not isolated multi-school tenancy. Demo role switching is not authentication.
-- Live retrieval is scoped to the authorized workspace; the live adapter does not yet enforce a per-lesson retrieval filter.
-- Before production, implement durable lesson/progress models with account-level authorization, test student isolation on the running backend, verify Thai retrieval/OCR with approved teacher documents, set HTTPS, cost controls, retention and backup/restore.
-
-## Checks
+## Build และตรวจสอบ
 
 ```bash
 npm --prefix frontend run lint:classroom
 node --test tests/classroom/*.test.mjs
-npm --prefix frontend run build
-npm --prefix frontend run build:demo
+npm --prefix frontend run build:school
 node scripts/run-classroom-qa.mjs
 ```
 
-Browser QA runs a compiled production demo with no API interception and uses installed Chrome by default. For CI: install Chromium with `cd frontend && npx playwright install chromium`, then run `CLASSROOM_QA_BROWSER=chromium node scripts/run-classroom-qa.mjs` from repo root. Results and screenshots are in ignored `artifacts/classroom/`. A ready-to-review GitHub Actions recipe is provided in `docs/classroom-ci.example.yml`. The active GitHub account lacks workflow scope, so active workflow files were not changed; all listed checks were run locally. Enable the recipe only after an owner grants workflow permission.
+`build:school` สร้าง `frontend/dist-demo/` (ชื่อไดเรกทอรีเดิม) พร้อม `_worker.js` สำหรับ Pages; ชื่อ artifact ไม่ได้หมายความว่าเป็นบัญชีสาธิต. `npm --prefix frontend run build` ยังคงสร้าง artifact สำหรับ upstream Express แยกต่างหาก.
 
-## Attribution and design
+Browser QA ใช้ compiled app, local D1 ใหม่, secrets/บัญชีทดสอบแยก และ Chrome โดยไม่มี API interception. ไม่แตะข้อมูล production และไม่เรียก Gemini จริง. สำหรับ CI ติดตั้ง Chromium แล้วใช้ `CLASSROOM_QA_BROWSER=chromium`. รายงานใน `artifacts/classroom/`; [หลักฐานและขอบเขตการตรวจ](docs/VALIDATION.md), [GitHub Actions](docs/CI.md).
 
-Original MIT `LICENSE` is retained. [Upstream provenance](docs/OPEN_SOURCE.md) · [original README](README.upstream.md) · [client brief](docs/CLIENT_BRIEF.md) · [design decisions](docs/UI_DESIGN.md). Native Mentingo source integration, impeccable, audit, animate and adapt were applied. Current UI uses platform fonts. [UI audit](docs/UI_AUDIT.md).
+## ข้อจำกัดที่ต้องทราบ
+
+- ยังไม่ได้รับ Gemini key จึงยังไม่ยืนยันการเรียกโมเดลจริงหรือความถูกต้องของคำตอบ.
+- Cloudflare รุ่นนี้รองรับ TXT/Markdown ไม่เกิน 1 MB/ไฟล์ และข้อมูลหลักสูตรรวม 1.8 MB. PDF/DOCX/OCR ของ collector เดิมไม่ได้ถูก deploy บน Pages.
+- ไม่มี SMTP/กู้รหัสผ่านอีเมลอัตโนมัติ; ใช้แอดมินออกรหัสชั่วคราวและบังคับเปลี่ยนรหัส.
+- รองรับหนึ่งห้องเรียน ไม่อ้างว่าแยกข้อมูลหลายโรงเรียน.
+- ไม่ได้ทดสอบ Docker runtime หรืออุปกรณ์ iOS/Android จริง. เก็บ `compose.classroom.yaml` และ `scripts/setup-classroom.mjs` สำหรับ backend เดิมไว้โดยไม่อ้างว่า Cloudflare ใช้งานส่วนนั้น.
+- ต้องสำรอง APP_SECRET อย่างปลอดภัย; ใช้ทั้ง password pepper และถอดรหัส Gemini key ห้ามสร้างทับโดยไม่มีแผนย้ายข้อมูล.

@@ -117,7 +117,9 @@ export function WasteSorting() {
           </button>
         ))}
       </div>
-      <div className="waste-item" key={item}>{current.name}</div>
+      <div className="waste-item" key={item}>
+        {current.name}
+      </div>
       <div className="waste-bins">
         {["รีไซเคิล", "อินทรีย์", "อันตราย", "ทั่วไป"].map((category) => (
           <button
@@ -163,6 +165,15 @@ export function WasteSorting() {
 }
 export function KnowledgeCheck({ lesson, onFinish }) {
   const [answers, setAnswers] = useState({});
+  if (!lesson.quiz?.length)
+    return (
+      <section className="knowledge-check">
+        <p>อ่านบทเรียนครบแล้ว บันทึกความก้าวหน้าของคุณได้</p>
+        <button className="button" onClick={() => onFinish(0, 0, {})}>
+          บันทึกว่าเรียนจบแล้ว <ArrowRight size={17} />
+        </button>
+      </section>
+    );
   const all = Object.keys(answers).length === lesson.quiz.length;
   const score = lesson.quiz.reduce(
     (sum, question, index) =>
@@ -215,7 +226,7 @@ export function KnowledgeCheck({ lesson, onFinish }) {
           </div>
           <button
             className="button"
-            onClick={() => onFinish(score, lesson.quiz.length)}
+            onClick={() => onFinish(score, lesson.quiz.length, answers)}
           >
             บันทึกผลและจบบทเรียน <ArrowRight size={17} />
           </button>

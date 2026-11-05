@@ -1,3 +1,4 @@
+import { CASE_STUDIES, caseLesson, caseDocument } from "./caseStudies.js";
 export const TOPICS = [
   {
     id: "air",
@@ -30,8 +31,8 @@ export const TOPICS = [
 ];
 export const SUGGESTIONS = [
   "PM2.5 ส่งผลต่อร่างกายอย่างไร?",
-  "ทำไมน้ำเสียถึงกระทบระบบนิเวศ?",
-  "ไมโครพลาสติกเข้าสู่ห่วงโซ่อาหารได้อย่างไร?",
+  "หมอกควันลอนดอนปี 1952 เกิดจากอะไร?",
+  "ควันไฟป่าแคนาดาปี 2023 เกี่ยวข้องกับลมอย่างไร?",
 ];
 const air = `ขนาดและแหล่งกำเนิด PM2.5
 PM2.5 คืออนุภาคในอากาศที่มีเส้นผ่านศูนย์กลางเชิงอากาศพลศาสตร์ไม่เกิน 2.5 ไมโครเมตร แหล่งกำเนิดอาจเกี่ยวข้องกับการเผาไหม้ การคมนาคม อุตสาหกรรม และอนุภาคที่เกิดจากปฏิกิริยาในบรรยากาศ การเห็นท้องฟ้าขุ่นอย่างเดียวไม่พอจะระบุแหล่งกำเนิด ต้องใช้ข้อมูลประกอบ
@@ -260,21 +261,22 @@ export function makeSeed() {
       reference: "https://science.nasa.gov/climate-change/causes/",
     },
   ];
+  lessons.unshift(...CASE_STUDIES.map(caseLesson));
   const classrooms = [
     {
       id: "eco-m5",
-      name: "สิ่งแวดล้อมศึกษา ม.5/1",
-      description: "สำรวจปัญหาใกล้ตัวผ่านหลักฐานและการลงมือทำ",
+      name: "ภูมิศาสตร์ มัธยมศึกษาตอนปลาย",
+      description: "กรณีศึกษาฝุ่นและควันพิษจากทั่วโลก · 1948–2026",
       lessonIds: lessons.map((lesson) => lesson.id),
     },
-    {
-      id: "eco-m6",
-      name: "วิทยาศาสตร์สิ่งแวดล้อม ม.6/2",
-      description: "เชื่อมโยงระบบนิเวศกับการตัดสินใจ",
-      lessonIds: ["water-1", "climate-1"],
-    },
   ];
-  const texts = [air, water, plastic, climate];
+  const texts = [
+    ...CASE_STUDIES.map(caseDocument),
+    air,
+    water,
+    plastic,
+    climate,
+  ];
   const documents = lessons.map((lesson, i) => ({
     id: `doc-${lesson.id}`,
     classroomId: "eco-m5",
@@ -286,13 +288,8 @@ export function makeSeed() {
     type: "TXT",
     sample: true,
   }));
-  documents.push(
-    ...documents
-      .filter((doc) => ["water-1", "climate-1"].includes(doc.lessonId))
-      .map((doc) => ({ ...doc, id: `m6-${doc.id}`, classroomId: "eco-m6" }))
-  );
   return {
-    version: 2,
+    version: 3,
     classrooms,
     lessons,
     documents,
@@ -302,18 +299,58 @@ export function makeSeed() {
   };
 }
 const KEY = "eco-critical-demo-v2";
+// Consolidate old sample classrooms without discarding uploads or learner progress.
+export function migrateDemo(value) {
+  if (
+    !value ||
+    ![2, 3].includes(value.version) ||
+    ![value.classrooms, value.lessons, value.documents].every(Array.isArray)
+  )
+    return makeSeed();
+  if (value.version === 3 && value.classrooms.length === 1) return value;
+  const seed = makeSeed();
+  const lessons = [
+    ...seed.lessons.filter(
+      (item) => !value.lessons.some((old) => old.id === item.id)
+    ),
+    ...value.lessons,
+  ];
+  const documents = [
+    ...seed.documents.filter(
+      (item) => !value.documents.some((old) => old.id === item.id)
+    ),
+    ...value.documents.map((doc) => ({ ...doc, classroomId: "eco-m5" })),
+  ];
+  const progress = {};
+  for (const [key, entry] of Object.entries(value.progress || {})) {
+    const lessonId = key.substring(key.indexOf(":") + 1);
+    const target = `eco-m5:${lessonId}`;
+    if (
+      !progress[target] ||
+      (entry.percent || 0) >= (progress[target].percent || 0)
+    )
+      progress[target] = entry;
+  }
+  return {
+    ...value,
+    version: 3,
+    classrooms: [
+      { ...seed.classrooms[0], lessonIds: lessons.map((item) => item.id) },
+    ],
+    lessons,
+    documents,
+    progress,
+    lastLesson: value.lastLesson
+      ? { ...value.lastLesson, classroomId: "eco-m5" }
+      : null,
+  };
+}
 export function readDemo(storage = localStorage) {
   try {
-    const value = JSON.parse(storage.getItem(KEY));
-    if (
-      value?.version === 2 &&
-      [value.classrooms, value.lessons, value.documents].every(Array.isArray)
-    )
-      return value;
+    return migrateDemo(JSON.parse(storage.getItem(KEY)));
   } catch {
-    /* Ignore corrupt optional demo state and start with a valid seed. */
+    return makeSeed();
   }
-  return makeSeed();
 }
 export function saveDemo(value, storage = localStorage) {
   storage.setItem(KEY, JSON.stringify(value));

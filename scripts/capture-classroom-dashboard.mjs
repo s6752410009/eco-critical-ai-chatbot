@@ -58,7 +58,7 @@ try {
       if (screen === "dashboard")
         await expect(
           page.locator('[data-testid="modern-course-card-link"]')
-        ).toHaveCount(4);
+        ).toHaveCount(10);
       await expect(
         page.getByRole("button", { name: "ถาม Eco AI", exact: true })
       ).toBeInViewport();

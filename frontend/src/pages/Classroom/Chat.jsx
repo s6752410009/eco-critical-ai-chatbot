@@ -17,13 +17,15 @@ export default function EcoChat({
   classroom,
   lesson,
   documents,
-  demo,
+  demo: originalDemo,
+  school = null,
   compact = false,
   dashboard = false,
   prepared = "",
   conversations = {},
   onConversation,
 }) {
+  const demo = originalDemo && !school;
   const key = `${classroom?.id || "none"}:${lesson?.id || "all"}`;
   const [messages, setMessages] = useState(conversations[key] || []);
   const [input, setInput] = useState(prepared);
@@ -33,6 +35,7 @@ export default function EcoChat({
   const thread = useRef(null);
   const generation = useRef(0);
   const streamState = useRef(false);
+  const requestController = useRef(null);
   const messagesContainer = useRef(null);
   const textarea = useRef(null);
   useEffect(() => {
@@ -40,6 +43,7 @@ export default function EcoChat({
     const activeStream = streamState;
     return () => {
       counter.current++;
+      requestController.current?.abort();
       if (activeStream.current)
         window.dispatchEvent(new Event("abort-chat-stream"));
     };
@@ -57,7 +61,7 @@ export default function EcoChat({
   }, [messages, busy]);
   function persist(next) {
     setMessages(next);
-    if (demo) onConversation?.(key, next);
+    if (demo || school) onConversation?.(key, next);
   }
   async function send(provided) {
     const question = (provided || input).trim();
@@ -78,7 +82,19 @@ export default function EcoChat({
       sources: [],
     };
     try {
-      if (demo) {
+      if (school) {
+        const controller = new AbortController();
+        requestController.current = controller;
+        const result = await school.request("/chat", {
+          method: "POST",
+          body: { question, lessonId: lesson?.id || null },
+          signal: controller.signal,
+        });
+        if (generation.current !== requestGeneration) return;
+        reply.text = result.answer;
+        reply.sources = result.sources;
+        persist([...next, reply]);
+      } else if (demo) {
         // Local extractive retrieval, explicitly labeled. This is not a model call.
         await new Promise((resolve) => setTimeout(resolve, 180));
         if (generation.current !== requestGeneration) return;
@@ -140,7 +156,10 @@ export default function EcoChat({
         setError(failure.message || "ตอบคำถามไม่สำเร็จ กรุณาลองอีกครั้ง");
     } finally {
       streamState.current = false;
-      if (generation.current === requestGeneration) setBusy(false);
+      if (generation.current === requestGeneration) {
+        requestController.current = null;
+        setBusy(false);
+      }
     }
   }
   return (
@@ -314,6 +333,7 @@ export default function EcoChat({
           id={`chat-input-${compact ? "side" : "main"}`}
           ref={textarea}
           rows={2}
+          maxLength={2000}
           placeholder="ถามเรื่องที่อยากเข้าใจ…"
           value={input}
           onChange={(event) => setInput(event.target.value)}
@@ -348,6 +368,8 @@ export default function EcoChat({
               aria-label="หยุดตอบ"
               onClick={() => {
                 generation.current++;
+                requestController.current?.abort();
+                requestController.current = null;
                 window.dispatchEvent(new Event("abort-chat-stream"));
                 setBusy(false);
               }}

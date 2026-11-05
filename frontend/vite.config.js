@@ -22,6 +22,8 @@ export default defineConfig(({ mode }) => ({
     port: 3000,
     host: "localhost",
     proxy: {
+      "/api/school": {target:"http://127.0.0.1:3416",changeOrigin:false},
+      "/api/discussions": {target:"http://127.0.0.1:3416",changeOrigin:false},
       "/api": { target: "http://127.0.0.1:3001", changeOrigin: true, ws: true }
     }
   },
@@ -79,19 +81,13 @@ export default defineConfig(({ mode }) => ({
         replacement: fileURLToPath(new URL("./src", import.meta.url))
       },
       {
-        process: "process/browser",
-        stream: "stream-browserify",
-        zlib: "browserify-zlib",
-        util: "util",
-        find: /^~.+/,
-        replacement: (val) => {
-          return val.replace(/^~/, "")
-        }
+        find: /^~/,
+        replacement: ""
       }
     ]
   },
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       output: {
         // These settings ensure the primary JS and CSS file references are always index.{js,css}
         // so we can SSR the index.html as text response from server/index.js without breaking references each build.
@@ -113,11 +109,8 @@ export default defineConfig(({ mode }) => ({
   optimizeDeps: {
     entries: ["index.html"],
     include: ["@mintplex-labs/piper-tts-web"],
-    esbuildOptions: {
-      define: {
-        global: "globalThis"
-      },
-      plugins: []
+    rolldownOptions: {
+      transform: { define: { global: "globalThis" } }
     }
   }
 }))
