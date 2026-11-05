@@ -1,0 +1,25 @@
+name: eco-critical
+services:
+  classroom:
+    image: eco-critical-ai:local
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "127.0.0.1:3001:3001"
+    env_file:
+      - .classroom-local/runtime.env
+    volumes:
+      - ./.classroom-local/runtime.env:/app/server/.env
+      - classroom-storage:/app/server/storage
+      - classroom-hotdir:/app/collector/hotdir
+      - classroom-outputs:/app/collector/outputs
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+volumes:
+  classroom-storage:
+  classroom-hotdir:
+  classroom-outputs:

@@ -4,13 +4,13 @@ import System from "./models/system";
 
 export const PfpContext = createContext();
 
-export function PfpProvider({ children }) {
+export function PfpProvider({ children, publicDemo = false }) {
   const [pfp, setPfp] = useState(null);
   const { user } = useUser();
 
   useEffect(() => {
     async function fetchPfp() {
-      if (!user?.id) return;
+      if (!user?.id || publicDemo) return;
       try {
         const pfpUrl = await System.fetchPfp(user.id);
         setPfp(pfpUrl);
@@ -20,7 +20,7 @@ export function PfpProvider({ children }) {
       }
     }
     fetchPfp();
-  }, [user?.id]);
+  }, [user?.id, publicDemo]);
 
   return (
     <PfpContext.Provider value={{ pfp, setPfp }}>

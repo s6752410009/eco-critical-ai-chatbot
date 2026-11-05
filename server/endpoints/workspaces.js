@@ -1,3 +1,4 @@
+const { uploadedLessonLocations } = require("../utils/classroomPolicy");
 const {
   reqBody,
   multiUserMode,
@@ -15,7 +16,7 @@ const {
   getLLMProvider,
   stripThinkingFromText,
 } = require("../utils/helpers");
-const { handleFileUpload } = require("../utils/files/multer");
+const { handleFileUpload, handleLessonUpload } = require("../utils/files/multer");
 const {
   getReasoningCapabilities,
   usesModelRouter,
@@ -122,7 +123,7 @@ function workspaceEndpoints(app) {
     [
       validatedRequest,
       flexUserRoleValid([ROLES.admin, ROLES.manager]),
-      handleFileUpload,
+      handleLessonUpload,
     ],
     async function (request, response) {
       try {
@@ -179,7 +180,7 @@ function workspaceEndpoints(app) {
           },
           response.locals?.user?.id
         );
-        response.status(200).json({ success: true, error: null });
+        response.status(200).json({ success: true, error: null, documents: uploadedLessonLocations(documents) });
       } catch (e) {
         console.error(e.message, e);
         response.sendStatus(500).end();

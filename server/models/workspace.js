@@ -1,3 +1,4 @@
+const { classroomDefaults } = require("../utils/classroomPolicy");
 const prisma = require("../utils/prisma");
 const slugifyModule = require("slugify");
 const { Document } = require("./documents");
@@ -197,7 +198,9 @@ const Workspace = {
    * @returns {Promise<{workspace: Object | null, message: string | null}>} A promise that resolves to an object containing the created workspace and an error message if applicable.
    */
   new: async function (name = null, creatorId = null, additionalFields = {}) {
-    if (!name) return { workspace: null, message: "name cannot be null" };
+    if (typeof name !== "string" || !name.trim() || name.trim().length > 255)
+      return { workspace: null, message: "ชื่อห้องเรียนต้องมีความยาว 1–255 ตัวอักษร" };
+    name = name.trim();
     var slug = this.slugify(name, { lower: true });
     slug = slug || uuidv4();
 
@@ -214,14 +217,14 @@ const Workspace = {
       });
       additionalFields.openAiPrompt = !!defaultSystemPrompt?.value
         ? defaultSystemPrompt.value
-        : this.defaultPrompt;
+        : classroomDefaults().openAiPrompt;
     }
 
     try {
       const workspace = await prisma.workspaces.create({
         data: {
           name: this.validations.name(name),
-          chatMode: "automatic",
+          ...classroomDefaults(),
           ...this.validateFields(additionalFields),
           slug,
         },

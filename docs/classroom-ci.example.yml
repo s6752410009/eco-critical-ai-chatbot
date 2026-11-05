@@ -1,0 +1,33 @@
+name: Eco-Critical classroom checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  classroom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --legacy-peer-deps --no-audit --no-fund
+        working-directory: frontend
+      - run: npm run lint:classroom
+        working-directory: frontend
+      - run: node --test tests/classroom/*.test.mjs
+      - run: npm run build
+        working-directory: frontend
+      - run: npm run build:demo
+        working-directory: frontend
+        env:
+          CLASSROOM_BUILD_SECRET_CANARY: eco_build_secret_must_not_ship_7f2b
+      - run: node scripts/check-client-secrets.mjs frontend/dist-demo
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: node scripts/run-classroom-qa.mjs
+        env:
+          CLASSROOM_QA_BROWSER: chromium

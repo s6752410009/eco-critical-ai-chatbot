@@ -22,6 +22,7 @@ export const PALETTE_SEEDS = ["main", "accent"];
  * @type {Record<string, {name: string, shades?: Record<string, string>} & PaletteColors>}
  */
 const BUILT_IN_PALETTES = {
+  "eco-classroom": { name: "Eco Classroom", main: "#245b46", accent: "#327996" },
   default: { name: "Default", main: "#71717a", accent: "#0ea5e9" },
   // Pure black page background with near-black surfaces, for OLED screens.
   "true-dark": {
@@ -87,7 +88,7 @@ function normalizeInstance(value) {
 // Shared across every useTheme() instance so they never disagree on the palette.
 let state = {
   /** The palette the user picked, or null to follow the instance default. */
-  choice: localStorage.getItem(USER_PALETTE_KEY) || null,
+  choice: localStorage.getItem(USER_PALETTE_KEY) || "eco-classroom",
   /** Cached until the server responds so the palette applies without a flash. */
   instance: normalizeInstance(
     safeJsonParse(localStorage.getItem(INSTANCE_CACHE_KEY), EMPTY_INSTANCE)

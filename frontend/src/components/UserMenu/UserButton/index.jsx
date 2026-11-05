@@ -65,6 +65,8 @@ export default function UserButton() {
     <div className="absolute top-3 right-4 md:top-9 md:right-10 w-fit h-fit z-40">
       <button
         ref={buttonRef}
+        aria-label="เมนูบัญชีผู้ใช้"
+        aria-expanded={showMenu}
         onClick={() => setShowMenu(!showMenu)}
         type="button"
         className="uppercase transition-all duration-300 w-[35px] h-[35px] text-base font-semibold rounded-full flex items-center bg-theme-action-menu-bg hover:bg-theme-action-menu-item-hover justify-center text-white p-2 hover:border-slate-100 hover:border-opacity-50 border-transparent border"
@@ -122,12 +124,15 @@ export default function UserButton() {
 function UserDisplay() {
   const { pfp } = usePfp();
   const user = userFromStorage();
+  const [imageFailed, setImageFailed] = useState(false);
+  useEffect(() => setImageFailed(false), [pfp]);
 
-  if (pfp) {
+  if (pfp && !imageFailed) {
     return (
       <div className="w-[35px] h-[35px] rounded-full flex-shrink-0 overflow-hidden transition-all duration-300 bg-gray-100 hover:border-slate-100 hover:border-opacity-50 border-transparent border hover:opacity-60">
         <img
           src={pfp}
+          onError={() => setImageFailed(true)}
           alt="User profile picture"
           className="w-full h-full object-cover"
         />

@@ -144,10 +144,10 @@ WORKDIR /app
 # The output (static HTML/CSS/JS) is platform-independent.
 FROM --platform=$BUILDPLATFORM node:24-slim AS frontend-build
 WORKDIR /app/frontend
-COPY ./frontend/package.json ./frontend/yarn.lock ./
-RUN yarn install --network-timeout 100000 && yarn cache clean
+COPY ./frontend/package.json ./frontend/package-lock.json ./
+RUN npm ci --legacy-peer-deps --no-audit --no-fund && npm cache clean --force
 COPY ./frontend/ ./
-RUN yarn build
+RUN npm run build
 WORKDIR /app
 
 # Install server layer

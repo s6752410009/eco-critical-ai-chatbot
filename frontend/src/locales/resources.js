@@ -15,6 +15,7 @@
 // from the primary dictionary.
 
 import English from "./en/common.js";
+import Thai from "./th/common.js";
 import Korean from "./ko/common.js";
 import Spanish from "./es/common.js";
 import French from "./fr/common.js";
@@ -49,6 +50,7 @@ import Hungarian from "./hu/common.js";
 
 export const defaultNS = "common";
 export const resources = {
+  th: { common: Thai },
   en: {
     common: English,
   },

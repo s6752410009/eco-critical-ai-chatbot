@@ -1,0 +1,48 @@
+{
+  "demoEndToEnd": true,
+  "apiIntercepted": false,
+  "liveGeminiTested": false,
+  "checks": [
+    {
+      "name": "student dashboard has four visual modules, clear demo role and working classroom selection",
+      "passed": true
+    },
+    {
+      "name": "suggested question prepares chat, local retrieval and clickable source details work",
+      "passed": true
+    },
+    {
+      "name": "visual air lesson, interactive PM2.5 slider, quiz explanations and progress persistence",
+      "passed": true
+    },
+    {
+      "name": "water lesson expands causal explanations and has a complete knowledge check",
+      "passed": true
+    },
+    {
+      "name": "waste sorting gives immediate correct and incorrect feedback",
+      "passed": true
+    },
+    {
+      "name": "teacher creates and edits classroom, adds lesson, uploads and previews a real text document",
+      "passed": true
+    },
+    {
+      "name": "teacher preview leads to student contextual retrieval of newly uploaded material",
+      "passed": true
+    },
+    {
+      "name": "other classrooms cannot retrieve the newly uploaded private demo content",
+      "passed": true
+    },
+    {
+      "name": "teacher can remove a document and it stops being retrievable",
+      "passed": true
+    },
+    {
+      "name": "primary student and teacher views are responsive at 390, 1024 and 1440px",
+      "passed": true
+    }
+  ],
+  "browserErrors": []
+}

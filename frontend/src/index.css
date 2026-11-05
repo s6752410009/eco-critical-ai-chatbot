@@ -1191,3 +1191,8 @@ textarea {
     "Segoe UI Symbol",
     "Noto Color Emoji" !important;
 }
+/* Local Thai typography: no third-party font requests. */
+@font-face { font-family: "Bai Jamjuree"; src: url("/fonts/BaiJamjuree-SemiBold.ttf") format("truetype"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Sarabun"; src: url("/fonts/Sarabun-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Sarabun"; src: url("/fonts/Sarabun-SemiBold.ttf") format("truetype"); font-weight: 600; font-display: swap; }
+body { font-family: "Sarabun", sans-serif; }

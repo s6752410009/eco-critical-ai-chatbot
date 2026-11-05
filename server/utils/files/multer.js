@@ -1,3 +1,4 @@
+const { lessonFileAllowed } = require("../classroomPolicy");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
@@ -220,7 +221,25 @@ function handleImageGenUpload(request, response, next) {
   });
 }
 
+// Bounded upload specifically for the classroom lesson endpoint. Other native
+// chat attachment endpoints retain their existing supported formats.
+function handleLessonUpload(request, response, next) {
+  multer({
+    storage: fileUploadStorage,
+    limits: { fileSize: 20 * 1024 * 1024, files: 1, fields: 4, parts: 5 },
+    fileFilter: (_request, file, callback) => {
+      if (!lessonFileAllowed(file.originalname)) return callback(new Error("รองรับ PDF, DOCX, TXT และ Markdown เท่านั้น"));
+      callback(null, true);
+    },
+  }).single("file")(request, response, (error) => {
+    if (error) return response.status(error.code === "LIMIT_FILE_SIZE" ? 413 : 400).json({ success: false, error: error.code === "LIMIT_FILE_SIZE" ? "ไฟล์ต้องมีขนาดไม่เกิน 20 MB" : error.message });
+    if (!request.file) return response.status(400).json({ success: false, error: "กรุณาเลือกไฟล์บทเรียน" });
+    next();
+  });
+}
+
 module.exports = {
+  handleLessonUpload,
   handleFileUpload,
   handleAPIFileUpload,
   handleAssetUpload,

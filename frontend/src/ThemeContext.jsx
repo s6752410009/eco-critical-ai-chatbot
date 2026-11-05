@@ -4,12 +4,12 @@ import { paletteStore } from "./palettes";
 
 const ThemeContext = createContext();
 
-export function ThemeProvider({ children }) {
+export function ThemeProvider({ children, publicDemo = false }) {
   const themeValue = useTheme();
 
   useEffect(() => {
-    paletteStore.refresh();
-  }, []);
+    if (!publicDemo) paletteStore.refresh();
+  }, [publicDemo]);
 
   return (
     <ThemeContext.Provider value={themeValue}>{children}</ThemeContext.Provider>

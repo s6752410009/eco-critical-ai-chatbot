@@ -23,8 +23,24 @@ const router = createBrowserRouter([
       {
         path: "/",
         lazy: async () => {
-          const { default: Main } = await import("@/pages/Main");
-          return { element: <PrivateRoute Component={Main} /> };
+          const { default: Classroom } = await import("@/pages/Classroom");
+          return { element: <Classroom demo /> };
+        },
+      },
+      {
+        path: "/demo",
+        lazy: async () => {
+          const { default: Classroom } = await import("@/pages/Classroom");
+          return { element: <Classroom demo /> };
+        },
+      },
+      {
+        path: "/live",
+        lazy: async () => {
+          const { default: LiveEntry } = await import(
+            "@/pages/Classroom/LiveEntry"
+          );
+          return { element: <LiveEntry /> };
         },
       },
       {

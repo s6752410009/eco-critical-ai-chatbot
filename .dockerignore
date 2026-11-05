@@ -16,3 +16,9 @@
 **/.log
 !docker/.env.example
 !frontend/.env.production
+.git
+.classroom-local
+artifacts
+**/test-results
+
+**/dist-demo/

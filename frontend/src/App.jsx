@@ -18,18 +18,19 @@ import ErrorBoundaryFallback from "./components/ErrorBoundaryFallback";
 
 export default function App() {
   const location = useLocation();
+  const publicDemo = ["/", "/demo"].includes(location.pathname);
   return (
     <ErrorBoundary
       FallbackComponent={ErrorBoundaryFallback}
       onError={console.error}
       resetKeys={[location.pathname]}
     >
-      <ThemeProvider>
+      <ThemeProvider publicDemo={publicDemo}>
         <PWAModeProvider>
           <Suspense fallback={<FullScreenLoader />}>
-            <AuthProvider>
-              <LogoProvider>
-                <PfpProvider>
+            <AuthProvider publicDemo={publicDemo}>
+              <LogoProvider publicDemo={publicDemo}>
+                <PfpProvider publicDemo={publicDemo}>
                   <I18nextProvider i18n={i18n}>
                     <Outlet />
                     <ToastContainer />

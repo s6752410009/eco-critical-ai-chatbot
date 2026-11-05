@@ -10,3 +10,22 @@ aws_cf_deploy_anything_llm.json
 yarn.lock
 *.bak
 .idea
+
+# Eco-Critical local state, generated bundles and secrets
+.env.*
+!.env.example
+!**/.env.example
+frontend/dist/
+frontend/bundleinspector.html
+artifacts/
+test-results/
+playwright-report/
+.classroom-local/
+server/storage/*
+!server/storage/.gitkeep
+collector/hotdir/*
+!collector/hotdir/.gitkeep
+collector/outputs/*
+!collector/outputs/.gitkeep
+
+frontend/dist-demo/

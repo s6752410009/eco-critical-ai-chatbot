@@ -1,6 +1,4 @@
 import { createContext, useEffect, useState } from "react";
-import AnythingLLM from "./media/logo/anything-llm.png";
-import AnythingLLMDark from "./media/logo/anything-llm-dark.png";
 import DefaultLoginLogoLight from "./media/illustrations/login-logo.svg";
 import DefaultLoginLogoDark from "./media/illustrations/login-logo-light.svg";
 import System from "./models/system";
@@ -12,7 +10,7 @@ function isLightMode() {
 }
 export const LogoContext = createContext();
 
-export function LogoProvider({ children }) {
+export function LogoProvider({ children, publicDemo = false }) {
   const [logo, setLogo] = useState("");
   const [loginLogo, setLoginLogo] = useState("");
   const [isCustomLogo, setIsCustomLogo] = useState(false);
@@ -23,30 +21,31 @@ export function LogoProvider({ children }) {
       : DefaultLoginLogoLight;
     try {
       const { isCustomLogo, logoURL } = await System.fetchLogo();
-      if (logoURL) {
+      if (logoURL && isCustomLogo) {
         setLogo(logoURL);
         setLoginLogo(isCustomLogo ? logoURL : DefaultLoginLogo);
         setIsCustomLogo(isCustomLogo);
       } else {
-        isLightMode() ? setLogo(AnythingLLMDark) : setLogo(AnythingLLM);
-        setLoginLogo(DefaultLoginLogo);
+        setLogo("/eco-wordmark.svg");
+        setLoginLogo("/eco-wordmark.svg");
         setIsCustomLogo(false);
       }
     } catch (err) {
-      isLightMode() ? setLogo(AnythingLLMDark) : setLogo(AnythingLLM);
-      setLoginLogo(DefaultLoginLogo);
+      setLogo("/eco-wordmark.svg");
+      setLoginLogo("/eco-wordmark.svg");
       setIsCustomLogo(false);
       console.error("Failed to fetch logo:", err);
     }
   }
 
   useEffect(() => {
+    if (publicDemo) { setLogo("/eco-wordmark.svg"); setLoginLogo("/eco-wordmark.svg"); return; }
     fetchInstanceLogo();
     window.addEventListener(REFETCH_LOGO_EVENT, fetchInstanceLogo);
     return () => {
       window.removeEventListener(REFETCH_LOGO_EVENT, fetchInstanceLogo);
     };
-  }, []);
+  }, [publicDemo]);
 
   return (
     <LogoContext.Provider value={{ logo, setLogo, loginLogo, isCustomLogo }}>
