@@ -16,18 +16,22 @@ import {
 } from "./school-auth.mjs";
 const encoder = new TextEncoder();
 export async function curriculum(env) {
-  const seed = makeSeed();
-  delete seed.progress;
-  delete seed.conversations;
-  delete seed.lastLesson;
-  await env.BOARD_DB.prepare(
-    "INSERT OR IGNORE INTO school_curriculum(id,data,revision,updated_at) VALUES (1,?,1,?)"
-  )
-    .bind(JSON.stringify(seed), Date.now())
-    .run();
-  const row = await env.BOARD_DB.prepare(
-    "SELECT * FROM school_curriculum WHERE id=1"
-  ).first();
+  const select = env.BOARD_DB.prepare(
+    "SELECT data,revision FROM school_curriculum WHERE id=1"
+  );
+  let row = await select.first();
+  if (!row) {
+    const { version, classrooms, lessons, documents } = makeSeed();
+    const seed = {
+      version, classrooms, lessons,
+      documents: documents.map(({ chunks, ...document }) => document),
+    };
+    await env.BOARD_DB.prepare(
+      "INSERT OR IGNORE INTO school_curriculum(id,data,revision,updated_at) VALUES (1,?,1,?)"
+    ).bind(JSON.stringify(seed), Date.now()).run();
+    // Read the winning row if two first-time requests initialized the class together.
+    row = await select.first();
+  }
   const data = JSON.parse(row.data);
   data.documents = data.documents.map((doc) => ({
     ...doc,
