@@ -1,0 +1,441 @@
+import { Node, mergeAttributes } from "@tiptap/core";
+import { NodeViewWrapper, ReactNodeViewRenderer } from "@tiptap/react";
+import { GripVertical, Video as VideoIcon, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
+
+import {
+  VIDEO_UPLOAD_NODE_STATUS,
+  getVideoUploadNodeDataAttributes,
+  normalizeVideoUploadNodeAttrs,
+} from "~/components/RichText/extensions/utils/videoUploadNode";
+import { Button } from "~/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
+import { Video } from "~/components/VideoPlayer/Video";
+import { VideoProcessingPlaceholder } from "~/components/VideoPlayer/VideoProcessingPlaceholder";
+import { cn } from "~/lib/utils";
+
+import { removeResourceNode, type RichTextResourceNodeOptions } from "./utils/resourceNode";
+import {
+  VIDEO_NODE_TYPE,
+  getVideoEmbedAttrsFromElement,
+  normalizeVideoEmbedAttributes,
+  type VideoEmbedAttrs,
+  type VideoSourceType,
+} from "./utils/video";
+
+import type { SupportedLanguages } from "@repo/shared";
+import type { NodeConfig } from "@tiptap/core";
+import type { NodeViewProps } from "@tiptap/react";
+import type { VideoCoverageSnapshotChange } from "~/components/VideoPlayer/videoCoverage.types";
+
+type VideoViewerOptions = {
+  onVideoEnded?: (index: number | null) => void;
+  videoCoverageTracking?: {
+    enabled: boolean;
+    showCoverageMarkers?: boolean;
+    lessonId?: string;
+    language?: SupportedLanguages;
+    onSnapshotChange?: (change: VideoCoverageSnapshotChange) => void;
+    onVideoActivated?: (resourceEntityId: string) => void;
+  };
+};
+
+type VideoEditorOptions = RichTextResourceNodeOptions;
+
+const getStringAttribute = (value: unknown) => (typeof value === "string" ? value : null);
+
+const getBooleanAttribute = (value: unknown) =>
+  typeof value === "boolean" || typeof value === "string" ? value : null;
+
+const getNumberAttribute = (value: unknown) =>
+  typeof value === "number" || typeof value === "string" ? value : null;
+
+const getVideoWatchedRangesAttribute = (value: unknown) =>
+  Array.isArray(value) || typeof value === "string" ? value : null;
+
+const renderUploadCard = (label: string, errorMessage?: string | null) => (
+  <div className="flex w-full flex-col gap-1.5 rounded border border-dashed border-neutral-300 bg-neutral-50 px-3 py-2 text-sm text-neutral-700">
+    <div className="flex items-center gap-2">
+      <span className="inline-flex size-4 items-center justify-center">
+        <span className="size-3 animate-spin rounded-full border-2 border-neutral-400 border-t-transparent" />
+      </span>
+      <span className="truncate font-medium">{label}</span>
+    </div>
+    {errorMessage && <p className="text-xs text-error-700">{errorMessage}</p>}
+  </div>
+);
+
+declare module "@tiptap/core" {
+  interface Commands<ReturnType> {
+    video: {
+      setVideoEmbed: (
+        attrs: Partial<VideoEmbedAttrs> & { src: string; sourceType?: VideoSourceType },
+      ) => ReturnType;
+    };
+  }
+}
+
+const getVideoDataAttributes = (attrs: VideoEmbedAttrs) => ({
+  "data-node-type": VIDEO_NODE_TYPE,
+  "data-source-type": attrs.sourceType,
+  "data-provider": attrs.provider,
+  "data-src": attrs.src ?? "",
+  ...(attrs.index !== null ? { "data-index": attrs.index } : {}),
+  ...(attrs.resourceEntityId ? { "data-resource-entity-id": attrs.resourceEntityId } : {}),
+  ...(attrs.videoCoveragePercent !== null
+    ? { "data-video-coverage-percent": attrs.videoCoveragePercent }
+    : {}),
+  ...(attrs.videoIsWatched ? { "data-video-is-watched": "true" } : {}),
+  ...(attrs.videoWatchedRanges.length > 0
+    ? { "data-video-watched-ranges": JSON.stringify(attrs.videoWatchedRanges) }
+    : {}),
+  ...(attrs.videoDurationSeconds !== null
+    ? { "data-video-duration-seconds": attrs.videoDurationSeconds }
+    : {}),
+  ...(attrs.videoBucketSizeSeconds !== null
+    ? { "data-video-bucket-size-seconds": attrs.videoBucketSizeSeconds }
+    : {}),
+  ...(attrs.hasError ? { "data-error": "true" } : {}),
+  ...getVideoUploadNodeDataAttributes(attrs),
+});
+
+const VideoEditorContent = ({
+  attrs,
+  onRemove,
+  dragLabel,
+  removeLabel,
+  containerClassName,
+  linkClassName,
+}: {
+  attrs: VideoEmbedAttrs & { src: string };
+  onRemove: () => void;
+  dragLabel: string;
+  removeLabel: string;
+  containerClassName?: string;
+  linkClassName?: string;
+}) => (
+  <div
+    className={cn(
+      "inline-flex max-w-full items-center gap-2 rounded border border-dashed border-neutral-300 bg-neutral-50 px-3 py-2 text-sm text-primary-700",
+      attrs.hasError && "border-red-500 border-2 bg-red-500/10",
+      containerClassName,
+    )}
+  >
+    <Button
+      type="button"
+      size="xs"
+      variant="ghost"
+      className="rounded-full text-neutral-500 hover:bg-neutral-200"
+      aria-label={dragLabel}
+      data-drag-handle
+    >
+      <GripVertical className="size-4" aria-hidden />
+    </Button>
+    <a
+      {...getVideoDataAttributes(attrs)}
+      href={attrs.src}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={cn("inline-flex min-w-0 items-center gap-2 underline", linkClassName)}
+      contentEditable={false}
+    >
+      <VideoIcon className="size-4 text-primary-700" aria-hidden />
+      <span className="truncate">{attrs.src}</span>
+    </a>
+    <Button type="button" onClick={onRemove} aria-label={removeLabel} size="xs" variant="ghost">
+      <X className="size-3.5" aria-hidden />
+    </Button>
+  </div>
+);
+
+const VideoEditorView = ({ node, editor, getPos }: NodeViewProps) => {
+  const { t } = useTranslation();
+
+  const attrs = normalizeVideoEmbedAttributes(node.attrs);
+  const isPending = !attrs.src && attrs.uploadStatus !== VIDEO_UPLOAD_NODE_STATUS.FAILED;
+  const isFailed = !attrs.src && attrs.uploadStatus === VIDEO_UPLOAD_NODE_STATUS.FAILED;
+
+  if (isPending) {
+    return (
+      <NodeViewWrapper className="video-node block w-full">
+        {renderUploadCard(
+          attrs.uploadLabel ?? t("common.button.uploading"),
+          attrs.uploadErrorMessage,
+        )}
+      </NodeViewWrapper>
+    );
+  }
+
+  if (isFailed) {
+    return (
+      <NodeViewWrapper className="video-node block w-full">
+        <div className="flex w-full flex-col gap-1.5 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <span className="truncate font-medium">
+            {attrs.uploadLabel ?? t("common.button.uploading")}
+          </span>
+          <span className="text-xs">
+            {attrs.uploadErrorMessage ?? t("common.toast.somethingWentWrong")}
+          </span>
+        </div>
+      </NodeViewWrapper>
+    );
+  }
+
+  if (!attrs.src) return null;
+  const videoAttrs = attrs as VideoEmbedAttrs & { src: string };
+
+  const handleRemove = () =>
+    void removeResourceNode({
+      editor,
+      getPos,
+      nodeSize: node.nodeSize,
+    });
+
+  if (attrs.hasError) {
+    return (
+      <NodeViewWrapper className="video-node">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger className="cursor-help">
+              <VideoEditorContent
+                attrs={videoAttrs}
+                onRemove={handleRemove}
+                dragLabel={t("richText.video.ariaLabel.drag")}
+                removeLabel={t("richText.video.ariaLabel.remove")}
+                linkClassName="cursor-help"
+              />
+            </TooltipTrigger>
+            <TooltipContent>
+              <div>{t("richText.video.tooltip.bunnyMissing")}</div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </NodeViewWrapper>
+    );
+  }
+
+  return (
+    <NodeViewWrapper className="video-node">
+      <VideoEditorContent
+        attrs={videoAttrs}
+        onRemove={handleRemove}
+        dragLabel={t("richText.video.ariaLabel.drag")}
+        removeLabel={t("richText.video.ariaLabel.remove")}
+      />
+    </NodeViewWrapper>
+  );
+};
+
+const VideoViewerView = ({ node, extension }: NodeViewProps) => {
+  const attrs = normalizeVideoEmbedAttributes(node.attrs);
+  const { onVideoEnded, videoCoverageTracking } = extension.options as VideoViewerOptions;
+
+  if (!attrs.src) return null;
+
+  if (attrs.processingStatus) {
+    return (
+      <NodeViewWrapper className="video-node not-prose">
+        <VideoProcessingPlaceholder status={attrs.processingStatus} />
+      </NodeViewWrapper>
+    );
+  }
+
+  if (attrs.hasError) return null;
+
+  const trackingEnabled = Boolean(
+    videoCoverageTracking?.enabled &&
+      attrs.sourceType === "internal" &&
+      attrs.resourceEntityId &&
+      attrs.src.includes("/api/lesson/lesson-resource/"),
+  );
+
+  return (
+    <NodeViewWrapper className="video-node not-prose">
+      <Video
+        src={attrs.src}
+        provider={attrs.provider}
+        index={attrs.index}
+        onEnded={onVideoEnded}
+        coverageTracking={{
+          enabled: trackingEnabled,
+          showCoverageMarkers: trackingEnabled && videoCoverageTracking?.showCoverageMarkers,
+          lessonId: videoCoverageTracking?.lessonId,
+          resourceEntityId: attrs.resourceEntityId,
+          language: videoCoverageTracking?.language,
+          initialCoveragePercent: attrs.videoCoveragePercent ?? 0,
+          initialWatchedRanges: attrs.videoWatchedRanges,
+          initialIsWatched: attrs.videoIsWatched,
+          initialDurationSeconds: attrs.videoDurationSeconds,
+          initialBucketSizeSeconds: attrs.videoBucketSizeSeconds,
+          onSnapshotChange: videoCoverageTracking?.onSnapshotChange,
+          onVideoActivated: videoCoverageTracking?.onVideoActivated,
+        }}
+      />
+    </NodeViewWrapper>
+  );
+};
+
+const baseVideoNodeConfig: NodeConfig = {
+  name: "video",
+  group: "block",
+  atom: true,
+  selectable: true,
+  draggable: true,
+
+  addAttributes() {
+    return {
+      src: {
+        default: null,
+      },
+      sourceType: {
+        default: "external",
+      },
+      provider: {
+        default: "unknown",
+      },
+      hasError: {
+        default: false,
+      },
+      index: {
+        default: null,
+      },
+      uploadId: {
+        default: null,
+      },
+      uploadLabel: {
+        default: null,
+      },
+      uploadStatus: {
+        default: null,
+      },
+      uploadErrorMessage: {
+        default: null,
+      },
+      resourceEntityId: {
+        default: null,
+      },
+      videoCoveragePercent: {
+        default: null,
+      },
+      videoIsWatched: {
+        default: false,
+      },
+      videoWatchedRanges: {
+        default: [],
+      },
+      videoDurationSeconds: {
+        default: null,
+      },
+      videoBucketSizeSeconds: {
+        default: null,
+      },
+      processingStatus: {
+        default: null,
+        rendered: false,
+      },
+    };
+  },
+
+  parseHTML() {
+    return [
+      {
+        tag: 'div[data-node-type="video"]',
+        getAttrs: (el) => {
+          return getVideoEmbedAttrsFromElement(el as HTMLElement);
+        },
+      },
+      {
+        tag: 'a[data-node-type="video"]',
+        getAttrs: (el) => {
+          return getVideoEmbedAttrsFromElement(el as HTMLElement);
+        },
+      },
+    ];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    const {
+      src,
+      sourceType,
+      provider,
+      hasError,
+      index,
+      uploadId,
+      uploadLabel,
+      uploadStatus,
+      uploadErrorMessage,
+      resourceEntityId,
+      videoCoveragePercent,
+      videoIsWatched,
+      videoWatchedRanges,
+      videoDurationSeconds,
+      videoBucketSizeSeconds,
+      ...rest
+    } = HTMLAttributes as Record<string, unknown>;
+
+    const normalized = normalizeVideoEmbedAttributes({
+      src: getStringAttribute(src),
+      sourceType: getStringAttribute(sourceType),
+      provider: getStringAttribute(provider),
+      hasError: getBooleanAttribute(hasError),
+      index: getNumberAttribute(index),
+      ...normalizeVideoUploadNodeAttrs({
+        uploadId: getStringAttribute(uploadId),
+        uploadLabel: getStringAttribute(uploadLabel),
+        uploadStatus:
+          uploadStatus === VIDEO_UPLOAD_NODE_STATUS.UPLOADING ||
+          uploadStatus === VIDEO_UPLOAD_NODE_STATUS.FAILED
+            ? uploadStatus
+            : null,
+        uploadErrorMessage: getStringAttribute(uploadErrorMessage),
+      }),
+      resourceEntityId: getStringAttribute(resourceEntityId),
+      videoCoveragePercent: getNumberAttribute(videoCoveragePercent),
+      videoIsWatched: getBooleanAttribute(videoIsWatched),
+      videoWatchedRanges: getVideoWatchedRangesAttribute(videoWatchedRanges),
+      videoDurationSeconds: getNumberAttribute(videoDurationSeconds),
+      videoBucketSizeSeconds: getNumberAttribute(videoBucketSizeSeconds),
+    });
+
+    return ["div", mergeAttributes(getVideoDataAttributes(normalized), rest)];
+  },
+
+  addCommands() {
+    return {
+      setVideoEmbed:
+        (attrs) =>
+        ({ commands }) => {
+          const normalized = normalizeVideoEmbedAttributes(attrs);
+          if (!normalized.src) return false;
+
+          return commands.insertContent({
+            type: this.name,
+            attrs: normalized,
+          });
+        },
+    };
+  },
+};
+
+export const VideoEmbedEditor = Node.create<VideoEditorOptions>({
+  ...baseVideoNodeConfig,
+  addOptions() {
+    return {};
+  },
+  addNodeView() {
+    return ReactNodeViewRenderer(VideoEditorView);
+  },
+});
+
+export const VideoEmbedViewer = Node.create<VideoViewerOptions>({
+  ...baseVideoNodeConfig,
+  addOptions() {
+    return {
+      onVideoEnded: undefined,
+      videoCoverageTracking: undefined,
+    };
+  },
+  addNodeView() {
+    return ReactNodeViewRenderer(VideoViewerView);
+  },
+});

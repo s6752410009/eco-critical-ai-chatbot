@@ -1,0 +1,40 @@
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+
+import { useLessonsSequence } from "~/hooks/useLessonsSequence";
+import { useCourseAccessProvider } from "~/modules/Courses/context/CourseAccessProvider";
+
+import { getChaptersWithAccess } from "../../utils";
+import { CourseChapter } from "../CourseChapter";
+
+export function ChapterListOverview() {
+  const { t } = useTranslation();
+  const { course, isPreviewMode } = useCourseAccessProvider();
+
+  const { sequenceEnabled } = useLessonsSequence(course?.id);
+  const shouldEnforceSequence = sequenceEnabled && !isPreviewMode;
+
+  const chapters = useMemo(
+    () => getChaptersWithAccess(course?.chapters || [], shouldEnforceSequence),
+    [course?.chapters, shouldEnforceSequence],
+  );
+
+  return (
+    <div className="flex flex-col gap-y-4 rounded-lg bg-white px-4 py-6 md:p-8">
+      <div className="flex flex-col gap-y-1">
+        <h4 className="h6 text-neutral-950">{t("studentCourseView.header")}</h4>
+        <p className="body-base-md text-neutral-800">{t("studentCourseView.subHeader")}</p>
+      </div>
+      {chapters.map((chapter, index) => {
+        if (!chapter) return null;
+        return (
+          <CourseChapter
+            key={chapter.id}
+            chapter={chapter}
+            isLastChapter={index === chapters.length - 1}
+          />
+        );
+      })}
+    </div>
+  );
+}

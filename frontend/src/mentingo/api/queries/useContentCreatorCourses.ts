@@ -1,0 +1,63 @@
+import { useQuery } from "@tanstack/react-query";
+
+import { ApiClient } from "../api-client";
+
+import type { GetContentCreatorCoursesResponse } from "../generated-api";
+import type { SupportedLanguages } from "@repo/shared";
+
+type SearchParams = {
+  scope?: "all" | "enrolled" | "available";
+  excludeCourseId?: string;
+  /** Filter by course title only */
+  title?: string;
+  /** Filter by course description only */
+  description?: string;
+
+  language?: SupportedLanguages;
+};
+
+type QueryOptions = {
+  enabled?: boolean;
+};
+
+export const contentCreatorCoursesOptions = (
+  authorId?: string,
+  searchParams?: SearchParams,
+  canManageOwnCourses?: boolean,
+  options: QueryOptions = { enabled: true },
+) => {
+  return {
+    enabled: !!authorId && canManageOwnCourses,
+    queryKey: ["content-creator-courses", authorId, searchParams],
+    queryFn: async () => {
+      if (!authorId) {
+        throw new Error("Author ID is required");
+      }
+
+      if (!canManageOwnCourses) {
+        throw new Error("Author must be a content creator");
+      }
+
+      const response = await ApiClient.api.courseControllerGetContentCreatorCourses({
+        authorId,
+        ...(searchParams?.scope && { scope: searchParams.scope }),
+        ...(searchParams?.excludeCourseId && { excludeCourseId: searchParams.excludeCourseId }),
+        ...(searchParams?.title && { title: searchParams.title }),
+        ...(searchParams?.description && { description: searchParams.description }),
+        ...(searchParams?.language && { language: searchParams.language }),
+      });
+
+      return response.data;
+    },
+    select: (data: GetContentCreatorCoursesResponse) => data.data,
+    ...options,
+  };
+};
+
+export function useContentCreatorCourses(
+  authorId?: string,
+  searchParams?: SearchParams,
+  canManageOwnCourses?: boolean,
+) {
+  return useQuery(contentCreatorCoursesOptions(authorId, searchParams, canManageOwnCourses));
+}

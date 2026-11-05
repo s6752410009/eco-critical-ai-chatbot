@@ -59,6 +59,10 @@ try {
       capture.on("exit", (code) => resolve(code ?? 1))
     );
   }
+  if (exitCode === 0) {
+    const responsive = spawn(process.execPath, [fileURLToPath(new URL("scripts/check-classroom-responsive.mjs", root))], { cwd: fileURLToPath(root), env: { ...process.env, CLASSROOM_QA_URL: "http://127.0.0.1:3415" }, stdio: "inherit" });
+    exitCode = await new Promise((resolve) => responsive.on("exit", (code) => resolve(code ?? 1)));
+  }
 } finally {
   preview.kill("SIGTERM");
 }

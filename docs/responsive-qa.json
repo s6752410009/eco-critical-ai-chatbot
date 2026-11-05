@@ -1,0 +1,1011 @@
+{
+  "checks": [
+    {
+      "width": 320,
+      "height": 640,
+      "role": "student",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "role": "student",
+      "screen": "ห้องเรียนของฉัน",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "role": "student",
+      "screen": "บทเรียน",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "role": "student",
+      "screen": "ถาม AI",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "role": "student",
+      "screen": "ความก้าวหน้า",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "role": "teacher",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "role": "teacher",
+      "screen": "จัดการห้องเรียน",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "role": "teacher",
+      "screen": "เนื้อหาบทเรียน",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "role": "teacher",
+      "screen": "AI Knowledge Base",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "role": "teacher",
+      "screen": "คำถามนักเรียน",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "height": 640,
+      "role": "student",
+      "screen": "plastic lesson",
+      "passed": true
+    },
+    {
+      "width": 360,
+      "height": 740,
+      "role": "student",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 360,
+      "height": 740,
+      "role": "student",
+      "screen": "ห้องเรียนของฉัน",
+      "passed": true
+    },
+    {
+      "width": 360,
+      "height": 740,
+      "role": "student",
+      "screen": "บทเรียน",
+      "passed": true
+    },
+    {
+      "width": 360,
+      "height": 740,
+      "role": "student",
+      "screen": "ถาม AI",
+      "passed": true
+    },
+    {
+      "width": 360,
+      "height": 740,
+      "role": "student",
+      "screen": "ความก้าวหน้า",
+      "passed": true
+    },
+    {
+      "width": 360,
+      "height": 740,
+      "role": "teacher",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 360,
+      "height": 740,
+      "role": "teacher",
+      "screen": "จัดการห้องเรียน",
+      "passed": true
+    },
+    {
+      "width": 360,
+      "height": 740,
+      "role": "teacher",
+      "screen": "เนื้อหาบทเรียน",
+      "passed": true
+    },
+    {
+      "width": 360,
+      "height": 740,
+      "role": "teacher",
+      "screen": "AI Knowledge Base",
+      "passed": true
+    },
+    {
+      "width": 360,
+      "height": 740,
+      "role": "teacher",
+      "screen": "คำถามนักเรียน",
+      "passed": true
+    },
+    {
+      "width": 360,
+      "height": 740,
+      "role": "student",
+      "screen": "plastic lesson",
+      "passed": true
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "role": "student",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "role": "student",
+      "screen": "ห้องเรียนของฉัน",
+      "passed": true
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "role": "student",
+      "screen": "บทเรียน",
+      "passed": true
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "role": "student",
+      "screen": "ถาม AI",
+      "passed": true
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "role": "student",
+      "screen": "ความก้าวหน้า",
+      "passed": true
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "role": "teacher",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "role": "teacher",
+      "screen": "จัดการห้องเรียน",
+      "passed": true
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "role": "teacher",
+      "screen": "เนื้อหาบทเรียน",
+      "passed": true
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "role": "teacher",
+      "screen": "AI Knowledge Base",
+      "passed": true
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "role": "teacher",
+      "screen": "คำถามนักเรียน",
+      "passed": true
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "role": "student",
+      "screen": "plastic lesson",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "role": "student",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "role": "student",
+      "screen": "ห้องเรียนของฉัน",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "role": "student",
+      "screen": "บทเรียน",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "role": "student",
+      "screen": "ถาม AI",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "role": "student",
+      "screen": "ความก้าวหน้า",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "role": "teacher",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "role": "teacher",
+      "screen": "จัดการห้องเรียน",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "role": "teacher",
+      "screen": "เนื้อหาบทเรียน",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "role": "teacher",
+      "screen": "AI Knowledge Base",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "role": "teacher",
+      "screen": "คำถามนักเรียน",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "role": "student",
+      "screen": "plastic lesson",
+      "passed": true
+    },
+    {
+      "width": 414,
+      "height": 896,
+      "role": "student",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 414,
+      "height": 896,
+      "role": "student",
+      "screen": "ห้องเรียนของฉัน",
+      "passed": true
+    },
+    {
+      "width": 414,
+      "height": 896,
+      "role": "student",
+      "screen": "บทเรียน",
+      "passed": true
+    },
+    {
+      "width": 414,
+      "height": 896,
+      "role": "student",
+      "screen": "ถาม AI",
+      "passed": true
+    },
+    {
+      "width": 414,
+      "height": 896,
+      "role": "student",
+      "screen": "ความก้าวหน้า",
+      "passed": true
+    },
+    {
+      "width": 414,
+      "height": 896,
+      "role": "teacher",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 414,
+      "height": 896,
+      "role": "teacher",
+      "screen": "จัดการห้องเรียน",
+      "passed": true
+    },
+    {
+      "width": 414,
+      "height": 896,
+      "role": "teacher",
+      "screen": "เนื้อหาบทเรียน",
+      "passed": true
+    },
+    {
+      "width": 414,
+      "height": 896,
+      "role": "teacher",
+      "screen": "AI Knowledge Base",
+      "passed": true
+    },
+    {
+      "width": 414,
+      "height": 896,
+      "role": "teacher",
+      "screen": "คำถามนักเรียน",
+      "passed": true
+    },
+    {
+      "width": 414,
+      "height": 896,
+      "role": "student",
+      "screen": "plastic lesson",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "role": "student",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "role": "student",
+      "screen": "ห้องเรียนของฉัน",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "role": "student",
+      "screen": "บทเรียน",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "role": "student",
+      "screen": "ถาม AI",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "role": "student",
+      "screen": "ความก้าวหน้า",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "role": "teacher",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "role": "teacher",
+      "screen": "จัดการห้องเรียน",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "role": "teacher",
+      "screen": "เนื้อหาบทเรียน",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "role": "teacher",
+      "screen": "AI Knowledge Base",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "role": "teacher",
+      "screen": "คำถามนักเรียน",
+      "passed": true
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "role": "student",
+      "screen": "plastic lesson",
+      "passed": true
+    },
+    {
+      "width": 640,
+      "height": 360,
+      "role": "student",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 640,
+      "height": 360,
+      "role": "student",
+      "screen": "ห้องเรียนของฉัน",
+      "passed": true
+    },
+    {
+      "width": 640,
+      "height": 360,
+      "role": "student",
+      "screen": "บทเรียน",
+      "passed": true
+    },
+    {
+      "width": 640,
+      "height": 360,
+      "role": "student",
+      "screen": "ถาม AI",
+      "passed": true
+    },
+    {
+      "width": 640,
+      "height": 360,
+      "role": "student",
+      "screen": "ความก้าวหน้า",
+      "passed": true
+    },
+    {
+      "width": 640,
+      "height": 360,
+      "role": "teacher",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 640,
+      "height": 360,
+      "role": "teacher",
+      "screen": "จัดการห้องเรียน",
+      "passed": true
+    },
+    {
+      "width": 640,
+      "height": 360,
+      "role": "teacher",
+      "screen": "เนื้อหาบทเรียน",
+      "passed": true
+    },
+    {
+      "width": 640,
+      "height": 360,
+      "role": "teacher",
+      "screen": "AI Knowledge Base",
+      "passed": true
+    },
+    {
+      "width": 640,
+      "height": 360,
+      "role": "teacher",
+      "screen": "คำถามนักเรียน",
+      "passed": true
+    },
+    {
+      "width": 640,
+      "height": 360,
+      "role": "student",
+      "screen": "plastic lesson",
+      "passed": true
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "role": "student",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "role": "student",
+      "screen": "ห้องเรียนของฉัน",
+      "passed": true
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "role": "student",
+      "screen": "บทเรียน",
+      "passed": true
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "role": "student",
+      "screen": "ถาม AI",
+      "passed": true
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "role": "student",
+      "screen": "ความก้าวหน้า",
+      "passed": true
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "role": "teacher",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "role": "teacher",
+      "screen": "จัดการห้องเรียน",
+      "passed": true
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "role": "teacher",
+      "screen": "เนื้อหาบทเรียน",
+      "passed": true
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "role": "teacher",
+      "screen": "AI Knowledge Base",
+      "passed": true
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "role": "teacher",
+      "screen": "คำถามนักเรียน",
+      "passed": true
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "role": "student",
+      "screen": "plastic lesson",
+      "passed": true
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "role": "student",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "role": "student",
+      "screen": "ห้องเรียนของฉัน",
+      "passed": true
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "role": "student",
+      "screen": "บทเรียน",
+      "passed": true
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "role": "student",
+      "screen": "ถาม AI",
+      "passed": true
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "role": "student",
+      "screen": "ความก้าวหน้า",
+      "passed": true
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "role": "teacher",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "role": "teacher",
+      "screen": "จัดการห้องเรียน",
+      "passed": true
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "role": "teacher",
+      "screen": "เนื้อหาบทเรียน",
+      "passed": true
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "role": "teacher",
+      "screen": "AI Knowledge Base",
+      "passed": true
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "role": "teacher",
+      "screen": "คำถามนักเรียน",
+      "passed": true
+    },
+    {
+      "width": 820,
+      "height": 1180,
+      "role": "student",
+      "screen": "plastic lesson",
+      "passed": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "role": "student",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "role": "student",
+      "screen": "ห้องเรียนของฉัน",
+      "passed": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "role": "student",
+      "screen": "บทเรียน",
+      "passed": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "role": "student",
+      "screen": "ถาม AI",
+      "passed": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "role": "student",
+      "screen": "ความก้าวหน้า",
+      "passed": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "role": "teacher",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "role": "teacher",
+      "screen": "จัดการห้องเรียน",
+      "passed": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "role": "teacher",
+      "screen": "เนื้อหาบทเรียน",
+      "passed": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "role": "teacher",
+      "screen": "AI Knowledge Base",
+      "passed": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "role": "teacher",
+      "screen": "คำถามนักเรียน",
+      "passed": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "role": "student",
+      "screen": "plastic lesson",
+      "passed": true
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "role": "student",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "role": "student",
+      "screen": "ห้องเรียนของฉัน",
+      "passed": true
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "role": "student",
+      "screen": "บทเรียน",
+      "passed": true
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "role": "student",
+      "screen": "ถาม AI",
+      "passed": true
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "role": "student",
+      "screen": "ความก้าวหน้า",
+      "passed": true
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "role": "teacher",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "role": "teacher",
+      "screen": "จัดการห้องเรียน",
+      "passed": true
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "role": "teacher",
+      "screen": "เนื้อหาบทเรียน",
+      "passed": true
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "role": "teacher",
+      "screen": "AI Knowledge Base",
+      "passed": true
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "role": "teacher",
+      "screen": "คำถามนักเรียน",
+      "passed": true
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "role": "student",
+      "screen": "plastic lesson",
+      "passed": true
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "role": "student",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "role": "student",
+      "screen": "ห้องเรียนของฉัน",
+      "passed": true
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "role": "student",
+      "screen": "บทเรียน",
+      "passed": true
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "role": "student",
+      "screen": "ถาม AI",
+      "passed": true
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "role": "student",
+      "screen": "ความก้าวหน้า",
+      "passed": true
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "role": "teacher",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "role": "teacher",
+      "screen": "จัดการห้องเรียน",
+      "passed": true
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "role": "teacher",
+      "screen": "เนื้อหาบทเรียน",
+      "passed": true
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "role": "teacher",
+      "screen": "AI Knowledge Base",
+      "passed": true
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "role": "teacher",
+      "screen": "คำถามนักเรียน",
+      "passed": true
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "role": "student",
+      "screen": "plastic lesson",
+      "passed": true
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "role": "student",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "role": "student",
+      "screen": "ห้องเรียนของฉัน",
+      "passed": true
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "role": "student",
+      "screen": "บทเรียน",
+      "passed": true
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "role": "student",
+      "screen": "ถาม AI",
+      "passed": true
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "role": "student",
+      "screen": "ความก้าวหน้า",
+      "passed": true
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "role": "teacher",
+      "screen": "ภาพรวม",
+      "passed": true
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "role": "teacher",
+      "screen": "จัดการห้องเรียน",
+      "passed": true
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "role": "teacher",
+      "screen": "เนื้อหาบทเรียน",
+      "passed": true
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "role": "teacher",
+      "screen": "AI Knowledge Base",
+      "passed": true
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "role": "teacher",
+      "screen": "คำถามนักเรียน",
+      "passed": true
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "role": "student",
+      "screen": "plastic lesson",
+      "passed": true
+    },
+    {
+      "motion": "eco-native-arrive",
+      "reduced": "none",
+      "passed": true
+    }
+  ],
+  "browserErrors": []
+}

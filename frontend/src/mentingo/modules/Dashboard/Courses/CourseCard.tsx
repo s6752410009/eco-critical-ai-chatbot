@@ -1,0 +1,145 @@
+import { Link, useLocation } from "@remix-run/react";
+import { PERMISSIONS } from "@repo/shared";
+import { formatDate } from "date-fns";
+import { useTranslation } from "react-i18next";
+
+import DefaultPhotoCourse from "~/assets/svgs/default-photo-course.svg";
+import { CardBadge } from "~/components/CardBadge";
+import CourseProgress from "~/components/CourseProgress";
+import { Icon } from "~/components/Icon";
+import { CourseDescriptionSummary } from "~/components/RichText/CourseDescriptionSummary";
+import { CategoryChip } from "~/components/ui/CategoryChip";
+import { UserAvatar } from "~/components/UserProfile/UserAvatar";
+import { usePermissions } from "~/hooks/usePermissions";
+import { cn } from "~/lib/utils";
+import CourseCardButton from "~/modules/Dashboard/Courses/CourseCardButton";
+
+import { CourseCardTitle } from "./CourseCardTitle";
+
+import type { GetAvailableCoursesResponse } from "~/api/generated-api";
+
+export type CourseCardProps = GetAvailableCoursesResponse["data"][number] & { slug?: string };
+
+const CourseCard = ({
+  author,
+  authorEmail = "",
+  authorAvatarUrl,
+  category,
+  completedChapterCount,
+  repetitionCompletedChapterCount,
+  courseChapterCount,
+  currency,
+  description,
+  enrolled = false,
+  hasFreeChapters,
+  id,
+  thumbnailUrl,
+  priceInCents,
+  title,
+  dueDate,
+  slug,
+}: CourseCardProps) => {
+  const { pathname } = useLocation();
+  const { t } = useTranslation();
+  const isScormCreatePage = pathname.includes("/admin/courses/new-scorm");
+
+  const { hasAccess: canManageCourses } = usePermissions({ required: PERMISSIONS.COURSE_UPDATE });
+
+  return (
+    <Link
+      data-testid={title}
+      to={isScormCreatePage ? "#" : `/course/${slug || id}`}
+      className={cn(
+        "flex h-auto w-full max-w-[320px] flex-col overflow-hidden rounded-lg border bg-white transition hover:shadow-primary lg:bg-none",
+        {
+          "border-secondary-200 hover:border-secondary-500": enrolled,
+          "border-primary-200 hover:border-primary-500": !enrolled,
+        },
+      )}
+    >
+      <div className="relative">
+        <img
+          src={thumbnailUrl || DefaultPhotoCourse}
+          alt="Course"
+          loading="eager"
+          decoding="async"
+          className="aspect-video w-full rounded-t-lg object-cover"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = DefaultPhotoCourse;
+          }}
+        />
+        <div className="absolute left-4 right-4 top-4 flex flex-col gap-y-1">
+          <CategoryChip
+            category={category}
+            color={cn({
+              "text-secondary-600": enrolled,
+              "text-primary-700": canManageCourses || !enrolled,
+            })}
+          />
+          {hasFreeChapters && !enrolled && (
+            <CardBadge variant="successFilled">
+              <Icon name="FreeRight" className="w-4" />
+              {t("studentCoursesView.other.freeLessons")}
+            </CardBadge>
+          )}
+          {dueDate && (
+            <CategoryChip
+              category={t("common.other.dueDate", { date: formatDate(dueDate, "dd.MM.yyyy") })}
+              color="text-warning-600"
+              className="bg-warning-50"
+              textClassName="text-zest-900"
+            />
+          )}
+        </div>
+      </div>
+      <div className={cn("flex flex-grow flex-col p-4")}>
+        <div className="flex flex-grow flex-col">
+          {enrolled && (
+            <CourseProgress
+              label="Course progress:"
+              courseLessonCount={courseChapterCount}
+              completedLessonCount={completedChapterCount}
+            />
+          )}
+          {enrolled && repetitionCompletedChapterCount != null && (
+            <p className="mt-1 text-sm text-neutral-700">
+              {t("courseRepetition.progress", {
+                completed: repetitionCompletedChapterCount,
+                total: courseChapterCount,
+              })}
+            </p>
+          )}
+          <div className={cn({ "mt-3": enrolled })}>
+            <CourseCardTitle title={title} />
+          </div>
+          {authorEmail && (
+            <div className="mb-2 mt-2 flex items-center gap-x-1.5">
+              <UserAvatar
+                className="size-4"
+                userName={author}
+                profilePictureUrl={authorAvatarUrl}
+              />
+              <span className="text-neutral-950">{author}</span>
+            </div>
+          )}
+          <div className="flex-grow text-sm text-neutral-500">
+            <span className="line-clamp-3">
+              <CourseDescriptionSummary content={description ?? ""} />
+            </span>
+          </div>
+        </div>
+        <div className="mt-4">
+          <CourseCardButton
+            currency={currency}
+            enrolled={enrolled}
+            canManageCourses={canManageCourses}
+            priceInCents={priceInCents}
+            isScormCreatePage={isScormCreatePage}
+          />
+        </div>
+      </div>
+    </Link>
+  );
+};
+
+export default CourseCard;

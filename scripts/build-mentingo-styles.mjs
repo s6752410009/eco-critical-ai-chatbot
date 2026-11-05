@@ -1,0 +1,15 @@
+import {readFile,writeFile} from "node:fs/promises";
+import {createRequire} from "node:module";
+import {fileURLToPath} from "node:url";
+const require=createRequire(new URL("../frontend/package.json",import.meta.url));
+const postcss=require("postcss");const tailwind=require("tailwindcss");const autoprefixer=require("autoprefixer");const loadConfig=require("tailwindcss/loadConfig");
+const root=new URL("../frontend/",import.meta.url);
+const config=loadConfig(fileURLToPath(new URL("mentingo.tailwind.config.ts",root)));
+config.content=[fileURLToPath(new URL("src/mentingo/**/*.{ts,tsx}",root)),fileURLToPath(new URL("src/mentingo-bridge/**/*.{js,jsx,ts,tsx}",root))];
+config.corePlugins={preflight:false};config.important=".mentingo-root";
+const original=await readFile(new URL("src/mentingo/index.css",root),"utf8");
+const source=original.replace(/^@import.*$/gm,"")+"\n"+await readFile(new URL("src/mentingo/styles/overrides.css",root),"utf8");
+const result=await postcss([tailwind(config),autoprefixer]).process(source,{from:fileURLToPath(new URL("src/mentingo/index.css",root))});
+result.root.walkRules(rule=>{if(rule.parent?.type==="atrule" && /keyframes/.test(rule.parent.name))return;rule.selectors=rule.selectors.map(selector=>{if(selector.includes(".mentingo-root"))return selector;if(selector===":root"||selector==="html"||selector==="body")return ".mentingo-root";return `.mentingo-root ${selector}`;});});
+await writeFile(new URL("src/mentingo-native.css",root),result.root.toString());
+console.log("Built scoped styles from original Mentingo design system");

@@ -13,13 +13,13 @@ async function nav(label){await page.locator(".learning-sidebar").getByRole("but
 async function ask(question){const chat=page.locator(".eco-chat").first();await chat.getByRole("textbox",{name:"คำถามถึง Eco AI"}).fill(question);await chat.getByRole("button",{name:"ส่งคำถาม",exact:true}).click();await expect(chat.locator(".chat-loading")).toHaveCount(0);return chat;}
 try{
   await page.goto(url+"/demo");
-  await expect(page.getByRole("heading",{name:/สวัสดี, นักเรียน/})).toBeVisible();await page.evaluate(()=>document.fonts.ready);
+  await expect(page.locator(".native-catalog-view .group\\/hero h1")).toBeVisible();await page.evaluate(()=>document.fonts.ready);
   await check("student dashboard has four visual modules, clear demo role and working classroom selection",async()=>{
-    await expect(page.locator(".topic-card")).toHaveCount(4);await expect(page.getByLabel("ห้องเรียนที่ใช้งาน").locator("option")).toHaveCount(2);
+    await expect(page.locator('[data-testid="modern-course-card-link"]')).toHaveCount(4);await expect(page.getByLabel("ห้องเรียนที่ใช้งาน").locator("option")).toHaveCount(2);
     await page.screenshot({path:new URL("desktop.png",out).pathname,fullPage:true});
   });
   await check("suggested question prepares chat, local retrieval and clickable source details work",async()=>{
-    await page.locator(".dashboard-tutor .suggested-questions").getByRole("button",{name:/PM2.5/}).click();
+    await nav("ถาม AI");await page.locator(".suggested-questions").getByRole("button",{name:/PM2.5/}).click();
     await expect(page.getByRole("textbox",{name:"คำถามถึง Eco AI"})).toHaveValue("PM2.5 ส่งผลต่อร่างกายอย่างไร?");
     const chat=await ask("PM2.5 ส่งผลต่อร่างกายอย่างไร?");
     await expect(chat.locator(".chat-message.assistant")).toContainText("PM2.5");
@@ -30,25 +30,25 @@ try{
     await ask("สมการควอนตัม");await expect(chat.locator(".chat-message.assistant").last()).toContainText("ยังไม่พบข้อมูลที่เพียงพอ");
   });
   await check("visual air lesson, interactive PM2.5 slider, quiz explanations and progress persistence",async()=>{
-    await nav("บทเรียน");await page.locator(".topic-card.green").getByRole("button",{name:"เริ่มเรียน"}).click();
-    await expect(page.getByRole("heading",{name:"มลพิษทางอากาศกับชีวิตของเรา",exact:true})).toBeVisible();
+    await nav("บทเรียน");await page.locator('[data-testid="modern-course-card-link"][href*="lesson=air-1"]').click();
+    await expect(page.getByRole("heading",{name:"มลพิษทางอากาศกับชีวิตของเรา",exact:true,level:1})).toBeVisible();
     await page.getByRole("slider").fill("85");await expect(page.locator(".pm-value strong")).toHaveText("85");
     await expect(page.locator(".pm-explorer")).toContainText("ไม่ใช่ข้อมูลเซนเซอร์สด");
     await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({path:new URL("air-lesson.png",out).pathname,fullPage:true});
     const questions=page.locator(".quiz-question");await questions.nth(0).locator(".quiz-options button").nth(1).click();await questions.nth(1).locator(".quiz-options button").nth(2).click();
     await expect(page.locator(".quiz-explanation")).toHaveCount(2);await page.getByRole("button",{name:"บันทึกผลและจบบทเรียน"}).click();
-    await page.reload();await expect(page.locator(".visual-lesson h1")).toHaveText("มลพิษทางอากาศกับชีวิตของเรา");
+    await page.reload();await expect(page.getByRole("heading",{level:1,name:"มลพิษทางอากาศกับชีวิตของเรา",exact:true})).toHaveText("มลพิษทางอากาศกับชีวิตของเรา");
     await nav("ความก้าวหน้า");await expect(page.locator(".progress-lessons article").first()).toContainText("100%");
   });
   await check("water lesson expands causal explanations and has a complete knowledge check",async()=>{
-    await nav("บทเรียน");await page.locator(".topic-card.blue").getByRole("button",{name:"เริ่มเรียน"}).click();
+    await nav("บทเรียน");await page.locator('[data-testid="modern-course-card-link"][href*="lesson=water-1"]').click();
     await page.locator(".water-chain details").first().locator("summary").click();await expect(page.locator(".water-chain details").first().locator("p")).toBeVisible();
     const questions=page.locator(".quiz-question");await questions.nth(0).locator(".quiz-options button").nth(1).click();await questions.nth(1).locator(".quiz-options button").nth(0).click();await page.getByRole("button",{name:"บันทึกผลและจบบทเรียน"}).click();
   });
   await check("waste sorting gives immediate correct and incorrect feedback",async()=>{
-    await nav("บทเรียน");await page.locator(".topic-card.teal").getByRole("button",{name:"เริ่มเรียน"}).click();
+    await nav("บทเรียน");await page.locator('[data-testid="modern-course-card-link"][href*="lesson=plastic-1"]').click();
     const activity=page.locator(".waste-activity");await activity.getByRole("button",{name:"อันตราย",exact:true}).click();await expect(activity).toContainText("ลองอีกครั้ง");
-    await activity.getByRole("button",{name:"รีไซเคิล",exact:true}).click();await activity.locator(".item-selector button").nth(1).click();await activity.getByRole("button",{name:"อินทรีย์",exact:true}).click();await activity.locator(".item-selector button").nth(2).click();await activity.getByRole("button",{name:"อันตราย",exact:true}).click();await expect(activity).toContainText("สำเร็จ 3/3");
+    await activity.getByRole("button",{name:"รีไซเคิล",exact:true}).click();await activity.locator(".item-selector button").nth(1).click();await activity.getByRole("button",{name:"อินทรีย์",exact:true}).click();await activity.locator(".item-selector button").nth(2).click();await activity.getByRole("button",{name:"อันตราย",exact:true}).click();await expect(activity).toContainText("สำเร็จ 3/3");await nav("ภาพรวม");await expect(page.locator(".native-catalog-view h1")).toHaveText("พลาสติกไม่ได้หายไปไหน");
   });
   let newClass;
   await check("teacher creates and edits classroom, adds lesson, uploads and previews a real text document",async()=>{

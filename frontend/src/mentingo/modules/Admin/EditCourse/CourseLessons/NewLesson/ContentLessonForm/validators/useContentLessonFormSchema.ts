@@ -1,0 +1,25 @@
+import { z } from "zod";
+
+import { LessonType } from "~/modules/Admin/EditCourse/EditCourse.types";
+
+import type i18next from "i18next";
+
+export const contentLessonFormSchema = (t: typeof i18next.t) =>
+  z.object({
+    title: z
+      .string()
+      .min(1, { message: t("adminCourseView.curriculum.lesson.validation.titleRequired") }),
+    description: z
+      .string()
+      .min(1, { message: t("adminCourseView.curriculum.lesson.validation.descriptionRequired") })
+      .max(20_000, {
+        message: t("adminCourseView.curriculum.lesson.validation.descriptionMaxLength"),
+      })
+      .trim()
+      .refine((val) => val !== "<p></p>" && val.trim() !== "", {
+        message: t("adminCourseView.curriculum.lesson.validation.descriptionRequired"),
+      }),
+    type: z.literal(LessonType.CONTENT),
+  });
+
+export type ContentLessonFormValues = z.infer<ReturnType<typeof contentLessonFormSchema>>;

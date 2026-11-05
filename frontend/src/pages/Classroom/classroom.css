@@ -10,7 +10,7 @@
   --surface: #fdfefb;
   --line: #dce8df;
   --ink: #20382e;
-  --muted: #566c5d;
+  --eco-muted: #566c5d;
   --space-sm: 8px;
   --space-md: 16px;
   --space-lg: 24px;
@@ -129,12 +129,12 @@
 }
 .product-brand small {
   display: block;
-  color: var(--muted);
+  color: var(--eco-muted);
   font-size: 12px;
   letter-spacing: 1px;
 }
 .workspace-label {
-  color: var(--muted);
+  color: var(--eco-muted);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 1px;
@@ -157,7 +157,7 @@
   text-align: left;
   min-height: 44px;
   font-size: 14px;
-  color: var(--muted);
+  color: var(--eco-muted);
 }
 .learning-sidebar nav button:hover {
   background: var(--mint);
@@ -197,7 +197,7 @@
 }
 .demo-note span {
   font-size: 11px;
-  color: var(--muted);
+  color: var(--eco-muted);
   display: block;
   margin-top: 3px;
 }
@@ -209,7 +209,7 @@
   min-height: 44px;
   border: 0;
   background: transparent;
-  color: var(--muted);
+  color: var(--eco-muted);
   font-size: 14px;
   padding: 8px 12px;
   text-align: left;
@@ -239,7 +239,7 @@
 .workspace-user small {
   display: block;
   font-size: 11px;
-  color: var(--muted);
+  color: var(--eco-muted);
 }
 .learning-workspace {
   flex: 1;
@@ -260,7 +260,7 @@
   align-items: center;
   gap: 12px;
   font-size: 13px;
-  color: var(--muted);
+  color: var(--eco-muted);
   min-width: 0;
 }
 .breadcrumbs button {
@@ -301,7 +301,7 @@
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: var(--muted);
+  color: var(--eco-muted);
 }
 .role-switch select {
   background: var(--surface);
@@ -324,7 +324,7 @@
   gap: 10px;
   margin-bottom: 24px;
   font-size: 12px;
-  color: var(--muted);
+  color: var(--eco-muted);
   min-width: 0;
 }
 .classroom-context select {
@@ -363,7 +363,7 @@
 }
 .student-welcome p {
   font-size: 14px;
-  color: var(--muted);
+  color: var(--eco-muted);
 }
 .student-welcome > div:last-child {
   display: flex;
@@ -407,7 +407,7 @@
   border: 0;
   border-radius: 5px;
   background: transparent;
-  color: var(--muted);
+  color: var(--eco-muted);
   padding: 8px;
 }
 .icon-button:hover {
@@ -425,7 +425,7 @@
   background: transparent;
   border: 0;
   min-height: 40px;
-  color: var(--muted);
+  color: var(--eco-muted);
   padding: 0;
   font-size: 14px;
 }
@@ -454,7 +454,7 @@
   font-weight: 600;
 }
 .section-heading > span {
-  color: var(--muted);
+  color: var(--eco-muted);
   font-size: 13px;
 }
 .topic-grid {
@@ -538,10 +538,10 @@
 .lesson-count {
   font-size: 12px;
   white-space: nowrap;
-  color: var(--muted);
+  color: var(--eco-muted);
 }
 .topic-card-content > p {
-  color: var(--muted);
+  color: var(--eco-muted);
   font-size: 14px;
   margin-top: 6px;
 }
@@ -566,7 +566,7 @@
 }
 .topic-progress > span {
   font-size: 11px;
-  color: var(--muted);
+  color: var(--eco-muted);
   min-width: 28px;
   text-align: right;
 }
@@ -612,7 +612,7 @@
 }
 .continue-card p {
   font-size: 13px;
-  color: var(--muted);
+  color: var(--eco-muted);
   margin-top: 3px;
 }
 .ask-entry {
@@ -680,7 +680,7 @@
   margin: 4px 0 8px;
 }
 .page-heading p {
-  color: var(--muted);
+  color: var(--eco-muted);
   font-size: 14px;
 }
 .classroom-grid {
@@ -711,13 +711,13 @@
   border-radius: 8px;
 }
 .classroom-card p {
-  color: var(--muted);
+  color: var(--eco-muted);
   font-size: 14px;
   flex: 1;
 }
 .classroom-meta {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--eco-muted);
   padding: 4px 0;
 }
 .lesson-search {
@@ -730,7 +730,7 @@
   padding: 0 12px;
   max-width: 360px;
   margin-bottom: 24px;
-  color: var(--muted);
+  color: var(--eco-muted);
 }
 .lesson-search input {
   border: 0;
@@ -765,7 +765,7 @@
 }
 .lesson-results p {
   font-size: 14px;
-  color: var(--muted);
+  color: var(--eco-muted);
   margin-top: 4px;
 }
 .lesson-toolbar {
@@ -776,7 +776,7 @@
 }
 .lesson-toolbar > span {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--eco-muted);
   margin-left: auto;
 }
 .lesson-layout {
@@ -799,7 +799,7 @@
 }
 .lesson-description {
   font-size: 15px;
-  color: var(--muted);
+  color: var(--eco-muted);
   line-height: 1.9;
   margin-top: 12px !important;
 }
@@ -849,7 +849,7 @@
 }
 .concept-steps p {
   font-size: 14px;
-  color: var(--muted);
+  color: var(--eco-muted);
   line-height: 1.8;
 }
 .activity {
@@ -865,7 +865,7 @@
 }
 .activity > small {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--eco-muted);
   display: block;
   line-height: 1.8;
   margin-top: 16px;
@@ -920,7 +920,7 @@
   display: flex;
   justify-content: space-between;
   font-size: 12px;
-  color: var(--muted);
+  color: var(--eco-muted);
 }
 .activity-feedback {
   padding: 16px;
@@ -947,7 +947,7 @@
 .critical-question p {
   padding-top: 16px;
   font-size: 14px;
-  color: var(--muted);
+  color: var(--eco-muted);
 }
 .critical-question[open] summary svg {
   transform: rotate(90deg);
@@ -1043,7 +1043,7 @@
 }
 .quiz-result p {
   font-size: 13px;
-  color: var(--muted);
+  color: var(--eco-muted);
 }
 .lesson-reference {
   display: flex;
@@ -1052,7 +1052,7 @@
   border-top: 1px solid var(--line);
   padding-top: 20px;
   font-size: 12px;
-  color: var(--muted);
+  color: var(--eco-muted);
 }
 .lesson-reference a {
   display: flex;
@@ -1079,7 +1079,7 @@
   border: 1px solid var(--line);
   border-radius: 5px;
   background: var(--surface);
-  color: var(--muted);
+  color: var(--eco-muted);
   min-width: 40px;
   min-height: 40px;
   font-size: 13px;
@@ -1189,7 +1189,7 @@
 }
 .water-chain details p {
   font-size: 14px;
-  color: var(--muted);
+  color: var(--eco-muted);
   padding-top: 12px;
 }
 .eco-chat {
@@ -1215,7 +1215,7 @@
 }
 .chat-heading p {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--eco-muted);
 }
 .chat-mode {
   margin-left: auto;
@@ -1258,7 +1258,7 @@
 .chat-empty {
   padding: 28px 8px;
   text-align: center;
-  color: var(--muted);
+  color: var(--eco-muted);
 }
 .chat-empty > svg {
   margin: 0 auto 16px;
@@ -1306,7 +1306,7 @@
 }
 .message-author {
   font-size: 11px;
-  color: var(--muted);
+  color: var(--eco-muted);
   margin-bottom: 7px;
 }
 .message-text {
@@ -1336,7 +1336,7 @@
 }
 .message-sources > small {
   font-size: 11px;
-  color: var(--muted);
+  color: var(--eco-muted);
 }
 .message-sources button {
   display: flex;
@@ -1369,7 +1369,7 @@
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: var(--muted);
+  color: var(--eco-muted);
   padding: 8px 0 16px;
 }
 .chat-composer {
@@ -1409,7 +1409,7 @@
   align-items: center;
   gap: 6px;
   font-size: 10px;
-  color: var(--muted);
+  color: var(--eco-muted);
 }
 .send-button {
   display: grid;
@@ -1425,7 +1425,7 @@
   background: var(--deep);
 }
 .chat-disclosure {
-  color: var(--muted);
+  color: var(--eco-muted);
   font-size: 10px;
   text-align: center;
   padding: 10px 12px !important;
@@ -1505,7 +1505,7 @@
 }
 .sources-panel > p {
   font-size: 13px;
-  color: var(--muted);
+  color: var(--eco-muted);
   margin-bottom: 20px;
 }
 .sources-panel details {
@@ -1527,7 +1527,7 @@
 .sources-panel summary small {
   font-size: 10px;
   display: block;
-  color: var(--muted);
+  color: var(--eco-muted);
   margin-top: 3px;
 }
 .source-file-icon {
@@ -1540,12 +1540,12 @@
   margin-top: 12px;
   max-height: 280px;
   overflow: auto;
-  color: var(--muted);
+  color: var(--eco-muted);
 }
 .source-footnote {
   display: block;
   font-size: 11px;
-  color: var(--muted);
+  color: var(--eco-muted);
   padding-top: 20px;
   border-top: 1px solid var(--line);
   margin-top: 12px;
@@ -1582,7 +1582,7 @@
   height: 40px;
   border: 1px solid var(--line);
   border-radius: 50%;
-  color: var(--muted);
+  color: var(--eco-muted);
 }
 .completion-circle.completed {
   background: var(--mint);
@@ -1642,11 +1642,11 @@
 }
 .teacher-lesson-list article small {
   font-size: 11px;
-  color: var(--muted);
+  color: var(--eco-muted);
 }
 .teacher-lesson-list article p {
   font-size: 13px;
-  color: var(--muted);
+  color: var(--eco-muted);
   margin-top: 4px;
 }
 .topic-dot {
@@ -1685,7 +1685,7 @@
 }
 .upload-workspace p {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--eco-muted);
   margin-top: 6px;
 }
 .upload-button {
@@ -1741,7 +1741,7 @@
 }
 .knowledge-list p {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--eco-muted);
   margin-top: 3px;
 }
 .document-status {
@@ -1785,7 +1785,7 @@
 .student-question > span,
 .student-question > small {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--eco-muted);
 }
 .student-question h3 {
   font-size: 16px;
@@ -1849,7 +1849,7 @@
   padding: 40px 24px;
   border: 1px dashed var(--line);
   border-radius: 8px;
-  color: var(--muted);
+  color: var(--eco-muted);
   font-size: 14px;
   text-align: center;
   margin-top: 20px !important;
@@ -1870,7 +1870,7 @@
 }
 .app-guide p {
   font-size: 15px;
-  color: var(--muted);
+  color: var(--eco-muted);
   line-height: 1.9;
 }
 .app-guide > .button {
@@ -2392,7 +2392,7 @@
     border: 0;
     background: transparent;
     border-radius: 5px;
-    color: var(--muted);
+    color: var(--eco-muted);
     min-height: 52px;
     font-size: 10.5px;
     line-height: 1.4;
@@ -2471,7 +2471,7 @@
   margin: 8vh auto;
 }
 .live-setup p {
-  color: var(--muted);
+  color: var(--eco-muted);
   font-size: 16px;
   line-height: 1.9;
 }

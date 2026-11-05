@@ -1,0 +1,316 @@
+import { useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+import { useMarkLessonAsCompleted } from "~/api/mutations";
+import { useCurrentUser } from "~/api/queries";
+import { getCourseQueryKey } from "~/api/queries/useCourse";
+import { Icon } from "~/components/Icon";
+import { Button } from "~/components/ui/button";
+import { pauseAllLessonVideos, resumeLessonVideo } from "~/components/VideoPlayer/Video";
+import { useLessonsSequence } from "~/hooks/useLessonsSequence";
+import { LessonType } from "~/modules/Admin/EditCourse/EditCourse.types";
+import { useCourseAccessProvider } from "~/modules/Courses/context/CourseAccessProvider";
+import { useLanguageStore } from "~/modules/Dashboard/Settings/Language/LanguageStore";
+
+import { LEARNING_HANDLES } from "../../../../e2e/data/learning/handles";
+
+import { LessonContentRenderer } from "./LessonContentRenderer";
+import { LessonVideoProgressStrip } from "./LessonVideoProgressStrip";
+import { createLessonVideoProgressStore } from "./LessonVideoProgressStrip.utils";
+import { RequiredVideoLeaveGuard } from "./RequiredVideoLeaveGuard";
+import { isNextBlocked, isPreviousBlocked } from "./utils";
+
+import type { GetCourseResponse, GetLessonByIdResponse } from "~/api/generated-api";
+import type { LessonPreviewUser } from "~/modules/Courses/Lesson/types";
+
+type LessonContentProps = {
+  lesson: GetLessonByIdResponse["data"];
+  course: GetCourseResponse["data"];
+  previewUser?: LessonPreviewUser;
+  hideControls?: boolean;
+  handlePrevious: () => void;
+  handleNext: () => void;
+  isFirstLesson: boolean;
+  isLastLesson: boolean;
+  lessonLoading: boolean;
+};
+
+export const LessonContent = ({
+  lesson,
+  course,
+  previewUser,
+  hideControls = false,
+  handlePrevious,
+  handleNext,
+  isFirstLesson,
+  lessonLoading,
+  isLastLesson,
+}: LessonContentProps) => {
+  const { isEffectiveStudentExperience, isPreviewMode } = useCourseAccessProvider();
+
+  const [isPreviousDisabled, setIsPreviousDisabled] = useState(false);
+  const [isNextDisabled, setIsNextDisabled] = useState(false);
+
+  const { language } = useLanguageStore();
+
+  const { data: user } = useCurrentUser();
+  const { mutate: markLessonAsCompleted } = useMarkLessonAsCompleted(user?.id || "");
+  const { sequenceEnabled } = useLessonsSequence(course.id);
+  const videoProgressPersistenceEnabled = Boolean(
+    lesson.hasTrackedVideo && isEffectiveStudentExperience && !isPreviewMode,
+  );
+  const videoCompletionTrackingEnabled = Boolean(lesson.videoCompletionTrackingEnabled);
+  const shouldUseCoverageCompletion =
+    videoProgressPersistenceEnabled && videoCompletionTrackingEnabled;
+  const videoProgressStore = useMemo(() => createLessonVideoProgressStore(), []);
+  const videoCoverageTracking = useMemo(
+    () => ({
+      enabled: videoProgressPersistenceEnabled,
+      showCoverageMarkers: videoProgressPersistenceEnabled && videoCompletionTrackingEnabled,
+      lessonId: lesson.id,
+      learningStateId: lesson.learningStateId,
+      language,
+      onVideoActivated: videoProgressStore.getState().markVideoActivated,
+      onSnapshotChange: videoProgressStore.getState().publishSnapshot,
+    }),
+    [
+      language,
+      lesson.id,
+      lesson.learningStateId,
+      videoCompletionTrackingEnabled,
+      videoProgressPersistenceEnabled,
+      videoProgressStore,
+    ],
+  );
+
+  const currentChapterIndex = course.chapters.findIndex((chapter) =>
+    chapter.lessons.some(({ id }) => id === lesson.id),
+  );
+  const currentLessonIndex = course.chapters[currentChapterIndex]?.lessons.findIndex(
+    ({ id }) => id === lesson.id,
+  );
+  const nextLessonIndex = currentLessonIndex + 1;
+  const currentChapter = course.chapters[currentChapterIndex];
+  const nextChapter = course.chapters[currentChapterIndex + 1];
+  const prevChapter = course.chapters[currentChapterIndex - 1];
+  const totalLessons = currentChapter.lessons.length;
+  const queryClient = useQueryClient();
+
+  const canAccessLesson = useCallback(
+    (courseData: GetCourseResponse["data"], targetLessonId: string) => {
+      if (!sequenceEnabled) {
+        return true;
+      }
+
+      const allLessons =
+        courseData.chapters.flatMap((c) => c.lessons?.map((l) => ({ ...l })) ?? []) ?? [];
+
+      const targetIndex = allLessons.findIndex((l) => l.id === targetLessonId);
+      if (targetIndex === -1) return true;
+
+      const target = allLessons[targetIndex];
+      if (target.status === "completed") return true;
+
+      const priorLessons = allLessons.slice(0, Math.max(targetIndex, 0));
+      return priorLessons.every((l) => l.status === "completed");
+    },
+    [sequenceEnabled],
+  );
+
+  useEffect(() => {
+    if (isPreviewMode) return;
+
+    const nextLessonId =
+      currentChapter?.lessons?.[nextLessonIndex]?.id ?? nextChapter?.lessons?.[0]?.id;
+    const cannotEnterNextLesson = nextLessonId ? !canAccessLesson(course, nextLessonId) : false;
+
+    setIsNextDisabled(
+      isNextBlocked(
+        currentLessonIndex,
+        totalLessons,
+        nextChapter?.isFreemium ?? false,
+        course.enrolled ?? false,
+        cannotEnterNextLesson,
+      ),
+    );
+
+    setIsPreviousDisabled(
+      isPreviousBlocked(
+        currentLessonIndex,
+        prevChapter?.isFreemium ?? false,
+        course.enrolled ?? false,
+      ),
+    );
+
+    queryClient.invalidateQueries({ queryKey: getCourseQueryKey(course.id) });
+  }, [
+    lesson.type,
+    lesson.lessonCompleted,
+    currentLessonIndex,
+    currentChapter.lessons,
+    totalLessons,
+    nextChapter,
+    prevChapter,
+    course.enrolled,
+    isPreviewMode,
+    queryClient,
+    course.id,
+    nextLessonIndex,
+    canAccessLesson,
+    course,
+  ]);
+
+  useEffect(() => {
+    if (isPreviewMode) return;
+
+    if (
+      (lesson.type === LessonType.CONTENT || lesson.type === LessonType.EMBED) &&
+      !lesson.hasVideo &&
+      !lesson.lessonCompleted
+    ) {
+      markLessonAsCompleted({
+        lessonId: lesson.id,
+        language,
+        learningStateId: lesson.learningStateId,
+      });
+    }
+
+    if (currentLessonIndex === totalLessons - 1) {
+      if (course.enrolled && nextChapter?.isFreemium && course.priceInCents !== 0) {
+        setIsNextDisabled(true);
+      }
+      if (currentLessonIndex === 0) {
+        if (!prevChapter?.isFreemium) {
+          setIsPreviousDisabled(true);
+        }
+      }
+    }
+  }, [
+    nextChapter?.isFreemium,
+    prevChapter?.isFreemium,
+    totalLessons,
+    currentLessonIndex,
+    currentChapterIndex,
+    course,
+    isLastLesson,
+    isPreviewMode,
+    lesson.id,
+    lesson.learningStateId,
+    lesson.type,
+    markLessonAsCompleted,
+    language,
+    lesson.hasVideo,
+    lesson.lessonCompleted,
+  ]);
+
+  const handleVideoEnded = useCallback(
+    (index: number | null) => {
+      if (
+        isPreviewMode ||
+        !isEffectiveStudentExperience ||
+        lesson.type !== LessonType.CONTENT ||
+        lesson.lessonCompleted
+      ) {
+        return;
+      }
+
+      if (shouldUseCoverageCompletion) return;
+
+      const videosCount = lesson.videos?.length ?? 0;
+      if (videosCount === 0) return;
+
+      const endedIndex = index ?? (videosCount === 1 ? 0 : null);
+      if (endedIndex !== videosCount - 1) return;
+
+      markLessonAsCompleted({
+        lessonId: lesson.id,
+        language,
+        learningStateId: lesson.learningStateId,
+      });
+    },
+    [
+      isEffectiveStudentExperience,
+      isPreviewMode,
+      language,
+      lesson.id,
+      lesson.learningStateId,
+      lesson.lessonCompleted,
+      lesson.type,
+      lesson.videos,
+      markLessonAsCompleted,
+      shouldUseCoverageCompletion,
+    ],
+  );
+
+  return (
+    <div className="flex w-full min-w-0 flex-col items-center h-auto py-10">
+      <div className="flex w-full min-w-0 flex-col px-6 sm:px-10 max-w-full 3xl:max-w-[1024px] 3xl:px-8 h-auto">
+        <div className="flex w-full flex-col pb-6">
+          <div className="flex w-full min-w-0 flex-col gap-y-4 overflow-x-hidden">
+            <h1
+              data-testid={LEARNING_HANDLES.LESSON_TITLE}
+              className="h4 text-neutral-950 break-words min-w-0"
+            >
+              {lesson.title}
+            </h1>
+          </div>
+          {!hideControls && (
+            <div className="mt-4 flex flex-col gap-2 sm:ml-8 sm:mt-0 sm:items-end">
+              <div className="flex flex-row gap-x-4">
+                <Button
+                  variant="outline"
+                  className="w-full gap-x-1 sm:w-auto disabled:opacity-0"
+                  aria-label="บทเรียนก่อนหน้า"
+                  disabled={isPreviousDisabled || isFirstLesson}
+                  onClick={handlePrevious}
+                >
+                  <Icon name="ArrowRight" className="h-auto w-4 rotate-180" />
+                </Button>
+                <Button
+                  aria-label="บทเรียนถัดไป"
+                  data-testid={LEARNING_HANDLES.NEXT_LESSON_BUTTON}
+                  variant="outline"
+                  disabled={isNextDisabled}
+                  className="w-full gap-x-1 sm:w-auto disabled:opacity-0"
+                  onClick={handleNext}
+                >
+                  <Icon name="ArrowRight" className="h-auto w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <LessonVideoProgressStrip
+          lessonId={lesson.id}
+          description={lesson.description}
+          enabled={shouldUseCoverageCompletion}
+          showRequirementWarning={!lesson.lessonCompleted}
+          store={videoProgressStore}
+        />
+
+        <RequiredVideoLeaveGuard
+          courseId={course.id}
+          userId={user?.id ?? ""}
+          lessonCompleted={Boolean(lesson.lessonCompleted)}
+          enabled={shouldUseCoverageCompletion}
+          store={videoProgressStore}
+          onPause={pauseAllLessonVideos}
+          onContinueWatching={(resourceEntityId) => {
+            if (resourceEntityId) resumeLessonVideo(resourceEntityId);
+          }}
+        />
+
+        <LessonContentRenderer
+          lesson={lesson}
+          user={user}
+          previewUser={previewUser}
+          hideControls={hideControls}
+          lessonLoading={lessonLoading}
+          onVideoEnded={handleVideoEnded}
+          videoCoverageTracking={videoCoverageTracking}
+        />
+      </div>
+    </div>
+  );
+};

@@ -1,0 +1,119 @@
+{
+  "url": "https://eco-critical-ai-chatbot.demo-agent-jum.workers.dev",
+  "nativeMentingoSource": true,
+  "checks": [
+    {
+      "screen": "dashboard",
+      "width": 1440,
+      "height": 900,
+      "passed": true,
+      "overflow": false,
+      "canvas": "rgb(246, 248, 251)",
+      "font": "-apple-system, \"system-ui\", \"Segoe UI\", Roboto, Helvetica, Arial, Thonburi, sans-serif",
+      "audit": {
+        "violations": [],
+        "incomplete": [
+          "color-contrast"
+        ],
+        "passes": 19
+      },
+      "browserErrors": []
+    },
+    {
+      "screen": "lesson",
+      "width": 1440,
+      "height": 900,
+      "passed": true,
+      "overflow": false,
+      "canvas": "rgb(246, 248, 251)",
+      "font": "-apple-system, \"system-ui\", \"Segoe UI\", Roboto, Helvetica, Arial, Thonburi, sans-serif",
+      "audit": {
+        "violations": [],
+        "incomplete": [
+          "color-contrast"
+        ],
+        "passes": 24
+      },
+      "browserErrors": []
+    },
+    {
+      "screen": "teacher-dashboard",
+      "width": 1440,
+      "height": 900,
+      "passed": true,
+      "audit": {
+        "violations": [],
+        "passes": 17
+      },
+      "browserErrors": []
+    },
+    {
+      "screen": "teacher-knowledge",
+      "width": 1440,
+      "height": 900,
+      "passed": true,
+      "audit": {
+        "violations": [],
+        "passes": 17
+      },
+      "browserErrors": []
+    },
+    {
+      "screen": "dashboard",
+      "width": 390,
+      "height": 844,
+      "passed": true,
+      "overflow": false,
+      "canvas": "rgb(246, 248, 251)",
+      "font": "-apple-system, \"system-ui\", \"Segoe UI\", Roboto, Helvetica, Arial, Thonburi, sans-serif",
+      "audit": {
+        "violations": [],
+        "incomplete": [
+          "color-contrast"
+        ],
+        "passes": 17
+      },
+      "browserErrors": []
+    },
+    {
+      "screen": "lesson",
+      "width": 390,
+      "height": 844,
+      "passed": true,
+      "overflow": false,
+      "canvas": "rgb(246, 248, 251)",
+      "font": "-apple-system, \"system-ui\", \"Segoe UI\", Roboto, Helvetica, Arial, Thonburi, sans-serif",
+      "audit": {
+        "violations": [],
+        "incomplete": [
+          "color-contrast"
+        ],
+        "passes": 24
+      },
+      "browserErrors": []
+    },
+    {
+      "screen": "teacher-dashboard",
+      "width": 390,
+      "height": 844,
+      "passed": true,
+      "audit": {
+        "violations": [],
+        "passes": 15
+      },
+      "browserErrors": []
+    },
+    {
+      "screen": "teacher-knowledge",
+      "width": 390,
+      "height": 844,
+      "passed": true,
+      "audit": {
+        "violations": [],
+        "passes": 15
+      },
+      "browserErrors": []
+    }
+  ],
+  "liveGeminiTested": false
+}

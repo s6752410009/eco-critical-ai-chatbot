@@ -1,0 +1,75 @@
+import { useMutation } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+
+import { COURSE_QUERY_KEY } from "~/api/queries/admin/useBetaCourse";
+import { COURSE_VIEW_QUERY_KEY } from "~/api/queries/useCourse";
+import { globalSettingsQueryOptions } from "~/api/queries/useGlobalSettings";
+import { queryClient } from "~/api/queryClient";
+import { getTranslatedApiErrorMessage } from "~/api/utils/getTranslatedApiErrorMessage";
+import { invalidateCourseListData } from "~/api/utils/invalidateCourseListData";
+import { updateCourseOverviewCache } from "~/api/utils/updateCourseOverviewCache";
+import { useToast } from "~/components/ui/use-toast";
+
+import { ApiClient } from "../../api-client";
+
+import type { UpdateCourseBody } from "../../generated-api";
+import type { SupportedLanguages } from "@repo/shared";
+
+type UpdateCourseOptions = {
+  data: UpdateCourseBody;
+  courseId: string;
+  courseOverviewCache?: {
+    categoryTitle?: string;
+    idOrSlug: string;
+    language: SupportedLanguages;
+  };
+};
+
+export function useUpdateCourse() {
+  const { toast } = useToast();
+  const { t } = useTranslation();
+
+  return useMutation({
+    mutationFn: async (options: UpdateCourseOptions) => {
+      const response = await ApiClient.api.courseControllerUpdateCourse(
+        options.courseId,
+        options.data,
+      );
+
+      return response.data;
+    },
+    onSuccess: async (_data, options) => {
+      if (options.courseOverviewCache) {
+        updateCourseOverviewCache({
+          categoryTitle: options.courseOverviewCache.categoryTitle,
+          data: options.data,
+          idOrSlug: options.courseOverviewCache.idOrSlug,
+          language: options.courseOverviewCache.language,
+        });
+      } else {
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: [COURSE_QUERY_KEY, { id: options.courseId }],
+          }),
+          queryClient.invalidateQueries({
+            queryKey: COURSE_VIEW_QUERY_KEY,
+          }),
+        ]);
+      }
+
+      if (options.data.status) {
+        await queryClient.invalidateQueries(globalSettingsQueryOptions);
+      }
+
+      await invalidateCourseListData();
+
+      toast({ description: t("adminCourseView.toast.courseUpdatedSuccessfully") });
+    },
+    onError: (error) => {
+      toast({
+        description: getTranslatedApiErrorMessage(error, t, t("common.toast.somethingWentWrong")),
+        variant: "destructive",
+      });
+    },
+  });
+}

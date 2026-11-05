@@ -1,0 +1,37 @@
+import { useMutation } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+
+import { courseLearningHeaders } from "~/api/utils/courseLearningHeaders";
+import { useToast } from "~/components/ui/use-toast";
+
+import { ApiClient } from "../api-client";
+import { getTranslatedApiErrorMessage } from "../utils/getTranslatedApiErrorMessage";
+
+type RetakeQuizProps = {
+  lessonId: string;
+  handleOnSuccess: () => Promise<void> | void;
+};
+
+export function useRetakeQuiz({ lessonId, handleOnSuccess }: RetakeQuizProps) {
+  const { toast } = useToast();
+  const { t } = useTranslation();
+
+  return useMutation({
+    mutationFn: async (learningStateId?: string | null) => {
+      const response = await ApiClient.api.lessonControllerDeleteStudentQuizAnswers(
+        { lessonId },
+        courseLearningHeaders(learningStateId),
+      );
+      return response.data;
+    },
+    onSuccess: async () => {
+      await handleOnSuccess();
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        description: getTranslatedApiErrorMessage(error, t, t("common.toast.somethingWentWrong")),
+      });
+    },
+  });
+}

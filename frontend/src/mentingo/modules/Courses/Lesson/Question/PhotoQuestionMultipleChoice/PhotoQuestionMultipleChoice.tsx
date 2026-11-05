@@ -1,0 +1,41 @@
+import { useRichTextMediaUrl } from "~/components/RichText/contentPolicyContext";
+import { useCourseAccessProvider } from "~/modules/Courses/context/CourseAccessProvider";
+import { MultipleChoiceOptionList } from "~/modules/Courses/Lesson/Question/MultipleChoice/MultipleChoiceOptionList";
+
+import { QuestionCard } from "../QuestionCard";
+
+import type { QuizQuestion } from "../types";
+
+type PhotoQuestionMultipleChoiceProps = {
+  question: QuizQuestion;
+  isCompleted?: boolean;
+};
+
+export const PhotoQuestionMultipleChoice = ({
+  question,
+  isCompleted = false,
+}: PhotoQuestionMultipleChoiceProps) => {
+  const { isPreviewMode } = useCourseAccessProvider();
+
+  const safePhotoUrl = useRichTextMediaUrl(
+    question.photoS3Key || "https://placehold.co/960x620/png",
+  );
+  return (
+    <QuestionCard
+      title={question.title}
+      questionType="multipleChoice"
+      questionNumber={question.displayOrder}
+    >
+      {safePhotoUrl && (
+        <img src={safePhotoUrl} alt="" className="h-auto w-full max-w-[960px] rounded-lg" />
+      )}
+      <MultipleChoiceOptionList
+        options={question.options ?? []}
+        questionId={question.id}
+        isCompleted={isCompleted}
+        isPreviewMode={isPreviewMode}
+        withPicture
+      />
+    </QuestionCard>
+  );
+};

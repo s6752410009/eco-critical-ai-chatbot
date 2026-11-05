@@ -1,0 +1,510 @@
+import { Link, type MetaFunction, useNavigate, useParams, useSearchParams } from "@remix-run/react";
+import {
+  COURSE_FEATURE,
+  COURSE_ORIGIN_TYPES,
+  COURSE_STATUSES,
+  COURSE_TYPE,
+  isCourseFeatureEnabledForCourseType,
+  type SupportedLanguages,
+} from "@repo/shared";
+import { isAxiosError } from "axios";
+import { Building } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+
+import useGenerateMissingTranslations from "~/api/mutations/admin/useGenerateMissingTranslations";
+import { useCurrentUserSuspense } from "~/api/queries";
+import { COURSE_QUERY_KEY, useBetaCourseById } from "~/api/queries/admin/useBetaCourse";
+import { useCourseDuplicationJobStatus } from "~/api/queries/admin/useCourseDuplicationJobStatus";
+import { useMissingTranslations } from "~/api/queries/admin/useHasMissingTranslations";
+import { useAIConfigured } from "~/api/queries/useAIConfigured";
+import { ALL_COURSES_QUERY_KEY } from "~/api/queries/useCourses";
+import { useGlobalSettings } from "~/api/queries/useGlobalSettings";
+import { useLumaConfigured } from "~/api/queries/useLumaConfigured";
+import { useStripeConfigured } from "~/api/queries/useStripeConfigured";
+import { queryClient } from "~/api/queryClient";
+import { Icon } from "~/components/Icon";
+import { PageWrapper } from "~/components/PageWrapper";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
+import { Separator } from "~/components/ui/separator";
+import { Tabs, TabsContent } from "~/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
+import { LeaveModalProvider } from "~/context/LeaveModalContext";
+import { useTrackDataUpdatedAt } from "~/hooks/useTrackDataUpdatedAt";
+import { CourseLanguageSelector } from "~/modules/Admin/EditCourse/components/CourseLanguageSelector";
+import { CourseEnrolled } from "~/modules/Admin/EditCourse/CourseEnrolled/CourseEnrolled";
+import { useEditCourseTabs } from "~/modules/Admin/EditCourse/hooks/useEditCourseTabs";
+import { useLanguageStore } from "~/modules/Dashboard/Settings/Language/LanguageStore";
+import { setPageTitle } from "~/utils/setPageTitle";
+
+import {
+  COURSE_LANGUAGE_DIALOG_HANDLES,
+  EDIT_COURSE_PAGE_HANDLES,
+} from "../../../../e2e/data/courses/handles";
+import {
+  getCourseBadgeIcon,
+  getCourseBadgeIconClasses,
+  getCourseBadgeVariant,
+  getCourseTypeLabel,
+} from "../Courses/utils";
+
+import { CourseSharingTabContent } from "./components/CourseSharingTabContent";
+import { SharedCourseReadonlyNotice } from "./components/SharedCourseReadonlyNotice";
+import CourseLessons from "./CourseLessons/CourseLessons";
+import CoursePricing from "./CoursePricing/CoursePricing";
+import CourseStatus from "./CourseStatus/CourseStatus";
+import { EDIT_COURSE_TABS, LessonType, type Chapter, type NavigationTab } from "./EditCourse.types";
+
+export const meta: MetaFunction = ({ matches }) => setPageTitle(matches, "pages.editCourse");
+
+const EXPORTED_COURSE_VISIBLE_TAB_VALUES: NavigationTab[] = [
+  EDIT_COURSE_TABS.STATUS,
+  EDIT_COURSE_TABS.ENROLLED,
+];
+const EDIT_COURSE_TAB_VALUES = Object.values(EDIT_COURSE_TABS) as NavigationTab[];
+
+const isEditCourseTab = (value: string | null): value is NavigationTab =>
+  value !== null && EDIT_COURSE_TAB_VALUES.includes(value as NavigationTab);
+
+const EditCourse = () => {
+  const { t } = useTranslation();
+  const { id } = useParams();
+
+  const { data: isStripeConfigured } = useStripeConfigured();
+  const { data: isAIConfigured } = useAIConfigured();
+  const { data: isLumaConfigured } = useLumaConfigured();
+  const { data: currentUser } = useCurrentUserSuspense();
+  const canShowTenantSharing = Boolean(
+    currentUser?.isManagingTenantAdmin && !currentUser?.isSupportMode,
+  );
+
+  const { language } = useLanguageStore();
+
+  const [courseLanguage, setCourseLanguage] = useState<SupportedLanguages>(language);
+
+  const [openGenerateTranslationModal, setOpenGenerateTranslationModal] = useState(false);
+  const { mutateAsync: generateTranslations, isPending: isGenerationPending } =
+    useGenerateMissingTranslations();
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const duplicationJobId = searchParams.get("duplicationJobId");
+  const { data: duplicationJobStatus } = useCourseDuplicationJobStatus(duplicationJobId);
+  const duplicationJobState = duplicationJobStatus?.state;
+  const isDuplicationCompleted = duplicationJobState === "completed";
+  const isDuplicationFailed = duplicationJobState === "failed";
+  const isDuplicationLocked = Boolean(duplicationJobId) && !isDuplicationCompleted;
+
+  if (!id) throw new Error("Course ID not found");
+
+  const {
+    data: course,
+    isFetching,
+    isLoading,
+    dataUpdatedAt,
+    error,
+  } = useBetaCourseById(id, courseLanguage);
+  const baseLanguage = course?.baseLanguage ?? courseLanguage;
+  const { data: baseLanguageCourse } = useBetaCourseById(id, baseLanguage);
+  const baseLanguageChapters =
+    courseLanguage === baseLanguage ? undefined : (baseLanguageCourse?.chapters as Chapter[]);
+  const { data: globalSettings } = useGlobalSettings();
+  const courseType = course?.courseType ?? COURSE_TYPE.DEFAULT;
+  const courseTabs = useEditCourseTabs({ courseType });
+  const canEditCurriculum = isCourseFeatureEnabledForCourseType(
+    courseType,
+    COURSE_FEATURE.CURRICULUM_EDITING,
+  );
+
+  const showCourseGenerationButton = useMemo(
+    () => !!isLumaConfigured?.courseGenerationEnabled,
+    [isLumaConfigured?.courseGenerationEnabled],
+  );
+
+  const { data: hasMissingTranslations } = useMissingTranslations(
+    id,
+    courseLanguage,
+    Boolean(course),
+  );
+  const { previousDataUpdatedAt, currentDataUpdatedAt } = useTrackDataUpdatedAt(dataUpdatedAt);
+
+  const hasMissingCourseTranslations =
+    hasMissingTranslations?.data?.hasMissingTranslations ?? false;
+
+  const unsupportedScormExportLessonCount = useMemo(() => {
+    const supportedLessonTypes = new Set<LessonType>([
+      LessonType.CONTENT,
+      LessonType.QUIZ,
+      LessonType.EMBED,
+      LessonType.SCORM,
+    ]);
+
+    return (
+      course?.chapters.reduce(
+        (total, chapter) =>
+          total +
+          (chapter.lessons ?? []).filter((lesson) => !supportedLessonTypes.has(lesson.type)).length,
+        0,
+      ) ?? 0
+    );
+  }, [course?.chapters]);
+
+  const sharedCourseNotice = useMemo(
+    () => ({
+      title: t("adminCourseView.sharedCourse.exportedNoticeTitle"),
+      description: t("adminCourseView.sharedCourse.exportedNoticeDescription"),
+    }),
+    [t],
+  );
+
+  useEffect(() => {
+    if (!isFetching && !course?.availableLocales.includes(courseLanguage)) {
+      setCourseLanguage(course?.baseLanguage ?? language);
+    }
+  }, [language, courseLanguage, course, isFetching]);
+
+  const handleGenerate = useCallback(async () => {
+    await generateTranslations({ courseId: id, language: courseLanguage });
+    setOpenGenerateTranslationModal(false);
+  }, [courseLanguage, generateTranslations, id]);
+
+  const canRefetchChapterList =
+    previousDataUpdatedAt && currentDataUpdatedAt && previousDataUpdatedAt < currentDataUpdatedAt;
+  const rawSelectedTab = searchParams.get("tab");
+
+  const { isExportedCourse, isMasterCourse } = useMemo(() => {
+    const isExportedCourse = course?.originType === COURSE_ORIGIN_TYPES.EXPORTED;
+    const isMasterCourse = course?.originType === COURSE_ORIGIN_TYPES.MASTER;
+
+    return { isExportedCourse, isMasterCourse };
+  }, [course]);
+
+  const selectedTab = isEditCourseTab(rawSelectedTab)
+    ? rawSelectedTab
+    : isExportedCourse
+      ? EDIT_COURSE_TABS.STATUS
+      : EDIT_COURSE_TABS.CURRICULUM;
+
+  const { activeTab } = useMemo(() => {
+    const canShowPricingTab = Boolean(isStripeConfigured?.enabled);
+
+    const visibleCourseTabs = (
+      isExportedCourse
+        ? courseTabs.filter((tab) => EXPORTED_COURSE_VISIBLE_TAB_VALUES.includes(tab.value))
+        : courseTabs
+    ).filter((tab) => tab.value !== EDIT_COURSE_TABS.PRICING || canShowPricingTab);
+
+    const activeTab = visibleCourseTabs.some((tab) => tab.value === selectedTab)
+      ? selectedTab
+      : (visibleCourseTabs[0]?.value ?? EDIT_COURSE_TABS.STATUS);
+
+    return { visibleCourseTabs, activeTab };
+  }, [courseTabs, isExportedCourse, isStripeConfigured?.enabled, selectedTab]);
+
+  useEffect(() => {
+    if (!course || rawSelectedTab === activeTab) return;
+
+    setSearchParams((prevParams) => {
+      const nextParams = new URLSearchParams(prevParams);
+      nextParams.set("tab", activeTab);
+      return nextParams;
+    });
+  }, [activeTab, course, rawSelectedTab, setSearchParams]);
+
+  useEffect(() => {
+    if (!duplicationJobId || !isDuplicationCompleted || !course?.id) return;
+
+    void queryClient.invalidateQueries({ queryKey: ALL_COURSES_QUERY_KEY });
+    void queryClient.invalidateQueries({ queryKey: [COURSE_QUERY_KEY] });
+    void queryClient.invalidateQueries({ queryKey: ["course"] });
+
+    setSearchParams(
+      (prevParams) => {
+        const nextParams = new URLSearchParams(prevParams);
+        nextParams.delete("duplicationJobId");
+        return nextParams;
+      },
+      { replace: true },
+    );
+  }, [course?.id, duplicationJobId, isDuplicationCompleted, setSearchParams]);
+
+  useEffect(() => {
+    if (error) {
+      navigate(isAxiosError(error) && error.response?.status === 404 ? "/courses" : "/");
+    }
+  }, [error, navigate]);
+
+  if (error) return null;
+
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="size-32 animate-spin rounded-full border-b-2 border-t-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  const breadcrumbs = [
+    { title: t("adminCourseView.breadcrumbs.courses"), href: "/admin/courses" },
+    { title: course?.title || "", href: `/admin/beta-courses/${id}` },
+  ];
+  const duplicationNotice = isDuplicationFailed
+    ? {
+        variant: "destructive" as const,
+        title: t("adminCourseDuplication.failedTitle"),
+        description: t("adminCourseDuplication.failedDescription"),
+      }
+    : {
+        variant: "default" as const,
+        title: t("adminCourseDuplication.processingTitle"),
+        description: t("adminCourseDuplication.processingDescription"),
+      };
+
+  return (
+    <PageWrapper breadcrumbs={breadcrumbs} className="relative">
+      <Tabs
+        data-testid={EDIT_COURSE_PAGE_HANDLES.PAGE}
+        value={EDIT_COURSE_TABS.CURRICULUM}
+        className="flex h-full flex-col gap-y-4"
+      >
+        <div className="flex w-full flex-col gap-y-4 rounded-lg border border-gray-200 bg-white px-8 py-6 shadow-md">
+          <div className="flex items-center justify-between">
+            <h4
+              data-testid={EDIT_COURSE_PAGE_HANDLES.HEADING}
+              className="h4 flex items-center text-neutral-950 mr-2"
+            >
+              {course?.title || ""}
+
+              {course?.status === COURSE_STATUSES.PUBLISHED && (
+                <Badge
+                  variant={getCourseBadgeVariant(course?.status)}
+                  fontWeight="bold"
+                  className="ml-2"
+                  icon={getCourseBadgeIcon(course?.status)}
+                  iconClasses={getCourseBadgeIconClasses(course?.status)}
+                >
+                  {t("common.other.published")}
+                </Badge>
+              )}
+              {course?.status === COURSE_STATUSES.DRAFT && (
+                <Badge
+                  variant={getCourseBadgeVariant(course?.status)}
+                  fontWeight="bold"
+                  className="ml-2"
+                  icon={getCourseBadgeIcon(course?.status)}
+                  iconClasses={getCourseBadgeIconClasses(course?.status)}
+                >
+                  {t("common.other.draft")}
+                </Badge>
+              )}
+              {course?.status === COURSE_STATUSES.PRIVATE && (
+                <Badge
+                  variant={getCourseBadgeVariant(course?.status)}
+                  fontWeight="bold"
+                  className="ml-2"
+                  icon={getCourseBadgeIcon(course?.status)}
+                  iconClasses={getCourseBadgeIconClasses(course?.status)}
+                >
+                  {t("common.other.private")}
+                </Badge>
+              )}
+              {courseType === COURSE_TYPE.SCORM && (
+                <Badge
+                  data-testid={EDIT_COURSE_PAGE_HANDLES.COURSE_TYPE_BADGE}
+                  variant="success"
+                  fontWeight="bold"
+                  className="ml-2"
+                >
+                  {getCourseTypeLabel(courseType, t)}
+                </Badge>
+              )}
+              {isMasterCourse && (
+                <Badge variant="secondaryWithOutline" fontWeight="bold" className="ml-2">
+                  <Building className="size-3.5" />
+                  {t("adminCourseView.sharedCourse.badgeMaster")}
+                </Badge>
+              )}
+              {isExportedCourse && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Badge variant="secondaryWithOutline" fontWeight="bold" className="ml-2">
+                        <Building className="size-3.5" />
+                        {t("adminCourseView.sharedCourse.badgeExported")}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      {t("adminCourseView.sharedCourse.badgeExportedTooltip")}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </h4>
+
+            <div className="flex gap-4 items-center">
+              {!isExportedCourse && (
+                <>
+                  <div className="flex gap-2 items-center">
+                    <CourseLanguageSelector
+                      courseLanguage={courseLanguage}
+                      course={
+                        course && {
+                          id: course.id,
+                          baseLanguage: course.baseLanguage,
+                          availableLocales: course.availableLocales,
+                        }
+                      }
+                      isAIConfigured={isAIConfigured?.enabled ?? false}
+                      canAddLanguage={!isExportedCourse}
+                      onChange={setCourseLanguage}
+                      setOpenGenerateTranslationModal={setOpenGenerateTranslationModal}
+                    />
+
+                    {hasMissingCourseTranslations && isAIConfigured?.enabled && (
+                      <Dialog
+                        open={openGenerateTranslationModal}
+                        onOpenChange={setOpenGenerateTranslationModal}
+                      >
+                        <DialogTrigger asChild>
+                          <Button
+                            data-testid={COURSE_LANGUAGE_DIALOG_HANDLES.GENERATE_BUTTON}
+                            variant="outline"
+                            className="gap-2"
+                          >
+                            <Icon name="AiMentor" className="size-4" />
+                            {t("adminCourseView.common.generateMissingTranslations")}
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent data-testid={COURSE_LANGUAGE_DIALOG_HANDLES.GENERATE_DIALOG}>
+                          <DialogTitle>
+                            {t("adminCourseView.common.generateMissingTranslations")}
+                          </DialogTitle>
+                          <DialogDescription>
+                            {t("adminCourseView.common.generateMissingTranslationsDescription")}
+                          </DialogDescription>
+                          <DialogFooter>
+                            <DialogClose asChild>
+                              <Button
+                                data-testid={COURSE_LANGUAGE_DIALOG_HANDLES.GENERATE_CANCEL_BUTTON}
+                                variant="outline"
+                              >
+                                {t("contentCreatorView.button.cancel")}
+                              </Button>
+                            </DialogClose>
+                            <Button
+                              data-testid={COURSE_LANGUAGE_DIALOG_HANDLES.GENERATE_CONFIRM_BUTTON}
+                              type="button"
+                              onClick={handleGenerate}
+                              disabled={isGenerationPending}
+                            >
+                              {isGenerationPending ? (
+                                <span className="flex items-center gap-2">
+                                  <span className="size-4 border-2 border-t-2 border-gray-300 border-t-gray-900 rounded-full animate-spin"></span>
+                                  {t("contentCreatorView.button.confirm")}
+                                </span>
+                              ) : (
+                                t("contentCreatorView.button.confirm")
+                              )}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    )}
+                  </div>
+
+                  <Separator orientation="vertical" className="h-10" decorative />
+                </>
+              )}
+
+              <Button
+                asChild
+                className="border border-neutral-200 bg-transparent text-accent-foreground"
+              >
+                <Link
+                  data-testid={EDIT_COURSE_PAGE_HANDLES.PREVIEW_BUTTON}
+                  to={`/course/${course?.id}?language=${courseLanguage}`}
+                >
+                  <Icon name="Eye" className="mr-2" />
+                  {t("adminCourseView.common.preview")}
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+        {isDuplicationLocked && (
+          <Alert variant={duplicationNotice.variant}>
+            <AlertTitle>{duplicationNotice.title}</AlertTitle>
+            <AlertDescription>{duplicationNotice.description}</AlertDescription>
+          </Alert>
+        )}
+        {canEditCurriculum && (
+          <TabsContent value={EDIT_COURSE_TABS.CURRICULUM} className="h-full">
+            {isDuplicationLocked ? null : isExportedCourse ? (
+              <SharedCourseReadonlyNotice
+                title={sharedCourseNotice.title}
+                description={sharedCourseNotice.description}
+              />
+            ) : (
+              <LeaveModalProvider>
+                <CourseLessons
+                  showCourseGenerationButton={showCourseGenerationButton}
+                  chapters={course?.chapters as Chapter[]}
+                  trustedCourseDescription={course?.description ?? ""}
+                  baseLanguageChapters={baseLanguageChapters}
+                  canRefetchChapterList={!!canRefetchChapterList}
+                  language={courseLanguage}
+                  baseLanguage={baseLanguage}
+                  coursePriceInCents={course?.priceInCents}
+                  unregisteredUserCoursesAccessibility={Boolean(
+                    globalSettings?.unregisteredUserCoursesAccessibility,
+                  )}
+                />
+              </LeaveModalProvider>
+            )}
+          </TabsContent>
+        )}
+        {isStripeConfigured?.enabled && (
+          <TabsContent value={EDIT_COURSE_TABS.PRICING}>
+            <CoursePricing
+              courseId={course?.id || ""}
+              currency={course?.currency}
+              priceInCents={course?.priceInCents}
+              language={language}
+            />
+          </TabsContent>
+        )}
+        <TabsContent value={EDIT_COURSE_TABS.STATUS}>
+          <CourseStatus
+            courseId={course?.id || ""}
+            status={course?.status || COURSE_STATUSES.DRAFT}
+            language={language}
+          />
+        </TabsContent>
+        <TabsContent value={EDIT_COURSE_TABS.ENROLLED}>
+          <CourseEnrolled language={language} />
+        </TabsContent>
+        <TabsContent value={EDIT_COURSE_TABS.EXPORTS}>
+          <CourseSharingTabContent
+            courseId={id}
+            language={courseLanguage}
+            unsupportedLessonCount={unsupportedScormExportLessonCount}
+            showTenantSharing={canShowTenantSharing}
+          />
+        </TabsContent>
+      </Tabs>
+    </PageWrapper>
+  );
+};
+
+export default EditCourse;

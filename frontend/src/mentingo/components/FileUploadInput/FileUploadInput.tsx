@@ -1,0 +1,113 @@
+import { useEffect, useState } from "react";
+import { useDropzone } from "react-dropzone";
+import { match } from "ts-pattern";
+
+import { FileUploadLoading } from "~/components/FileUploadInput/FileUploadLoading";
+import { cn } from "~/lib/utils";
+
+import EmptyStateUpload from "./EmptyStateUpload";
+import { SpreadsheetPreview } from "./SpreadsheetPreview";
+
+type FileUploadInputProps = {
+  handleFileUpload: (file: File) => Promise<void>;
+  handleFileDelete: () => void;
+  isUploading: boolean;
+  contentTypeToDisplay: string;
+  isProcessing?: boolean;
+  url?: string;
+  className?: string;
+  onVideoSelected?: () => void;
+  inputTestId?: string;
+};
+
+const ACCEPTED_TYPE_FORMATS: Record<string, Record<string, string[]>> = {
+  ["Image"]: {
+    "image/svg+xml": [".svg"],
+    "image/png": [".png"],
+    "image/jpeg": [".jpg"],
+  },
+  ["Spreadsheet"]: {
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+    "text/csv": [".csv"],
+  },
+};
+
+const FileUploadInput = ({
+  handleFileUpload,
+  handleFileDelete,
+  isUploading,
+  contentTypeToDisplay,
+  url,
+  className,
+  inputTestId = "fileUploadInput",
+}: FileUploadInputProps) => {
+  const acceptedTypes = ACCEPTED_TYPE_FORMATS[contentTypeToDisplay] || {};
+
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+
+  const { getRootProps, getInputProps } = useDropzone({
+    multiple: false,
+    onDropAccepted: (acceptedFiles) => {
+      handleFileChange(acceptedFiles[0]);
+    },
+    disabled: isUploading,
+    accept: acceptedTypes,
+  });
+
+  useEffect(() => {
+    if (url) {
+      setVideoPreview(url);
+    } else setVideoPreview(null);
+  }, [url]);
+
+  const handleFileChange = async (file?: File) => {
+    if (file) {
+      setFile(file);
+      handleFileUpload(file);
+    }
+  };
+
+  const renderFilePreview = () => {
+    if (isUploading) return <FileUploadLoading />;
+
+    return match(contentTypeToDisplay)
+      .with("Spreadsheet", () => {
+        return (
+          <SpreadsheetPreview
+            file={file}
+            handleFileDelete={handleFileDelete}
+            setVideoPreview={setVideoPreview}
+            setFile={setFile}
+          />
+        );
+      })
+      .otherwise(() => null);
+  };
+
+  const filePreview = renderFilePreview();
+
+  if (!videoPreview && !file) {
+    return (
+      <div {...getRootProps()} className={cn("w-full max-w-[440px]", className)}>
+        <EmptyStateUpload className={className} />
+        <input {...getInputProps()} className="sr-only" data-testid={inputTestId} />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        "relative h-[240px] w-full max-w-[440px] overflow-hidden rounded-lg border border-neutral-200",
+        className,
+      )}
+      {...getRootProps()}
+    >
+      {filePreview}
+      <input {...getInputProps()} className="sr-only" data-testid={inputTestId} />
+    </div>
+  );
+};
+
+export default FileUploadInput;

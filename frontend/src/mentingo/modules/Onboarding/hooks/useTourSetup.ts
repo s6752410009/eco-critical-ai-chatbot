@@ -1,0 +1,51 @@
+import { useTour } from "@reactour/tour";
+import { useEffect, useMemo } from "react";
+
+import { useMarkPageOnboardingAsCompleted } from "~/api/mutations/useMarkPageOnboardingAsCompleted";
+import { useCurrentUserStore } from "~/modules/common/store/useCurrentUserStore";
+
+import type { StepType } from "@reactour/tour";
+import type { OnboardingPages } from "@repo/shared";
+
+interface UseTourSetupProps {
+  steps: StepType[];
+  isLoading: boolean;
+  hasCompletedTour: boolean | undefined;
+  page: OnboardingPages;
+}
+
+export function useTourSetup({ steps, isLoading, hasCompletedTour, page }: UseTourSetupProps) {
+  const { setSteps, setIsOpen, currentStep, isOpen, setCurrentStep, setMeta } = useTour();
+  const { mutate: markOnboardingPageAsCompleted } = useMarkPageOnboardingAsCompleted(page);
+
+  const currentUser = useCurrentUserStore((state) => state.currentUser);
+
+  const isLastStep = useMemo(() => currentStep === steps.length - 1, [currentStep, steps]);
+  const isTestEnvironment =
+    import.meta.env.VITE_E2E === "true" || import.meta.env.VITE_TEST === "true";
+
+  const shouldSkipTour = useMemo(
+    () => hasCompletedTour || !currentUser || isTestEnvironment,
+    [hasCompletedTour, currentUser, isTestEnvironment],
+  );
+
+  useEffect(() => {
+    if (isLastStep && isOpen) {
+      markOnboardingPageAsCompleted();
+    }
+  }, [markOnboardingPageAsCompleted, isOpen, isLastStep]);
+
+  useEffect(() => {
+    if (!shouldSkipTour && setSteps) {
+      setSteps(steps);
+      setCurrentStep(0);
+      setMeta?.(page);
+    }
+  }, [setSteps, steps, shouldSkipTour, setCurrentStep, setMeta, page]);
+
+  useEffect(() => {
+    if (!isLoading && !shouldSkipTour) {
+      setIsOpen(true);
+    }
+  }, [isLoading, setIsOpen, shouldSkipTour]);
+}

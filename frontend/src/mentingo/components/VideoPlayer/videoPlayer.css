@@ -1,0 +1,486 @@
+.mentingo-video-js {
+  --vjs-theme-primary: var(--primary);
+  --vjs-theme-contrast: var(--contrast, #fff);
+  --vjs-watched-marker: color-mix(in srgb, var(--primary) 72%, var(--vjs-theme-contrast) 28%);
+  --vjs-surface: color-mix(in srgb, var(--ring) 40%, #000 80%);
+  --vjs-border: color-mix(in srgb, var(--vjs-theme-contrast) 12%, transparent);
+  --vjs-track: color-mix(in srgb, var(--vjs-theme-contrast) 20%, transparent);
+  font-family: "Open Sans", sans-serif;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  border-radius: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.mentingo-video-js,
+.mentingo-video-js.video-js,
+[data-vjs-player]:has(.mentingo-video-js),
+.mentingo-video-js .vjs-poster,
+.mentingo-video-js .vjs-tech {
+  border-radius: 0 !important;
+}
+
+.mentingo-video-js .vjs-poster {
+  background-size: cover;
+}
+
+.mentingo-video-js .vjs-tech {
+  border-radius: inherit;
+  object-fit: contain;
+}
+
+.mentingo-video-js.mentingo-video-js--cover .vjs-tech {
+  object-fit: cover;
+}
+
+.mentingo-video-js .vjs-control-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3rem;
+  background: var(--vjs-surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--vjs-border);
+  padding: 0 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 180ms ease;
+}
+
+.mentingo-video-js.vjs-controls-enabled .vjs-control-bar {
+  display: flex !important;
+  visibility: visible;
+}
+
+.mentingo-video-player--controls-hidden {
+  cursor: none;
+}
+
+.mentingo-video-player--controls-hidden .mentingo-video-js .vjs-control-bar {
+  opacity: 0 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+.mentingo-video-player--controls-hidden .mentingo-video-js.vjs-user-active .vjs-control-bar,
+.mentingo-video-player--controls-hidden .mentingo-video-js.vjs-scrubbing .vjs-control-bar,
+.mentingo-video-player--controls-hidden .mentingo-video-js:focus-within .vjs-control-bar,
+.mentingo-video-player--controls-hidden
+  .mentingo-video-js:has(.vjs-control-bar:hover)
+  .vjs-control-bar,
+.mentingo-video-player--controls-hidden .mentingo-video-js:has(.vjs-slider-active) .vjs-control-bar,
+.mentingo-video-player--controls-hidden
+  .mentingo-video-js:has(.vjs-menu-button.vjs-hover)
+  .vjs-control-bar,
+.mentingo-video-player--controls-hidden
+  .mentingo-video-js:has(.vjs-menu.vjs-lock-showing)
+  .vjs-control-bar,
+.mentingo-video-player--controls-hidden
+  .mentingo-video-js:has(.mentingo-vjs-quality-selector__menu)
+  .vjs-control-bar {
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+.mentingo-video-js .vjs-control-bar,
+.mentingo-video-js .vjs-loading-spinner {
+  z-index: 2;
+}
+
+.mentingo-video-js .vjs-button {
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  flex-shrink: 0;
+  outline: none;
+  text-shadow: none;
+}
+
+.mentingo-video-js .vjs-button:hover,
+.mentingo-video-js .vjs-button:active {
+  background: color-mix(in srgb, var(--vjs-theme-contrast) 10%, transparent);
+}
+
+.mentingo-video-js .vjs-button:focus,
+.mentingo-video-js .vjs-button:focus-visible {
+  outline: none;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.mentingo-video-js *,
+.mentingo-video-js *::before,
+.mentingo-video-js *::after {
+  text-shadow: none !important;
+}
+
+.mentingo-video-js .vjs-play-progress:before,
+.mentingo-video-js .vjs-volume-level:before {
+  color: var(--vjs-theme-primary);
+  font-size: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  line-height: 1;
+}
+
+.mentingo-video-js .vjs-button > .vjs-icon-placeholder:before,
+.mentingo-video-js .vjs-icon-volume-high:before,
+.mentingo-video-js .vjs-icon-volume-mid:before,
+.mentingo-video-js .vjs-icon-volume-low:before,
+.mentingo-video-js .vjs-icon-volume-mute:before {
+  color: var(--vjs-theme-contrast);
+  font-size: 1.25rem;
+  line-height: 1;
+  position: static;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.mentingo-video-js .vjs-time-control {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--vjs-theme-contrast) 70%, transparent);
+  padding: 0 0.75rem;
+  min-width: auto;
+  display: flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.mentingo-video-js .vjs-current-time,
+.mentingo-video-js .vjs-duration,
+.mentingo-video-js .vjs-remaining-time {
+  display: flex;
+  align-items: center;
+}
+
+.mentingo-video-js .vjs-time-divider {
+  padding: 0;
+  min-width: auto;
+}
+
+.mentingo-video-js .vjs-progress-control {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.mentingo-video-js .vjs-progress-control .vjs-progress-holder {
+  height: 0.25rem;
+  border-radius: 0.125rem;
+  margin: 0;
+  background: var(--vjs-track);
+  overflow: hidden;
+  position: relative;
+}
+
+.mentingo-video-js .mentingo-video-coverage-markers {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.mentingo-video-js .mentingo-video-coverage-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 0.125rem;
+  background: var(--vjs-watched-marker);
+}
+
+.mentingo-video-js .vjs-slider {
+  background: var(--vjs-track);
+  border-radius: 0.125rem;
+}
+
+.mentingo-video-js .vjs-play-progress {
+  background: var(--vjs-theme-primary);
+  border-radius: 0.125rem;
+  z-index: 1;
+}
+
+.mentingo-video-js .vjs-volume-level {
+  background: var(--vjs-theme-primary);
+  border-radius: 0.125rem;
+  z-index: 1;
+}
+
+.mentingo-video-js .vjs-load-progress,
+.mentingo-video-js .vjs-load-progress div {
+  background: color-mix(in srgb, var(--vjs-theme-contrast) 25%, transparent);
+  border-radius: 9999px;
+}
+
+.mentingo-video-js .vjs-volume-panel,
+.mentingo-video-js .vjs-volume-panel.vjs-volume-panel-horizontal,
+.mentingo-video-js .vjs-volume-panel:hover,
+.mentingo-video-js .vjs-volume-panel.vjs-hover {
+  display: flex;
+  align-items: center;
+  width: 6.5rem !important;
+  transition: none !important;
+}
+
+.mentingo-video-js .vjs-volume-panel .vjs-mute-control {
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: 2.25rem;
+}
+
+.mentingo-video-js .vjs-volume-panel .vjs-volume-control,
+.mentingo-video-js .vjs-volume-panel .vjs-volume-control.vjs-volume-horizontal {
+  display: flex;
+  align-items: center;
+  width: 4rem !important;
+  height: 100%;
+  margin: 0;
+  margin-left: 0.5rem;
+  padding-right: 0.25rem;
+  transition: none !important;
+  opacity: 1 !important;
+}
+
+.mentingo-video-js .vjs-volume-bar.vjs-slider-horizontal {
+  width: 100%;
+  height: 0.25rem;
+  margin: 0;
+}
+
+.mentingo-video-js .vjs-volume-level {
+  height: 0.25rem;
+}
+
+.mentingo-video-js .vjs-volume-panel *,
+.mentingo-video-js .vjs-volume-panel *::before,
+.mentingo-video-js .vjs-volume-panel *::after {
+  transition: none !important;
+}
+
+.mentingo-video-js .vjs-playback-rate {
+  position: relative;
+  width: 3rem;
+  min-width: 3rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  color: var(--vjs-theme-contrast) !important;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.mentingo-video-js .vjs-playback-rate .vjs-playback-rate-value {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--vjs-theme-contrast) !important;
+  font-size: inherit;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 600;
+  line-height: 1;
+  pointer-events: none;
+  text-align: center;
+}
+
+.mentingo-video-js .vjs-playback-rate .vjs-menu-button {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 0.375rem;
+  color: var(--vjs-theme-contrast) !important;
+}
+
+.mentingo-video-js .vjs-playback-rate .vjs-menu-button .vjs-icon-placeholder {
+  display: none;
+}
+
+.mentingo-video-js .vjs-playback-rate .vjs-menu-button:hover,
+.mentingo-video-js .vjs-playback-rate .vjs-menu-button:active {
+  background: color-mix(in srgb, var(--vjs-theme-contrast) 10%, transparent);
+}
+
+.mentingo-video-js .vjs-playback-rate .vjs-menu {
+  left: 50%;
+  width: 4rem;
+  transform: translateX(-50%);
+}
+
+.mentingo-video-js .mentingo-vjs-quality-selector-host {
+  position: relative;
+  width: 4.25rem;
+  min-width: 4.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  color: var(--vjs-theme-contrast) !important;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.mentingo-video-js .mentingo-vjs-quality-selector {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.mentingo-video-js .mentingo-vjs-quality-selector__button {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 0.375rem;
+  color: var(--vjs-theme-contrast) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Open Sans", sans-serif;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: 1;
+  text-align: center;
+}
+
+.mentingo-video-js .mentingo-vjs-quality-selector__button:hover,
+.mentingo-video-js .mentingo-vjs-quality-selector__button:active {
+  background: color-mix(in srgb, var(--vjs-theme-contrast) 10%, transparent);
+}
+
+.mentingo-video-js .mentingo-vjs-quality-selector__menu {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.5rem);
+  z-index: 3;
+  display: grid;
+  min-width: 5rem;
+  padding: 0.25rem 0;
+  transform: translateX(-50%);
+  background: var(--vjs-surface);
+  border: 1px solid var(--vjs-border);
+  border-radius: 0.5rem;
+}
+
+.mentingo-video-js .mentingo-vjs-quality-selector__item {
+  padding: 0.375rem 0.625rem;
+  color: var(--vjs-theme-contrast) !important;
+  font-family: "Open Sans", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.mentingo-video-js .mentingo-vjs-quality-selector__item:hover,
+.mentingo-video-js .mentingo-vjs-quality-selector__item:focus,
+.mentingo-video-js .mentingo-vjs-quality-selector__item[data-selected="true"] {
+  background: color-mix(in srgb, var(--vjs-theme-contrast) 10%, transparent);
+  outline: none;
+}
+
+.mentingo-video-js .vjs-menu .vjs-menu-content {
+  background: var(--vjs-surface);
+  border: 1px solid var(--vjs-border);
+  border-radius: 0.5rem;
+}
+
+.mentingo-video-js .vjs-menu-item {
+  font-family: "Open Sans", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.375rem 0.625rem;
+  color: var(--vjs-theme-contrast) !important;
+  text-align: center;
+}
+
+.mentingo-video-js .vjs-menu-item:hover,
+.mentingo-video-js .vjs-menu-item.vjs-selected {
+  background: color-mix(in srgb, var(--vjs-theme-contrast) 10%, transparent);
+}
+
+.mentingo-video-js .vjs-menu li.vjs-menu-item:hover,
+.mentingo-video-js .vjs-menu li.vjs-menu-item:focus,
+.mentingo-video-js .vjs-menu li.vjs-selected,
+.mentingo-video-js .vjs-menu li.vjs-selected:focus,
+.mentingo-video-js .vjs-menu li.vjs-selected:hover {
+  background-color: color-mix(in srgb, var(--vjs-theme-contrast) 10%, transparent) !important;
+  color: var(--vjs-theme-contrast) !important;
+}
+
+.mentingo-video-js .vjs-loading-spinner {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .mentingo-video-js .vjs-control-bar {
+    height: 2.75rem;
+    padding: 0 0.375rem;
+  }
+
+  .mentingo-video-js .vjs-time-control {
+    font-size: 0.7rem;
+    padding: 0 0.25rem;
+  }
+
+  .mentingo-video-js .vjs-button {
+    width: 2rem;
+    height: 2rem;
+    min-width: 2rem;
+  }
+
+  .mentingo-video-js .vjs-volume-panel,
+  .mentingo-video-js .vjs-volume-panel.vjs-volume-panel-horizontal,
+  .mentingo-video-js .vjs-volume-panel:hover,
+  .mentingo-video-js .vjs-volume-panel.vjs-hover {
+    width: 5.5rem !important;
+  }
+
+  .mentingo-video-js .vjs-volume-panel .vjs-mute-control {
+    width: 2rem;
+    height: 2rem;
+    min-width: 2rem;
+  }
+
+  .mentingo-video-js .vjs-volume-panel .vjs-volume-control,
+  .mentingo-video-js .vjs-volume-panel .vjs-volume-control.vjs-volume-horizontal {
+    width: 3.25rem !important;
+  }
+
+  .mentingo-video-js .vjs-playback-rate {
+    width: 2.75rem;
+    min-width: 2.75rem;
+    height: 2rem;
+    font-size: 0.625rem;
+  }
+
+  .mentingo-video-js .mentingo-vjs-quality-selector-host {
+    width: 3.75rem;
+    min-width: 3.75rem;
+    height: 2rem;
+    font-size: 0.625rem;
+  }
+}

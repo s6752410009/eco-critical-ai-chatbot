@@ -1,0 +1,71 @@
+import { forwardRef, useLayoutEffect, useRef } from "react";
+
+import { Textarea } from "~/components/ui/textarea";
+import { cn } from "~/lib/utils";
+
+import type { ForwardedRef } from "react";
+import type { TextareaProps } from "~/components/ui/textarea";
+
+export type AutosizeTextareaProps = TextareaProps & {
+  minRows?: number;
+  maxRows?: number;
+};
+
+const setForwardedRef = (
+  forwardedRef: ForwardedRef<HTMLTextAreaElement>,
+  element: HTMLTextAreaElement | null,
+) => {
+  if (typeof forwardedRef === "function") {
+    forwardedRef(element);
+    return;
+  }
+
+  if (forwardedRef) forwardedRef.current = element;
+};
+
+export const AutosizeTextarea = forwardRef<HTMLTextAreaElement, AutosizeTextareaProps>(
+  ({ className, minRows = 2, maxRows = 5, onInput, value, ...props }, forwardedRef) => {
+    const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+    const resize = () => {
+      const element = textareaRef.current;
+      if (!element) return;
+
+      const styles = window.getComputedStyle(element);
+      const lineHeight = Number.parseFloat(styles.lineHeight);
+      const verticalBorder =
+        Number.parseFloat(styles.borderTopWidth) + Number.parseFloat(styles.borderBottomWidth);
+      const verticalChrome =
+        Number.parseFloat(styles.paddingTop) +
+        Number.parseFloat(styles.paddingBottom) +
+        verticalBorder;
+      const maxHeight = lineHeight * maxRows + verticalChrome;
+
+      element.style.height = "auto";
+      const contentHeight = element.scrollHeight + verticalBorder;
+      element.style.height = `${Math.min(contentHeight, maxHeight)}px`;
+      element.style.overflowY = contentHeight > maxHeight ? "auto" : "hidden";
+    };
+
+    useLayoutEffect(resize, [maxRows, value]);
+
+    return (
+      <Textarea
+        {...props}
+        ref={(element) => {
+          textareaRef.current = element;
+          setForwardedRef(forwardedRef, element);
+        }}
+        value={value}
+        rows={minRows}
+        className={cn("min-h-[2.75rem] resize-none overflow-y-hidden", className)}
+        onInput={(event) => {
+          resize();
+          onInput?.(event);
+        }}
+      />
+    );
+  },
+);
+
+AutosizeTextarea.displayName = "AutosizeTextarea";

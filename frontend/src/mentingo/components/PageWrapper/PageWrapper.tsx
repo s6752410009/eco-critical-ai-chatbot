@@ -1,0 +1,96 @@
+import { Link } from "@remix-run/react";
+import { Fragment } from "react";
+
+import {
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "~/components/ui/breadcrumb";
+import { cn } from "~/lib/utils";
+
+import type { HTMLAttributes, ReactNode } from "react";
+
+type PageWrapperProps = HTMLAttributes<HTMLDivElement> & {
+  breadcrumbs?: { title: string; href: string }[];
+  isBarebones?: boolean;
+  children: ReactNode;
+  className?: string;
+  wrapperClassName?: string;
+  rightSideContent?: ReactNode;
+  leftSideContent?: ReactNode;
+  aboveBreadcrumbs?: ReactNode;
+};
+
+type Breadcrumb = { title: string; href: string };
+
+type BreadcrumbsProps = {
+  breadcrumbs: Breadcrumb[];
+};
+
+export const Breadcrumbs = ({ breadcrumbs = [] }: BreadcrumbsProps) => {
+  if (!breadcrumbs.length) return null;
+
+  const lastIndex = breadcrumbs.length - 1;
+  const lastBreadcrumb = breadcrumbs[lastIndex];
+
+  return (
+    <BreadcrumbList className="mb-4">
+      {breadcrumbs.slice(0, lastIndex).map(({ href, title }, index) => (
+        <Fragment key={index}><BreadcrumbItem>
+          <BreadcrumbLink asChild className="details-md text-neutral-800 hover:text-neutral-800">
+            <Link to={href}>{title}</Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem><BreadcrumbSeparator /></Fragment>
+      ))}
+      <BreadcrumbItem>
+        <BreadcrumbLink asChild className="details-md text-neutral-950 hover:text-neutral-950">
+          <Link to={lastBreadcrumb.href}>{lastBreadcrumb.title}</Link>
+        </BreadcrumbLink>
+      </BreadcrumbItem>
+    </BreadcrumbList>
+  );
+};
+
+export const PageWrapper = ({
+  className,
+  breadcrumbs,
+  isBarebones,
+  children,
+  rightSideContent,
+  leftSideContent,
+  wrapperClassName,
+  aboveBreadcrumbs,
+  ...props
+}: PageWrapperProps) => {
+  const hasBreadcrumbs = Boolean(breadcrumbs?.length);
+
+  const contentClasses = cn(
+    "w-full",
+    !isBarebones && "pt-6 px-4 pb-4 md:px-6 md:pb-6 3xl:pt-12 3xl:px-8 3xl:pb-8",
+    {
+      "pt-8 md:pt-6 3xl:pt-6 3xl:pb-2 [&_.breadcrumbs]:mb-2": hasBreadcrumbs,
+    },
+    className,
+  );
+
+  return (
+    <div className={cn("flex justify-between", wrapperClassName)}>
+      {leftSideContent}
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        {aboveBreadcrumbs}
+        <div className={contentClasses} {...props}>
+          {hasBreadcrumbs && (
+            <div className="breadcrumbs">
+              <Breadcrumbs breadcrumbs={breadcrumbs ?? []} />
+            </div>
+          )}
+          {children}
+        </div>
+      </div>
+
+      {rightSideContent}
+    </div>
+  );
+};

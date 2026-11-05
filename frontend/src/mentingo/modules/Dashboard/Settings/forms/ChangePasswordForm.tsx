@@ -1,0 +1,169 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMemo } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
+import { z } from "zod";
+
+import { useChangePassword } from "~/api/mutations/useChangePassword";
+import { usePasswordStatusSuspense } from "~/api/queries";
+import PasswordValidationDisplay from "~/components/PasswordValidation/PasswordValidationDisplay";
+import { Button } from "~/components/ui/button";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "~/components/ui/card";
+import { FormValidationError } from "~/components/ui/form-validation-error";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { cn } from "~/lib/utils";
+
+import { SETTINGS_PAGE_HANDLES } from "../../../../../e2e/data/settings/handles";
+import { passwordSchema } from "../schema/password.schema";
+
+import type { ChangePasswordBody } from "~/api/generated-api";
+
+const getChangePasswordSchema = (hasPassword: boolean) =>
+  z
+    .object({
+      oldPassword: hasPassword
+        ? z.string().min(1, "changePasswordView.validation.oldPassword")
+        : z.string().optional(),
+      newPassword: passwordSchema,
+      confirmPassword: z.string(),
+    })
+    .refine(({ newPassword, confirmPassword }) => newPassword === confirmPassword, {
+      path: ["confirmPassword"],
+      message: "changePasswordView.validation.passwordsDontMatch",
+    });
+
+export default function ChangePasswordForm() {
+  const { mutate: changePassword } = useChangePassword();
+  const { t } = useTranslation();
+
+  const {
+    data: { hasPassword },
+  } = usePasswordStatusSuspense();
+
+  const changePasswordSchema = useMemo(() => getChangePasswordSchema(hasPassword), [hasPassword]);
+
+  const methods = useForm<ChangePasswordBody>({
+    resolver: zodResolver(changePasswordSchema),
+    mode: "onChange",
+    defaultValues: {
+      oldPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isValid },
+  } = methods;
+
+  const onSubmit = (data: ChangePasswordBody) => {
+    const passwordData = hasPassword
+      ? data
+      : {
+          newPassword: data.newPassword,
+          confirmPassword: data.confirmPassword,
+        };
+
+    changePassword({ data: passwordData, hasPassword });
+    reset();
+  };
+
+  return (
+    <FormProvider {...methods}>
+      <Card id="change-password">
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <CardHeader>
+            <CardTitle className="h5">
+              {t(
+                hasPassword ? "changePasswordView.header" : "changePasswordView.setPasswordHeader",
+              )}
+            </CardTitle>
+            <CardDescription className="body-lg-md">
+              {t(
+                hasPassword
+                  ? "changePasswordView.subHeader"
+                  : "changePasswordView.setPasswordSubHeader",
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {hasPassword && (
+              <>
+                <Label htmlFor="oldPassword" className="body-base-md">
+                  {t("changePasswordView.field.oldPassword")}
+                </Label>
+                <Input
+                  id="oldPassword"
+                  type="password"
+                  data-testid={SETTINGS_PAGE_HANDLES.PASSWORD_OLD}
+                  className={cn({
+                    "border-red-500 focus:!ring-red-500": errors.oldPassword,
+                  })}
+                  {...register("oldPassword")}
+                />
+                {errors.oldPassword?.message && (
+                  <FormValidationError message={t(errors.oldPassword.message)} />
+                )}
+              </>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="newPassword" className="body-base-md">
+                {t("changePasswordView.field.newPassword")}
+              </Label>
+              <Input
+                id="newPassword"
+                type="password"
+                data-testid={SETTINGS_PAGE_HANDLES.PASSWORD_NEW}
+                className={cn({
+                  "border-red-500 focus:!ring-red-500": errors.newPassword,
+                })}
+                {...register("newPassword")}
+              />
+
+              <Label htmlFor="confirmPassword" className="body-base-md">
+                {t("changePasswordView.field.confirmPassword")}
+              </Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                data-testid={SETTINGS_PAGE_HANDLES.PASSWORD_CONFIRM}
+                className={cn({
+                  "border-red-500 focus:!ring-red-500": errors.confirmPassword,
+                })}
+                {...register("confirmPassword")}
+              />
+
+              <div id="password-hints" className="mb-3">
+                <PasswordValidationDisplay
+                  fieldName="newPassword"
+                  confirmFieldName="confirmPassword"
+                />
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter className="border-t px-6 py-4">
+            <Button
+              disabled={!isValid}
+              type="submit"
+              data-testid={SETTINGS_PAGE_HANDLES.PASSWORD_SAVE}
+            >
+              {t("common.button.save")}
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
+    </FormProvider>
+  );
+}

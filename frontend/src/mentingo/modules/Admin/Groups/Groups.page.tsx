@@ -1,0 +1,208 @@
+import { Link, useNavigate } from "@remix-run/react";
+import {
+  getCoreRowModel,
+  getSortedRowModel,
+  useReactTable,
+  flexRender,
+} from "@tanstack/react-table";
+import { isEmpty } from "lodash-es";
+import { Trash } from "lucide-react";
+import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
+
+import { useBulkDeleteGroups } from "~/api/mutations/admin/useBulkDeleteGroups";
+import { useGroupsQuerySuspense } from "~/api/queries/admin/useGroups";
+import { PageWrapper } from "~/components/PageWrapper";
+import { Button } from "~/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
+import { cn } from "~/lib/utils";
+import { useGroupTable } from "~/modules/Admin/Groups/hooks/useGroupTable";
+import { useLanguageStore } from "~/modules/Dashboard/Settings/Language/LanguageStore";
+import { setPageTitle } from "~/utils/setPageTitle";
+
+import { GROUPS_PAGE_HANDLES } from "../../../../e2e/data/groups/handles";
+
+import type { MetaFunction } from "@remix-run/react";
+import type { SortingState, RowSelectionState } from "@tanstack/react-table";
+import type { ReactElement, FormEvent } from "react";
+
+export const meta: MetaFunction = ({ matches }) => setPageTitle(matches, "pages.groups");
+
+const Groups = (): ReactElement => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+
+  const language = useLanguageStore((state) => state.language);
+
+  const { columns } = useGroupTable();
+
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+
+  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+
+  const { data } = useGroupsQuerySuspense({ language });
+  const { mutateAsync: deleteGroupsMutation } = useBulkDeleteGroups();
+
+  const table = useReactTable({
+    getRowId: (row) => row.id,
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    onSortingChange: setSorting,
+    getSortedRowModel: getSortedRowModel(),
+    onRowSelectionChange: setRowSelection,
+    state: {
+      sorting,
+      rowSelection,
+    },
+  });
+
+  const selectedRows = table.getSelectedRowModel().rows.map((row) => row.original.id);
+
+  const handleGroupEdit = useCallback(
+    (groupId: string) => () => {
+      navigate(groupId);
+    },
+    [navigate],
+  );
+
+  const handleGroupsDelete = useCallback(
+    async (event: FormEvent) => {
+      event.preventDefault();
+      await deleteGroupsMutation(selectedRows);
+      setRowSelection({});
+      setIsDialogOpen(false);
+    },
+    [deleteGroupsMutation, selectedRows],
+  );
+
+  return (
+    <PageWrapper
+      breadcrumbs={[
+        {
+          title: t("adminGroupsView.breadcrumbs.groups"),
+          href: "/admin/groups",
+        },
+      ]}
+    >
+      <div data-testid={GROUPS_PAGE_HANDLES.PAGE} className="flex flex-col">
+        <h4 data-testid={GROUPS_PAGE_HANDLES.HEADING} className="h4">
+          {t("navigationSideBar.groups")}
+        </h4>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-2 pt-6">
+            <Link to="new">
+              <Button data-testid={GROUPS_PAGE_HANDLES.CREATE_BUTTON} variant="outline">
+                {t("adminGroupsView.buttons.create")}
+              </Button>
+            </Link>
+          </div>
+          <div className="flex items-center justify-between gap-2 px-4 py-2">
+            <p
+              className={cn("text-sm", {
+                "text-neutral-500": isEmpty(selectedRows),
+                "text-neutral-900": !isEmpty(selectedRows),
+              })}
+            >
+              {t("common.other.selected")} ({selectedRows.length})
+            </p>
+
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger disabled={isEmpty(selectedRows)}>
+                <Button
+                  data-testid={GROUPS_PAGE_HANDLES.DELETE_SELECTED_BUTTON}
+                  size="sm"
+                  className="flex items-center gap-x-2"
+                  disabled={isEmpty(selectedRows)}
+                >
+                  <Trash className="size-3" />
+                  <span className="text-xs">{t("adminGroupsView.buttons.deleteSelected")}</span>
+                </Button>
+              </DialogTrigger>
+              <DialogPortal>
+                <DialogOverlay />
+                <DialogContent data-testid={GROUPS_PAGE_HANDLES.DELETE_DIALOG}>
+                  <DialogTitle>{t("adminGroupsView.deleteGroup.title")}</DialogTitle>
+                  <DialogDescription>
+                    {t("adminGroupsView.deleteGroup.description")}
+                  </DialogDescription>
+                  <form onSubmit={handleGroupsDelete}>
+                    <div className="flex justify-end gap-4">
+                      <DialogClose>
+                        <Button
+                          data-testid={GROUPS_PAGE_HANDLES.DELETE_DIALOG_CANCEL_BUTTON}
+                          type="reset"
+                          variant="ghost"
+                        >
+                          {t("adminGroupsView.deleteGroup.cancel")}
+                        </Button>
+                      </DialogClose>
+                      <Button
+                        data-testid={GROUPS_PAGE_HANDLES.DELETE_DIALOG_CONFIRM_BUTTON}
+                        type="submit"
+                        variant="secondary"
+                      >
+                        {t("adminGroupsView.deleteGroup.submit")}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </DialogPortal>
+            </Dialog>
+          </div>
+        </div>
+        <div className="ml-auto flex items-center gap-x-2 px-4 py-2"></div>
+        <Table data-testid={GROUPS_PAGE_HANDLES.TABLE} className="border bg-neutral-50">
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody data-testid={GROUPS_PAGE_HANDLES.TABLE_BODY}>
+            {table.getRowModel().rows.map((row) => (
+              <TableRow
+                key={row.id}
+                data-testid={GROUPS_PAGE_HANDLES.row(row.original.id)}
+                data-state={row.getIsSelected() && "selected"}
+                onClick={handleGroupEdit(row.original?.id)}
+                className="cursor-pointer hover:bg-neutral-100"
+              >
+                {row.getVisibleCells().map((cell, index) => (
+                  <TableCell key={cell.id} className={cn({ "!w-12": index === 0 })}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </PageWrapper>
+  );
+};
+
+export default Groups;

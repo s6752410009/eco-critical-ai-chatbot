@@ -1,0 +1,76 @@
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+
+import { useUpdateInviteOnlyRegistration } from "~/api/mutations/admin/useUpdateInviteOnlyRegistration";
+import { Button } from "~/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import { Switch } from "~/components/ui/switch";
+
+import { SETTINGS_PAGE_HANDLES } from "../../../../../../e2e/data/settings/handles";
+
+interface InviteOnlyRegistrationSwitchProps {
+  inviteOnlyRegistration: boolean;
+}
+export const InviteOnlyRegistration = ({
+  inviteOnlyRegistration,
+}: InviteOnlyRegistrationSwitchProps) => {
+  const { t } = useTranslation();
+  const [isChecked, setIsChecked] = useState(inviteOnlyRegistration || false);
+
+  const { mutate: updateInviteOnlyRegistration, isPending } = useUpdateInviteOnlyRegistration();
+
+  const toggleSwitch = () => setIsChecked((prev) => !prev);
+
+  const saveInviteOnlyRegistration = () => {
+    if (isChecked !== inviteOnlyRegistration) {
+      updateInviteOnlyRegistration();
+    }
+  };
+
+  return (
+    <Card
+      id="invite-only-registration"
+      data-testid={SETTINGS_PAGE_HANDLES.INVITE_ONLY_REGISTRATION_CARD}
+    >
+      <CardHeader>
+        <CardTitle className="h5">{t("inviteOnlyRegistrationView.header")}</CardTitle>
+        <CardDescription className="body-lg-md">
+          {t("inviteOnlyRegistrationView.subHeader")}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="body-sm-md flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
+        <p className="md:w-3/4">{t("inviteOnlyRegistrationView.description")}</p>
+        <div className="group inline-flex items-center gap-2">
+          <span className="flex-1 text-right details">
+            {t("inviteOnlyRegistrationView.switch.disabled")}
+          </span>
+          <Switch
+            checked={isChecked}
+            onCheckedChange={toggleSwitch}
+            data-testid={SETTINGS_PAGE_HANDLES.INVITE_ONLY_REGISTRATION_SWITCH}
+          />
+          <span className="flex-1 text-left details">
+            {t("inviteOnlyRegistrationView.switch.enabled")}
+          </span>
+        </div>
+      </CardContent>
+      <CardFooter className="border-t px-6 py-4">
+        <Button
+          disabled={isPending}
+          type="submit"
+          onClick={saveInviteOnlyRegistration}
+          data-testid={SETTINGS_PAGE_HANDLES.INVITE_ONLY_REGISTRATION_SAVE}
+        >
+          {t("common.button.save")}
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+};

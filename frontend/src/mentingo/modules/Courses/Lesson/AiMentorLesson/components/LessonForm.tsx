@@ -1,0 +1,419 @@
+import { getUiMessageText, LEARNER_TRANSCRIPT_STATUSES, MESSAGE_ROLE } from "@repo/shared";
+import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+
+import { useLumaConfigured } from "~/api/queries/useLumaConfigured";
+import { cn } from "~/lib/utils";
+import { LessonComposerCenterContent } from "~/modules/Courses/Lesson/AiMentorLesson/components/LessonComposerCenterContent";
+import { LessonComposerLeftControl } from "~/modules/Courses/Lesson/AiMentorLesson/components/LessonComposerLeftControl";
+import { LessonComposerRightControls } from "~/modules/Courses/Lesson/AiMentorLesson/components/LessonComposerRightControls";
+import { LessonEmojiPicker } from "~/modules/Courses/Lesson/AiMentorLesson/components/LessonEmojiPicker";
+import { VoiceMentorModeOverlay } from "~/modules/Courses/Lesson/AiMentorLesson/components/VoiceMentorModeOverlay";
+import { useTranscription } from "~/modules/Voice/hooks/useTranscription";
+import { useVoiceMentor } from "~/modules/Voice/hooks/useVoiceMentor";
+import { useVoiceModeUIState } from "~/modules/Voice/hooks/useVoiceModeUIState";
+import { acceptLearnerTranscriptRevision } from "~/modules/Voice/voice-mentor-presentation";
+
+import { LEARNING_HANDLES } from "../../../../../../e2e/data/learning/handles";
+
+import type { UIMessage } from "@ai-sdk/react";
+import type { VoiceMentorTarget } from "@repo/shared";
+import type { ChangeEvent, Dispatch, SetStateAction } from "react";
+import type { LearnerTranscriptRevision } from "~/modules/Voice/voice-mentor-presentation.types";
+
+const MENTOR_PLAYBACK_ACTIVITY_THRESHOLD = 0.01;
+
+interface LessonFormProps {
+  voiceTarget: VoiceMentorTarget;
+  mentorName: string;
+  mentorAvatarUrl?: string | null;
+  handleSubmit: () => void;
+  onLearnerTranscription?: (text: string, turnId?: string) => void;
+  onMentorResponseDelta?: (text: string) => void;
+  onMentorResponseCompleted?: (text: string) => void;
+  onAudioOutputCompleted?: () => void;
+  onAudioInterrupted?: () => void;
+  input: string;
+  handleInputChange: (e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>) => void;
+  setInput: Dispatch<SetStateAction<string>>;
+  messages: UIMessage[];
+  hasTaskDescription: boolean;
+  taskDescription: string;
+  onJudge: () => Promise<void>;
+  isJudgePending: boolean;
+  allowVoiceMentor?: boolean;
+  onVoiceActiveChange?: (active: boolean) => void;
+  compact?: boolean;
+}
+
+export const LessonForm = ({
+  voiceTarget,
+  mentorName,
+  mentorAvatarUrl,
+  handleSubmit,
+  onLearnerTranscription,
+  onMentorResponseDelta,
+  onMentorResponseCompleted,
+  onAudioOutputCompleted,
+  onAudioInterrupted,
+  input,
+  handleInputChange,
+  setInput,
+  messages,
+  hasTaskDescription,
+  taskDescription,
+  onJudge,
+  isJudgePending,
+  allowVoiceMentor = true,
+  onVoiceActiveChange,
+  compact = false,
+}: LessonFormProps) => {
+  const { t } = useTranslation();
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [isVoiceMentorAudioStarted, setIsVoiceMentorAudioStarted] = useState(false);
+  const [isVoiceTurnPending, setIsVoiceTurnPending] = useState(false);
+  const [isVoiceJudgePending, setIsVoiceJudgePending] = useState(false);
+  const [voiceLevel, setVoiceLevel] = useState(0);
+  const [mentorVoiceLevel, setMentorVoiceLevel] = useState(0);
+  const [latestTranscript, setLatestTranscript] = useState<LearnerTranscriptRevision | null>(null);
+  const [latestResponse, setLatestResponse] = useState("");
+  const mentorPlaybackActiveRef = useRef(false);
+  const { data: lumaConfigured } = useLumaConfigured();
+  const canUseVoiceMentor = allowVoiceMentor && Boolean(lumaConfigured?.voiceMentorEnabled);
+  const voiceModeUI = useVoiceModeUIState();
+  const lastMentorMessage = [...messages]
+    .reverse()
+    .find((message) => message.role === MESSAGE_ROLE.MENTOR);
+  const lastMentorResponse = lastMentorMessage ? getUiMessageText(lastMentorMessage) : "";
+
+  const emojiRef = useRef<HTMLDivElement | null>(null);
+  const hasTriggeredWelcomeRef = useRef(false);
+  const triggerWelcomeMessageRef = useRef<(message: string) => Promise<boolean>>(async () => false);
+  const toggleEmojiPicker = () => setShowEmojiPicker((prev) => !prev);
+
+  const { startRecording, stopRecording, cancelTranscription } = useTranscription({
+    setInput,
+    onLevelChange: setVoiceLevel,
+  });
+  const {
+    isRecording: isVoiceMentorMode,
+    isStarting: isVoiceMentorStarting,
+    isMuted: isVoiceMentorMuted,
+    connectionState: voiceMentorConnectionState,
+    startVoiceMentor,
+    restartVoiceMentor,
+    cancelVoiceMentor,
+    triggerWelcomeMessage,
+    setVoiceMentorMuted,
+    mentorSpeechPresentation,
+  } = useVoiceMentor({
+    voiceTarget,
+    setInput,
+    onLevelChange: setVoiceLevel,
+    onLearnerTranscription: (revision) => {
+      setIsVoiceTurnPending(true);
+      setLatestTranscript((current) => acceptLearnerTranscriptRevision(current, revision));
+      if (revision.status !== LEARNER_TRANSCRIPT_STATUSES.FINAL) {
+        return;
+      }
+
+      setLatestResponse("");
+      voiceModeUI.onLearnerTranscriptionReceived();
+      onLearnerTranscription?.(revision.text, revision.turnId);
+    },
+    onMentorResponseDelta: (text) => {
+      setLatestResponse((previous) => previous + text);
+      onMentorResponseDelta?.(text);
+    },
+    onMentorResponseCompleted: (text) => {
+      setIsVoiceTurnPending(false);
+      setLatestResponse(text);
+      onMentorResponseCompleted?.(text);
+    },
+    onAudioStarted: () => {
+      setIsVoiceMentorAudioStarted(true);
+    },
+    onAudioOutputCompleted: () => {
+      mentorPlaybackActiveRef.current = false;
+      voiceModeUI.onAudioOutputCompleted(isVoiceMentorMode);
+      onAudioOutputCompleted?.();
+    },
+    onAudioInterrupted: () => {
+      mentorPlaybackActiveRef.current = false;
+      voiceModeUI.onAudioInterrupted(isVoiceMentorMode);
+      onAudioInterrupted?.();
+    },
+    onSpeechChunkSent: () => {
+      voiceModeUI.onUserSpeechChunkSent();
+    },
+    onMentorAudioLevel: (level) => {
+      setMentorVoiceLevel(level);
+
+      if (level >= MENTOR_PLAYBACK_ACTIVITY_THRESHOLD) {
+        if (!mentorPlaybackActiveRef.current) {
+          mentorPlaybackActiveRef.current = true;
+          voiceModeUI.onAudioPlaybackStarted();
+        }
+        return;
+      }
+
+      mentorPlaybackActiveRef.current = false;
+    },
+  });
+
+  useEffect(() => {
+    onVoiceActiveChange?.(isVoiceMentorMode || isVoiceMentorStarting);
+  }, [isVoiceMentorMode, isVoiceMentorStarting, onVoiceActiveChange]);
+
+  useEffect(() => {
+    if (!showEmojiPicker) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showEmojiPicker]);
+
+  useEffect(() => {
+    triggerWelcomeMessageRef.current = triggerWelcomeMessage;
+  }, [triggerWelcomeMessage]);
+
+  useEffect(() => {
+    if (!isVoiceMentorMode || !isVoiceMentorAudioStarted) {
+      return;
+    }
+
+    if (hasTriggeredWelcomeRef.current) {
+      return;
+    }
+
+    if (messages.length !== 1 || messages[0]?.role !== "assistant") {
+      return;
+    }
+
+    hasTriggeredWelcomeRef.current = true;
+    void triggerWelcomeMessageRef.current(getUiMessageText(messages[0]));
+  }, [isVoiceMentorAudioStarted, isVoiceMentorMode, messages]);
+
+  const startVoiceMode = async () => {
+    if (isVoiceMentorMode) {
+      const canceledMentor = await cancelVoiceMentor();
+      if (canceledMentor) {
+        voiceModeUI.onMicCaptureStopped();
+      }
+    }
+    setShowEmojiPicker(false);
+    const hasStarted = await startRecording();
+    if (!hasStarted) return;
+
+    setIsVoiceMode(true);
+    setLatestTranscript(null);
+    setLatestResponse("");
+    mentorPlaybackActiveRef.current = false;
+    voiceModeUI.onMicCaptureStarted();
+  };
+
+  const stopVoiceMode = async () => {
+    await stopRecording();
+    setIsVoiceMode(false);
+    setVoiceLevel(0);
+    setMentorVoiceLevel(0);
+    voiceModeUI.onMicCaptureStopped();
+  };
+
+  const cancelVoiceMode = async () => {
+    await cancelTranscription();
+    setIsVoiceMode(false);
+    setVoiceLevel(0);
+    setMentorVoiceLevel(0);
+    voiceModeUI.onMicCaptureStopped();
+  };
+
+  const startVoiceMentorMode = async () => {
+    if (!canUseVoiceMentor) {
+      return;
+    }
+
+    if (isVoiceMode) {
+      await cancelVoiceMode();
+    }
+    hasTriggeredWelcomeRef.current = false;
+    setIsVoiceMentorAudioStarted(false);
+    setMentorVoiceLevel(0);
+    setShowEmojiPicker(false);
+    setLatestTranscript(null);
+    setLatestResponse(lastMentorResponse);
+    setIsVoiceTurnPending(false);
+    const started = await startVoiceMentor();
+    if (!started) {
+      return;
+    }
+
+    voiceModeUI.onMicCaptureStarted();
+  };
+
+  const stopVoiceMentorMode = async () => {
+    const canceled = await cancelVoiceMentor();
+    if (!canceled) {
+      return;
+    }
+
+    voiceModeUI.onMicCaptureStopped();
+    setVoiceLevel(0);
+    setMentorVoiceLevel(0);
+    onAudioOutputCompleted?.();
+  };
+
+  const restartVoiceMentorMode = async () => {
+    setIsVoiceMentorAudioStarted(false);
+    setMentorVoiceLevel(0);
+    mentorPlaybackActiveRef.current = false;
+    setLatestTranscript(null);
+    setLatestResponse(lastMentorResponse);
+    setIsVoiceTurnPending(false);
+    const restarted = await restartVoiceMentor();
+    if (!restarted) {
+      return;
+    }
+
+    voiceModeUI.onMicCaptureStarted();
+  };
+
+  const closeVoiceOverlay = async () => {
+    if (isVoiceMentorMode) {
+      await stopVoiceMentorMode();
+      return;
+    }
+
+    if (isVoiceMode) {
+      await cancelVoiceMode();
+    }
+  };
+
+  const judgeVoiceMentorLesson = async () => {
+    if (isVoiceJudgePending || (voiceTarget.practiceSessionId && isVoiceTurnPending)) return;
+
+    setIsVoiceJudgePending(true);
+
+    try {
+      const canceled = await cancelVoiceMentor();
+      if (!canceled) return;
+
+      voiceModeUI.onMicCaptureStopped();
+      setVoiceLevel(0);
+      setMentorVoiceLevel(0);
+      await onJudge();
+    } finally {
+      setIsVoiceJudgePending(false);
+    }
+  };
+
+  return (
+    <div className={cn("relative mt-3 w-full", compact && "mt-1")}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (isVoiceMode) {
+            void stopVoiceMode();
+            return;
+          }
+          handleSubmit();
+        }}
+      >
+        <div
+          className={cn(
+            "flex w-full flex-col rounded-lg border border-[#E4E6EB] bg-[#F5F6F7] px-4 py-3",
+            compact && "px-3 py-2",
+          )}
+        >
+          <div>
+            <LessonComposerCenterContent
+              isVoiceMode={isVoiceMode}
+              compact={compact}
+              input={input}
+              placeholder={t("studentCourseView.lesson.aiMentorLesson.sendMessage")}
+              voiceLevel={voiceLevel}
+              onInputChange={handleInputChange as (e: ChangeEvent<HTMLTextAreaElement>) => void}
+              onSubmit={handleSubmit}
+              textInputTestId={LEARNING_HANDLES.AI_MENTOR_MESSAGE_INPUT}
+            />
+          </div>
+
+          <div className={cn("mt-2 flex items-center justify-between gap-3", compact && "mt-1")}>
+            <div className="flex items-center gap-2">
+              <LessonComposerLeftControl
+                isVoiceMode={isVoiceMode}
+                onCloseVoiceMode={() => void cancelVoiceMode()}
+                onToggleEmojiPicker={toggleEmojiPicker}
+                closeVoiceModeLabel={t("studentCourseView.lesson.aiMentorLesson.closeVoiceMode")}
+                addEmojiLabel={t("studentCourseView.lesson.aiMentorLesson.addEmoji")}
+              />
+            </div>
+            <LessonComposerRightControls
+              isVoiceMode={isVoiceMode}
+              isVoiceMentorMode={isVoiceMentorMode}
+              isVoiceMentorStarting={isVoiceMentorStarting}
+              canSubmit={Boolean(input.trim())}
+              canUseVoiceMentor={canUseVoiceMentor}
+              onStartVoiceMode={() => void startVoiceMode()}
+              onStopVoiceMode={() => void stopVoiceMode()}
+              onStartVoiceMentor={() => void startVoiceMentorMode()}
+              onStopVoiceMentor={() => void stopVoiceMentorMode()}
+              onSubmit={handleSubmit}
+              sendLabel={t("studentCourseView.lesson.aiMentorLesson.send")}
+              toggleVoiceInputLabel={t("studentCourseView.lesson.aiMentorLesson.toggleVoiceInput")}
+              dictateVoiceInputLabel={t(
+                "studentCourseView.lesson.aiMentorLesson.dictateVoiceInput",
+              )}
+              startVoiceMentorLabel={t("studentCourseView.lesson.aiMentorLesson.startVoiceMentor")}
+              stopVoiceRecordingLabel={t(
+                "studentCourseView.lesson.aiMentorLesson.stopVoiceRecording",
+              )}
+              primaryActionTestId={LEARNING_HANDLES.AI_MENTOR_MESSAGE_ACTION_BUTTON}
+              micButtonTestId={LEARNING_HANDLES.AI_MENTOR_MIC_BUTTON}
+            />
+          </div>
+
+          {showEmojiPicker && !isVoiceMode && (
+            <div className="absolute bottom-16 left-0" ref={emojiRef}>
+              <LessonEmojiPicker setInput={setInput} input={input} />
+            </div>
+          )}
+        </div>
+      </form>
+
+      <VoiceMentorModeOverlay
+        messages={messages}
+        open={isVoiceMentorMode}
+        state={voiceModeUI.voiceModeState}
+        voiceLevel={voiceLevel}
+        mentorVoiceLevel={mentorVoiceLevel}
+        learnerTranscript={latestTranscript}
+        response={latestResponse}
+        mentorSpeech={mentorSpeechPresentation}
+        mentorName={mentorName}
+        mentorAvatarUrl={mentorAvatarUrl}
+        hasTaskDescription={hasTaskDescription}
+        taskDescription={taskDescription}
+        onJudge={() => void judgeVoiceMentorLesson()}
+        isJudgePending={isJudgePending || isVoiceJudgePending}
+        canJudge={
+          !voiceTarget.practiceSessionId ||
+          (!isVoiceTurnPending && messages.some((message) => message.role === MESSAGE_ROLE.USER))
+        }
+        isMicMuted={isVoiceMentorMuted}
+        connectionState={voiceMentorConnectionState}
+        isRestarting={isVoiceMentorStarting}
+        onMicMutedChange={(muted) => void setVoiceMentorMuted(muted)}
+        onRestart={() => void restartVoiceMentorMode()}
+        onExit={() => void closeVoiceOverlay()}
+      />
+    </div>
+  );
+};

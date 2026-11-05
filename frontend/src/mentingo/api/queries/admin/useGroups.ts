@@ -1,0 +1,43 @@
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+
+import { ApiClient } from "~/api/api-client";
+
+import type { SupportedLanguages } from "@repo/shared";
+import type { GetAllGroupsResponse } from "~/api/generated-api";
+
+export type GroupsSearchParams = {
+  name?: string;
+  sort?: string;
+  language?: SupportedLanguages;
+};
+
+export const GROUPS_QUERY_KEY = "groups";
+
+type QueryOptions = {
+  enabled?: boolean;
+};
+
+export const groupsQueryOptions = (
+  searchParams?: GroupsSearchParams,
+  options: QueryOptions = { enabled: true },
+) => ({
+  queryKey: [GROUPS_QUERY_KEY, searchParams],
+  queryFn: async () => {
+    const { data } = await ApiClient.api.groupControllerGetAllGroups({
+      ...(searchParams?.name && { keyword: searchParams.name }),
+      ...(searchParams?.sort && { sort: searchParams.sort }),
+      ...(searchParams?.language && { language: searchParams.language }),
+    });
+    return data;
+  },
+  select: ({ data }: GetAllGroupsResponse) => data,
+  ...options,
+});
+
+export function useGroupsQuerySuspense(searchParams?: GroupsSearchParams) {
+  return useSuspenseQuery(groupsQueryOptions(searchParams));
+}
+
+export function useGroupsQuery(searchParams?: GroupsSearchParams, options?: QueryOptions) {
+  return useQuery(groupsQueryOptions(searchParams, options));
+}

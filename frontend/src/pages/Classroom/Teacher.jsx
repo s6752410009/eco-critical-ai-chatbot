@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  BookOpen,
   Check,
   Eye,
   FileText,
@@ -11,7 +10,20 @@ import {
   Trash2,
   Upload,
   X,
+  ArrowRight,
 } from "lucide-react";
+import { Button as NativeButton } from "@/mentingo/components/ui/button";
+import { Input as NativeInput } from "@/mentingo/components/ui/input";
+import { Textarea as NativeTextarea } from "@/mentingo/components/ui/textarea";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/mentingo/components/ui/table";
+import { PageWrapper } from "@/mentingo/components/PageWrapper";
 import { chunkText, TOPICS } from "./data";
 import Workspace from "@/models/workspace";
 import { uploadLesson } from "./api";
@@ -222,11 +234,21 @@ export default function Teacher({
       setError(failure.message);
     }
   }
+  function reindex(doc) {
+    update((previous) => ({
+      ...previous,
+      documents: previous.documents.map((entry) =>
+        entry.id === doc.id
+          ? { ...entry, chunks: chunkText(entry.text), status: "ready" }
+          : entry
+      ),
+    }));
+    onNotice("สร้างดัชนีข้อความในเบราว์เซอร์ใหม่แล้ว");
+  }
   return (
-    <div className="teacher-view">
+    <PageWrapper isBarebones className="teacher-view native-teacher-workspace">
       <div className="page-heading">
         <div>
-          <span className="section-kicker">พื้นที่คุณครู</span>
           <h1>
             {
               {
@@ -245,16 +267,16 @@ export default function Teacher({
           </p>
         </div>
         {["dashboard", "classrooms"].includes(screen) && (
-          <button className="button" onClick={() => begin("classroom")}>
+          <NativeButton className="button" onClick={() => begin("classroom")}>
             <Plus size={17} />
             สร้างห้องเรียน
-          </button>
+          </NativeButton>
         )}
         {screen === "lessons" && demo && classroom && (
-          <button className="button" onClick={() => begin("lesson")}>
+          <NativeButton className="button" onClick={() => begin("lesson")}>
             <Plus size={17} />
             เพิ่มบทเรียน
-          </button>
+          </NativeButton>
         )}
       </div>
       {error && (
@@ -269,7 +291,7 @@ export default function Teacher({
               {form.id ? "แก้ไข" : "เพิ่ม"}
               {form.kind === "classroom" ? "ห้องเรียน" : "บทเรียน"}
             </h2>
-            <button
+            <NativeButton
               type="button"
               className="icon-button"
               aria-label="ปิดฟอร์ม"
@@ -277,11 +299,11 @@ export default function Teacher({
               disabled={busy}
             >
               <X size={19} />
-            </button>
+            </NativeButton>
           </div>
           <label>
             {form.kind === "classroom" ? "ชื่อห้องเรียน" : "ชื่อบทเรียน"}
-            <input
+            <NativeInput
               autoFocus
               required
               maxLength={255}
@@ -291,7 +313,7 @@ export default function Teacher({
           </label>
           <label>
             คำอธิบายสั้นๆ
-            <textarea
+            <NativeTextarea
               rows={2}
               maxLength={1000}
               value={description}
@@ -313,53 +335,103 @@ export default function Teacher({
               </select>
             </label>
           )}
-          <button className="button" disabled={busy || !name.trim()}>
+          <NativeButton className="button" disabled={busy || !name.trim()}>
             {busy ? (
               <LoaderCircle size={17} className="spin" />
             ) : (
               <Check size={17} />
             )}
             บันทึก
-          </button>
+          </NativeButton>
         </form>
       )}
       {["dashboard", "classrooms"].includes(screen) && (
-        <div className="classroom-grid">
-          {data.classrooms.map((entry) => (
-            <article className="classroom-card" key={entry.id}>
-              <div className="row-between">
-                <span className="classroom-symbol">
-                  <BookOpen size={24} />
-                </span>
-                <button
-                  className="icon-button"
-                  aria-label={`แก้ไข ${entry.name}`}
-                  onClick={() => begin("classroom", entry)}
-                >
-                  <Pencil size={16} />
-                </button>
-              </div>
-              <h2>{entry.name}</h2>
-              <p>{entry.description || "เตรียมบทเรียนสำหรับห้องเรียนนี้"}</p>
-              <div className="classroom-meta">
-                {entry.lessonIds.length} บทเรียน ·{" "}
-                {
-                  data.documents.filter((doc) => doc.classroomId === entry.id)
-                    .length
-                }{" "}
-                เอกสาร
-              </div>
-              <button
-                className="button secondary"
-                onClick={() => {
-                  setClassroom(entry.id);
-                  onCreated(entry.id);
-                }}
-              >
-                เปิดห้องเรียน
-              </button>
-            </article>
-          ))}
+        <div className="native-teacher-table classroom-grid">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>ห้องเรียน</TableHead>
+                <TableHead>บทเรียน</TableHead>
+                <TableHead>เอกสาร</TableHead>
+                <TableHead className="native-actions-head">จัดการ</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.classrooms.map((entry) => {
+                const firstLesson = data.lessons.find((lesson) =>
+                  entry.lessonIds.includes(lesson.id)
+                );
+                const count = data.documents.filter(
+                  (doc) => doc.classroomId === entry.id
+                ).length;
+                return (
+                  <TableRow key={entry.id}>
+                    <TableCell>
+                      <div className="native-class-cell">
+                        <img
+                          src={`/classroom/${firstLesson?.topic || "air"}.jpg`}
+                          alt=""
+                        />
+                        <div>
+                          <h2>
+                            <NativeButton
+                              variant="link"
+                              className="native-title-link"
+                              onClick={() => {
+                                setClassroom(entry.id);
+                                onCreated(entry.id);
+                              }}
+                            >
+                              {entry.name}
+                            </NativeButton>
+                          </h2>
+                          <p>
+                            {entry.description ||
+                              "เตรียมบทเรียนสำหรับห้องเรียนนี้"}
+                          </p>
+                          {entry.id === classroom?.id && (
+                            <span className="native-active-class">
+                              กำลังใช้งาน
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="native-table-count">
+                        {entry.lessonIds.length}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="native-table-count">{count}</span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="native-table-actions">
+                        <NativeButton
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`แก้ไข ${entry.name}`}
+                          onClick={() => begin("classroom", entry)}
+                        >
+                          <Pencil size={17} />
+                        </NativeButton>
+                        <NativeButton
+                          variant="outline"
+                          aria-label="เปิดห้องเรียน"
+                          onClick={() => {
+                            setClassroom(entry.id);
+                            onCreated(entry.id);
+                          }}
+                        >
+                          <span className="native-action-label">เปิดห้องเรียน</span><ArrowRight size={16}/>
+                        </NativeButton>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </div>
       )}
       {screen === "lessons" && (
@@ -374,33 +446,63 @@ export default function Teacher({
               การจัดหมวดบทเรียนแบบภาพในรอบนี้อยู่ในโหมดสาธิต
             </p>
           )}
-          <div className="teacher-lesson-list">
-            {lessons.map((lesson) => (
-              <article key={lesson.id}>
-                <span className={`topic-dot ${lesson.topic}`} />
-                <div>
-                  <small>
-                    {TOPICS.find((entry) => entry.id === lesson.topic)?.title}
-                  </small>
-                  <h3>{lesson.title}</h3>
-                  <p>{lesson.description}</p>
-                </div>
-                <button
-                  className="icon-button"
-                  aria-label={`แก้ไขบทเรียน ${lesson.title}`}
-                  onClick={() => begin("lesson", lesson)}
-                >
-                  <Pencil size={17} />
-                </button>
-                <button
-                  className="button secondary"
-                  onClick={() => openLesson(lesson.id)}
-                >
-                  <Eye size={16} />
-                  ดูแบบนักเรียน
-                </button>
-              </article>
-            ))}
+          <div className="teacher-lesson-list native-teacher-table">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>บทเรียน</TableHead>
+                  <TableHead>หัวข้อ</TableHead>
+                  <TableHead>เวลา</TableHead>
+                  <TableHead className="native-actions-head">จัดการ</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {lessons.map((lesson) => (
+                  <TableRow key={lesson.id}>
+                    <TableCell>
+                      <div className="native-class-cell">
+                        <img src={`/classroom/${lesson.topic}.jpg`} alt="" />
+                        <div>
+                          <h3>{lesson.title}</h3>
+                          <p>{lesson.description}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className={`native-topic-label ${lesson.topic}`}>
+                        {
+                          TOPICS.find((entry) => entry.id === lesson.topic)
+                            ?.title
+                        }
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {lesson.minutes ? `${lesson.minutes} นาที` : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <div className="native-table-actions">
+                        <NativeButton
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`แก้ไขบทเรียน ${lesson.title}`}
+                          onClick={() => begin("lesson", lesson)}
+                        >
+                          <Pencil size={17} />
+                        </NativeButton>
+                        <NativeButton
+                          variant="outline"
+                          aria-label="ดูแบบนักเรียน"
+                          onClick={() => openLesson(lesson.id)}
+                        >
+                          <Eye size={16} />
+                          <span className="native-action-label">ดูแบบนักเรียน</span>
+                        </NativeButton>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
           {demo && !lessons.length && (
             <p className="empty-state">
@@ -443,7 +545,7 @@ export default function Teacher({
                 <Plus size={17} />
               )}
               เลือกเอกสาร
-              <input
+              <NativeInput
                 aria-label="อัปโหลดเอกสารการสอน"
                 type="file"
                 disabled={!classroom || busy}
@@ -457,69 +559,89 @@ export default function Teacher({
             <h2>เอกสารใน {classroom?.name || "ห้องเรียน"}</h2>
             <span>{docs.length} ไฟล์</span>
           </div>
-          <div className="knowledge-list">
-            {docs.map((doc) => (
-              <article key={doc.id}>
-                <span className="file-type">{doc.type || "TXT"}</span>
-                <div>
-                  <h3>{doc.name}</h3>
-                  <p>
-                    {data.lessons.find((lesson) => lesson.id === doc.lessonId)
-                      ?.title || "ทุกบทเรียนในห้องเรียน"}
-                  </p>
-                  <small className="document-status">
-                    <Check size={13} />
-                    {doc.status === "ready"
-                      ? `พร้อมค้นหา${demo ? ` · ${doc.chunks.length} ส่วนข้อความ` : ""}`
-                      : "กำลังประมวลผล"}
-                    {doc.sample ? " · เอกสารตัวอย่าง" : ""}
-                  </small>
-                </div>
-                <div className="document-actions">
-                  {demo && (
-                    <>
-                      <button
-                        className="icon-button"
-                        aria-label={`ดู ${doc.name}`}
-                        onClick={() =>
-                          setViewed(viewed?.id === doc.id ? null : doc)
-                        }
-                      >
-                        <Eye size={17} />
-                      </button>
-                      <button
-                        className="icon-button"
-                        aria-label={`สร้างดัชนีใหม่ ${doc.name}`}
-                        onClick={() => {
-                          update((previous) => ({
-                            ...previous,
-                            documents: previous.documents.map((entry) =>
-                              entry.id === doc.id
-                                ? {
-                                    ...entry,
-                                    chunks: chunkText(entry.text),
-                                    status: "ready",
-                                  }
-                                : entry
-                            ),
-                          }));
-                          onNotice("สร้างดัชนีข้อความในเบราว์เซอร์ใหม่แล้ว");
-                        }}
-                      >
-                        <RefreshCw size={16} />
-                      </button>
-                    </>
-                  )}
-                  <button
-                    className="icon-button danger"
-                    aria-label={`นำออก ${doc.name}`}
-                    onClick={() => remove(doc)}
-                  >
-                    <Trash2 size={17} />
-                  </button>
-                </div>
-              </article>
-            ))}
+          <div className="knowledge-list native-teacher-table">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>เอกสาร</TableHead>
+                  <TableHead>บทเรียนที่เชื่อม</TableHead>
+                  <TableHead>สถานะ</TableHead>
+                  <TableHead className="native-actions-head">จัดการ</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {docs.map((doc) => (
+                  <TableRow key={doc.id}>
+                    <TableCell>
+                      <div className="native-document-cell">
+                        <span className="native-document-icon">
+                          <FileText size={22} />
+                        </span>
+                        <div>
+                          <h3>{doc.name}</h3>
+                          <small>
+                            {doc.type || "TXT"}
+                            {doc.sample ? " · เอกสารตัวอย่าง" : ""}
+                          </small>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {data.lessons.find((lesson) => lesson.id === doc.lessonId)
+                        ?.title || "ทุกบทเรียนในห้องเรียน"}
+                    </TableCell>
+                    <TableCell>
+                      <span className="native-document-status">
+                        <Check size={13} />
+                        {doc.status === "ready"
+                          ? "พร้อมค้นหา"
+                          : "กำลังประมวลผล"}
+                      </span>
+                      {demo && (
+                        <small className="native-document-chunks">
+                          {doc.chunks.length} ส่วนข้อความ
+                        </small>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="native-table-actions">
+                        {demo && (
+                          <>
+                            <NativeButton
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`ดู ${doc.name}`}
+                              onClick={() =>
+                                setViewed(viewed?.id === doc.id ? null : doc)
+                              }
+                            >
+                              <Eye size={17} />
+                            </NativeButton>
+                            <NativeButton
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`สร้างดัชนีใหม่ ${doc.name}`}
+                              onClick={() => reindex(doc)}
+                            >
+                              <RefreshCw size={16} />
+                            </NativeButton>
+                          </>
+                        )}
+                        <NativeButton
+                          variant="ghost"
+                          size="icon"
+                          className="native-remove"
+                          aria-label={`นำออก ${doc.name}`}
+                          onClick={() => remove(doc)}
+                        >
+                          <Trash2 size={17} />
+                        </NativeButton>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
           {!docs.length && (
             <p className="empty-state">
@@ -533,13 +655,13 @@ export default function Teacher({
                   <FileText size={18} />
                   {viewed.name}
                 </h2>
-                <button
+                <NativeButton
                   className="icon-button"
                   aria-label="ปิดตัวอย่างเอกสาร"
                   onClick={() => setViewed(null)}
                 >
                   <X size={18} />
-                </button>
+                </NativeButton>
               </div>
               <p>{viewed.text}</p>
             </section>
@@ -579,6 +701,6 @@ export default function Teacher({
           )}
         </>
       )}
-    </div>
+    </PageWrapper>
   );
 }

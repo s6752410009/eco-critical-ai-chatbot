@@ -1,0 +1,173 @@
+import * as PopoverPrimitive from "@radix-ui/react-popover";
+import { Download, Loader2, Palette, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+
+import { Linkedin } from "~/assets/svgs";
+import { ColorPickerField } from "~/components/ColorPickerField";
+import { Icon } from "~/components/Icon";
+import { languageOptions } from "~/components/LanguageSelector/languageOptions";
+import { Button } from "~/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import { cn } from "~/lib/utils";
+
+import { applyUniformCertificateColor } from "./certificateTheme";
+
+import type { CertificateColorTheme } from "./certificateTheme";
+import type { SupportedLanguages } from "@repo/shared";
+
+interface CertificateControlsProps {
+  onClose?: () => void;
+  selectedLanguage: SupportedLanguages;
+  setSelectedLanguage: (language: SupportedLanguages) => void;
+  downloadCertificatePdf: () => Promise<void>;
+  isPreparingDownload: boolean;
+  onShareToLinkedIn?: () => Promise<void>;
+  isPreparingShare?: boolean;
+  colorTheme: CertificateColorTheme;
+  setColorTheme: React.Dispatch<React.SetStateAction<CertificateColorTheme>>;
+  onColorChange?: (color: string) => void;
+  onColorPickerOpenChange?: (isOpen: boolean) => void;
+  showColorPicker?: boolean;
+  showDownloadButton?: boolean;
+  showShareButton?: boolean;
+}
+
+const buttonClasses =
+  "flex size-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700";
+
+const CertificateControls = ({
+  onClose,
+  selectedLanguage,
+  setSelectedLanguage,
+  downloadCertificatePdf,
+  isPreparingDownload,
+  onShareToLinkedIn,
+  isPreparingShare = false,
+  colorTheme,
+  setColorTheme,
+  onColorChange,
+  onColorPickerOpenChange,
+  showColorPicker = false,
+  showDownloadButton = true,
+  showShareButton = false,
+}: CertificateControlsProps) => {
+  const { t } = useTranslation();
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+
+  useEffect(() => {
+    return () => onColorPickerOpenChange?.(false);
+  }, [onColorPickerOpenChange]);
+
+  const handleDownload = () => {
+    void downloadCertificatePdf();
+  };
+
+  const handleColorPickerOpenChange = (isOpen: boolean) => {
+    setIsColorPickerOpen(isOpen);
+    onColorPickerOpenChange?.(isOpen);
+  };
+
+  const updateAllColors = (value: string) => {
+    setColorTheme((previous) => applyUniformCertificateColor(value, previous));
+    onColorChange?.(value);
+  };
+
+  return (
+    <div className="flex flex-wrap items-center justify-end gap-3">
+      <Select
+        value={selectedLanguage}
+        onValueChange={(value) => setSelectedLanguage(value as SupportedLanguages)}
+      >
+        <SelectTrigger
+          className="h-[42px] w-[152px]"
+          aria-label={t("studentCertificateView.controls.languageToggle")}
+        >
+          <SelectValue placeholder={t("changeUserLanguageView.field.language")} />
+        </SelectTrigger>
+        <SelectContent>
+          {languageOptions.map((item) => (
+            <SelectItem key={item.key} value={item.key} className="w-full">
+              <div className="flex w-full min-w-0 items-center gap-2 whitespace-nowrap">
+                <Icon name={item.iconName} className="size-4 shrink-0" />
+                <span className="truncate font-semibold">{t(item.translationKey)}</span>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {showColorPicker && (
+        <PopoverPrimitive.Root open={isColorPickerOpen} onOpenChange={handleColorPickerOpenChange}>
+          <PopoverPrimitive.Trigger asChild>
+            <Button
+              size="sm"
+              className="flex h-[42px] items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            >
+              <Palette className="size-4" />
+              <span className="block mr-3">{t("studentCertificateView.controls.fontColor")}</span>
+              <span
+                className="size-4 rounded border border-gray-300"
+                style={{ backgroundColor: colorTheme.titleColor }}
+              />
+              <span className="font-mono uppercase">{colorTheme.titleColor}</span>
+            </Button>
+          </PopoverPrimitive.Trigger>
+          <PopoverPrimitive.Content
+            align="end"
+            sideOffset={8}
+            className={cn(
+              "z-[60] rounded-lg border bg-white p-3 text-popover-foreground shadow-md outline-none",
+              "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+              "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+            )}
+          >
+            <ColorPickerField color={colorTheme.titleColor} onChange={updateAllColors} />
+          </PopoverPrimitive.Content>
+        </PopoverPrimitive.Root>
+      )}
+
+      {showDownloadButton && (
+        <button
+          className={buttonClasses}
+          onClick={handleDownload}
+          disabled={isPreparingDownload}
+          aria-label={t("studentCertificateView.button.download")}
+        >
+          {isPreparingDownload ? (
+            <Loader2 className="size-5 animate-spin" />
+          ) : (
+            <Download className="size-5" />
+          )}
+        </button>
+      )}
+      {showShareButton && (
+        <button
+          className={buttonClasses}
+          onClick={() => void onShareToLinkedIn?.()}
+          disabled={isPreparingShare}
+          aria-label={t("studentCertificateView.button.shareLinkedIn")}
+        >
+          {isPreparingShare ? (
+            <Loader2 className="size-5 animate-spin" />
+          ) : (
+            <Linkedin className="size-5" />
+          )}
+        </button>
+      )}
+      {onClose && (
+        <button className={buttonClasses} onClick={onClose}>
+          <X className="size-5" />
+        </button>
+      )}
+    </div>
+  );
+};
+
+export default CertificateControls;

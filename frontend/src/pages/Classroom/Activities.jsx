@@ -1,5 +1,14 @@
 import { useState } from "react";
-import { Check, X, RotateCcw, ArrowRight } from "lucide-react";
+import {
+  Check,
+  X,
+  RotateCcw,
+  ArrowRight,
+  Recycle,
+  Leaf,
+  ShieldAlert,
+  Trash2,
+} from "lucide-react";
 export function PollutionExplorer() {
   const [value, setValue] = useState(25);
   return (
@@ -8,10 +17,10 @@ export function PollutionExplorer() {
       <h3>ถ้าปริมาณฝุ่นเปลี่ยนไป?</h3>
       <div className="pm-scene" aria-hidden="true">
         <svg viewBox="0 0 420 120" fill="none">
-          <path d="M0 105h420v15H0z" fill="#c0d5c5" />
+          <path d="M0 105h420v15H0z" fill="#d7e9ff" />
           <path
             d="M30 105V57h42v48M83 105V35h48v70M145 105V65h42v40M218 105V49h50v56M301 105V64h56v41"
-            fill="#8ab297"
+            fill="#73aafa"
           />
           {Array.from({ length: Math.round(value * 0.6) + 5 }, (_, i) => (
             <circle
@@ -19,7 +28,7 @@ export function PollutionExplorer() {
               cx={12 + ((i * 53) % 400)}
               cy={7 + ((i * 31) % 87)}
               r={1.3 + (i % 3) * 0.5}
-              fill="#527d65"
+              fill="#1769e0"
               opacity=".6"
             />
           ))}
@@ -108,7 +117,7 @@ export function WasteSorting() {
           </button>
         ))}
       </div>
-      <div className="waste-item">{current.name}</div>
+      <div className="waste-item" key={item}>{current.name}</div>
       <div className="waste-bins">
         {["รีไซเคิล", "อินทรีย์", "อันตราย", "ทั่วไป"].map((category) => (
           <button
@@ -116,13 +125,19 @@ export function WasteSorting() {
             className={`bin bin-${category} ${choice === category ? "selected" : ""}`}
             onClick={() => choose(category)}
           >
-            <span className="bin-shape" aria-hidden="true" />
+            <span aria-hidden="true">
+              {category === "รีไซเคิล" && <Recycle />}
+              {category === "อินทรีย์" && <Leaf />}
+              {category === "อันตราย" && <ShieldAlert />}
+              {category === "ทั่วไป" && <Trash2 />}
+            </span>
             {category}
           </button>
         ))}
       </div>
       {choice && (
         <p
+          key={`${item}-${choice}`}
           className={`answer-feedback ${choice === current.category ? "correct" : "incorrect"}`}
           role="status"
         >

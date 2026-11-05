@@ -1,0 +1,190 @@
+import { isArray } from "lodash-es";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+
+import { FormTextField } from "~/components/Form/FormTextField";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader } from "~/components/ui/card";
+import { Form } from "~/components/ui/form";
+import { Label } from "~/components/ui/label";
+import { useLessonLeaveConfirmation } from "~/hooks/useLessonLeaveConfirmation";
+import DeleteConfirmationModal from "~/modules/Admin/components/DeleteConfirmationModal";
+import LeaveConfirmationModal from "~/modules/Admin/components/LeaveConfirmationModal";
+import { MissingTranslationsAlert } from "~/modules/Admin/EditCourse/components/MissingTranslationsAlert";
+
+import { EMBED_LESSON_FORM_HANDLES } from "../../../../../../../e2e/data/curriculum/handles";
+import { ContentTypes, DeleteContentType } from "../../../EditCourse.types";
+import Breadcrumb from "../components/Breadcrumb";
+
+import { EmbedLessonResourceCard } from "./components/EmbedLessonResourceCard";
+import { DEFAULT_EMBED_LESSON_RESOURCE, MAX_EMBED_LESSON_RESOURCES } from "./constants";
+import { useEmbedLessonForm } from "./hooks/useEmbedLessonForm";
+
+import type { Chapter, Lesson } from "../../../EditCourse.types";
+import type { SupportedLanguages } from "@repo/shared";
+
+type EmbedLessonProps = {
+  lessonToEdit?: Lesson | null;
+  baseLanguageLesson?: Lesson | null;
+  chapterToEdit: Chapter | null;
+  setSelectedLesson: (selectedLesson: Lesson | null) => void;
+  setContentTypeToDisplay: (contentTypeToDisplay: string) => void;
+  language: SupportedLanguages;
+};
+
+export const EmbedLessonForm = ({
+  lessonToEdit,
+  baseLanguageLesson,
+  chapterToEdit,
+  setContentTypeToDisplay,
+  setSelectedLesson,
+  language,
+}: EmbedLessonProps) => {
+  const { t } = useTranslation();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const { form, onSubmit, onDelete } = useEmbedLessonForm({
+    lessonToEdit,
+    chapterToEdit,
+    setContentTypeToDisplay,
+    language,
+  });
+  const leaveLessonForm = useCallback(
+    () => setContentTypeToDisplay(ContentTypes.EMPTY),
+    [setContentTypeToDisplay],
+  );
+  const {
+    handleCancel,
+    isLeaveModalOpen,
+    onCancelLeaveModal,
+    onDiscardLeaveModal,
+    setIsCurrectFormDirty,
+  } = useLessonLeaveConfirmation(leaveLessonForm);
+
+  const resources = form.watch("resources");
+  const { isDirty } = form.formState;
+
+  useEffect(() => {
+    setIsCurrectFormDirty(isDirty);
+  }, [isDirty, setIsCurrectFormDirty]);
+
+  const hasReachedMaxResources = useMemo(() => {
+    return isArray(resources) && resources.length >= MAX_EMBED_LESSON_RESOURCES;
+  }, [resources]);
+
+  const handleAddNewResource = () => {
+    if (hasReachedMaxResources) return;
+
+    const existingResources = form.getValues("resources") || [];
+
+    form.setValue("resources", [...existingResources, DEFAULT_EMBED_LESSON_RESOURCE], {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
+
+  const handleDeleteLesson = () =>
+    lessonToEdit ? setIsModalOpen(true) : () => setContentTypeToDisplay(ContentTypes.EMPTY);
+
+  const onCloseDeleteModal = () => setIsModalOpen(false);
+
+  const missingTranslations = lessonToEdit && !lessonToEdit.title.trim();
+
+  return (
+    <Card data-testid={EMBED_LESSON_FORM_HANDLES.ROOT}>
+      <CardHeader className="px-8 pb-6 pt-8">
+        {missingTranslations && <MissingTranslationsAlert />}
+        {!lessonToEdit && (
+          <Breadcrumb
+            lessonLabel={t("adminCourseView.curriculum.lesson.other.embed")}
+            setContentTypeToDisplay={setContentTypeToDisplay}
+            setSelectedLesson={setSelectedLesson}
+          />
+        )}
+        <div className="h5 text-neutral-950">
+          {lessonToEdit ? (
+            <>
+              <span className="text-neutral-600">
+                {t("adminCourseView.curriculum.other.edit")}
+                {": "}
+              </span>
+              <span className="font-bold break-words">{lessonToEdit.title}</span>
+            </>
+          ) : (
+            t("adminCourseView.curriculum.other.create")
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="px-8">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-y-5">
+            <FormTextField
+              data-testid={EMBED_LESSON_FORM_HANDLES.TITLE_INPUT}
+              name="title"
+              control={form.control}
+              label={t("adminCourseView.curriculum.lesson.field.title")}
+              placeholder={
+                baseLanguageLesson?.title ||
+                t("adminCourseView.curriculum.lesson.placeholder.title")
+              }
+              required
+            />
+            <div className="space-y-3">
+              <Label>{t("adminCourseView.curriculum.other.resources")}</Label>
+              {resources?.map((_, resourceIndex) => {
+                const hasError = !!form.formState.errors.resources?.[resourceIndex];
+
+                return (
+                  <EmbedLessonResourceCard
+                    key={resourceIndex}
+                    form={form}
+                    hasError={hasError}
+                    resourceIndex={resourceIndex}
+                  />
+                );
+              })}
+            </div>
+            <div className="flex gap-x-3">
+              <Button data-testid={EMBED_LESSON_FORM_HANDLES.SAVE_BUTTON} type="submit">
+                {t("common.button.save")}
+              </Button>
+              <Button
+                data-testid={EMBED_LESSON_FORM_HANDLES.ADD_RESOURCE_BUTTON}
+                type="button"
+                variant="outline"
+                className="w-fit"
+                disabled={hasReachedMaxResources}
+                onClick={handleAddNewResource}
+              >
+                {t("adminCourseView.curriculum.lesson.button.addResource")}
+              </Button>
+              <Button
+                data-testid={
+                  lessonToEdit
+                    ? EMBED_LESSON_FORM_HANDLES.DELETE_BUTTON
+                    : EMBED_LESSON_FORM_HANDLES.CANCEL_BUTTON
+                }
+                type="button"
+                onClick={lessonToEdit ? handleDeleteLesson : handleCancel}
+                className="border border-red-500 bg-transparent text-red-500 hover:bg-red-100"
+              >
+                {lessonToEdit ? t("common.button.delete") : t("common.button.cancel")}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+      <DeleteConfirmationModal
+        open={isModalOpen}
+        onClose={onCloseDeleteModal}
+        onDelete={onDelete}
+        contentType={DeleteContentType.EMBED}
+      />
+      <LeaveConfirmationModal
+        open={isLeaveModalOpen}
+        onCancel={onCancelLeaveModal}
+        onDiscard={onDiscardLeaveModal}
+      />
+    </Card>
+  );
+};

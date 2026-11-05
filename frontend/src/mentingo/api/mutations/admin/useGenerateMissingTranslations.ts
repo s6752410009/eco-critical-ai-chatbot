@@ -1,0 +1,44 @@
+import { useMutation } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+
+import { ApiClient } from "~/api/api-client";
+import { getTranslatedApiErrorMessage } from "~/api/utils/getTranslatedApiErrorMessage";
+import { invalidateGeneratedTranslationQueries } from "~/api/utils/invalidateGeneratedTranslationQueries";
+import { useToast } from "~/components/ui/use-toast";
+
+import type { SupportedLanguages } from "@repo/shared";
+
+type GenerateTranslationsOptions = {
+  courseId: string;
+  language: SupportedLanguages;
+};
+
+export default function useGenerateMissingTranslations() {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (options: GenerateTranslationsOptions) => {
+      const { courseId, language } = options;
+
+      const response = await ApiClient.api.courseControllerGenerateTranslations(courseId, {
+        language,
+      });
+
+      return response.data;
+    },
+    onSuccess: async (_, variables) => {
+      await invalidateGeneratedTranslationQueries(variables);
+
+      toast({
+        description: t("adminCourseView.toast.translationsGeneratedSuccessfully"),
+      });
+    },
+    onError: (error) => {
+      toast({
+        description: getTranslatedApiErrorMessage(error, t, t("common.toast.somethingWentWrong")),
+        variant: "destructive",
+      });
+    },
+  });
+}

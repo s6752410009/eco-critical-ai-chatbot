@@ -1,0 +1,206 @@
+import { Link, useNavigate, useParams } from "@remix-run/react";
+import { find } from "lodash-es";
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+
+import { useCurrentUser } from "~/api/queries";
+import { CardBadge } from "~/components/CardBadge";
+import { Icon } from "~/components/Icon";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "~/components/ui/accordion";
+import { Button } from "~/components/ui/button";
+import { cn, formatWithPlural } from "~/lib/utils";
+import { useCourseAccessProvider } from "~/modules/Courses/context/CourseAccessProvider";
+import { ChapterCounter } from "~/modules/Courses/CourseView/components/ChapterCounter";
+import { CourseChapterLesson } from "~/modules/Courses/CourseView/CourseChapterLesson";
+
+import type { GetCourseResponse } from "~/api/generated-api";
+
+export type Lesson = GetCourseResponse["data"]["chapters"][0]["lessons"][0] & {
+  hasAccess: boolean;
+};
+type Chapter = GetCourseResponse["data"]["chapters"][0] & { lessons: Lesson[] };
+type CourseChapterProps = {
+  chapter: Chapter;
+  isLastChapter?: boolean;
+};
+
+export const CourseChapter = ({ chapter, isLastChapter = false }: CourseChapterProps) => {
+  const { t } = useTranslation();
+  const { id: courseSlug } = useParams();
+  const { data: currentUser } = useCurrentUser();
+  const {
+    course: { enrolled, priceInCents },
+    isCourseStudentModeActive,
+    isEffectiveStudentExperience,
+    isPreviewMode,
+  } = useCourseAccessProvider();
+  const isPaidCourse = priceInCents !== 0;
+  const isPublicVisitor = !currentUser;
+  const freemiumBadgeCopyKey = isPaidCourse ? "free" : "public";
+  const freemiumBadgeIcon = isPaidCourse ? "FreeRight" : "Eye";
+  const freemiumBadgeClassName = isPaidCourse ? undefined : "bg-primary-600 text-white";
+  const lessonText = formatWithPlural(
+    chapter.lessonCount ?? 0,
+    t("courseChapterView.other.lesson"),
+    t("courseChapterView.other.lessons"),
+  );
+  const quizText = formatWithPlural(
+    chapter.quizCount ?? 0,
+    t("courseChapterView.other.quiz"),
+    t("courseChapterView.other.quizzes"),
+  );
+  const hasAccessToChapter =
+    isPreviewMode || chapter.lessons.some((lesson: Lesson) => lesson.hasAccess);
+  const lessons = useMemo(() => chapter?.lessons || [], [chapter?.lessons]);
+
+  const navigate = useNavigate();
+
+  const hasPublicVisitorLessonAccess = (lesson: Lesson) =>
+    Boolean(isPublicVisitor && chapter.isFreemium && lesson.type === "content");
+
+  const hasPlayableChapterAccess = isPublicVisitor
+    ? lessons.some(hasPublicVisitorLessonAccess)
+    : chapter.isFreemium && hasAccessToChapter;
+
+  const chapterProgressSegments = Array.from({ length: chapter.lessonCount }).map((_, index) => {
+    const isCompletedSegment =
+      typeof chapter?.completedLessonCount === "number" && index < chapter.completedLessonCount;
+
+    return (
+      <span
+        key={`${chapter.id}-progress-${index}`}
+        className={cn("h-1 w-full rounded-lg", {
+          "bg-secondary-100":
+            typeof chapter?.completedLessonCount === "number" &&
+            index >= chapter.completedLessonCount,
+          "bg-success-500": isCompletedSegment,
+          "bg-primary-100": !chapter.completedLessonCount && !isCompletedSegment,
+        })}
+      />
+    );
+  });
+
+  const playChapter = (chapter: CourseChapterProps["chapter"]) => {
+    const accessibleLessons = isPublicVisitor
+      ? chapter.lessons.filter(hasPublicVisitorLessonAccess)
+      : chapter.lessons;
+
+    if (!accessibleLessons.length) return;
+
+    const firstNotStartedLesson = find(
+      accessibleLessons,
+      (lesson) => lesson.status === "not_started",
+    )?.id;
+
+    const firstInProgressLesson = find(
+      accessibleLessons,
+      (lesson) => lesson.status === "in_progress",
+    )?.id;
+
+    const lessonToPlay = firstInProgressLesson ?? firstNotStartedLesson ?? accessibleLessons[0].id;
+
+    return navigate(`lesson/${lessonToPlay}`);
+  };
+
+  return (
+    <Accordion type="single" collapsible>
+      <AccordionItem value="item-1">
+        <div className="flex w-full gap-x-4">
+          <ChapterCounter
+            chapterProgress={chapter.chapterProgress}
+            displayOrder={chapter.displayOrder}
+            isLastChapter={isLastChapter}
+            isPreviewMode={isPreviewMode}
+            showProgressIcons={isEffectiveStudentExperience && enrolled}
+          />
+          <div className="flex w-full flex-col">
+            <AccordionTrigger
+              data-testid={chapter.title}
+              className="border text-start data-[state=closed]:rounded-lg data-[state=open]:rounded-t-lg data-[state=open]:border-primary-500 data-[state=open]:bg-primary-50 [&[data-state=open]>div>div>svg]:rotate-180 [&[data-state=open]>div>div>svg]:duration-200 [&[data-state=open]>div>div>svg]:ease-out"
+            >
+              <div className="flex w-full items-center gap-x-1 px-2 py-4 md:gap-x-4 md:p-4">
+                <div className="grid size-8 place-items-center">
+                  <Icon name="CarretDownLarge" className="h-auto w-6 text-accent-foreground" />
+                </div>
+                <div className="flex w-full flex-col">
+                  <div className="details text-neutral-800">
+                    {lessonText} {lessonText && quizText ? "• " : ""} {quizText}
+                  </div>
+                  <p className="body-base-md text-neutral-950">{chapter.title}</p>
+                  {!isPreviewMode && (
+                    <div className="details flex max-w-[620px] items-center gap-x-1 text-neutral-800">
+                      <span className="pr-2">
+                        {chapter.completedLessonCount}/{chapter.lessonCount}
+                      </span>
+                      {chapterProgressSegments}
+                    </div>
+                  )}
+                </div>
+                {chapter.isFreemium && (
+                  <CardBadge variant="successFilled" className={freemiumBadgeClassName}>
+                    <Icon name={freemiumBadgeIcon} className="w-4" />
+                    {t(`courseChapterView.other.${freemiumBadgeCopyKey}`)}
+                  </CardBadge>
+                )}
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="divide-y divide-neutral-200 rounded-b-lg border-x border-b border-primary-500 pb-4 pl-14 pt-3">
+                {lessons?.map((lesson: Lesson) => {
+                  if (!lesson) return null;
+
+                  const publicVisitorLessonAccess = hasPublicVisitorLessonAccess(lesson);
+                  const lessonWithPublicAccess = {
+                    ...lesson,
+                    hasAccess: isPublicVisitor
+                      ? publicVisitorLessonAccess
+                      : Boolean(lesson.hasAccess),
+                  };
+
+                  const hasCourseLearningAccess =
+                    publicVisitorLessonAccess ||
+                    (!isPublicVisitor &&
+                      (chapter.isFreemium || enrolled || isCourseStudentModeActive));
+
+                  const canOpenLesson =
+                    (isPreviewMode && !isPublicVisitor) ||
+                    (hasCourseLearningAccess && lessonWithPublicAccess.hasAccess);
+
+                  return canOpenLesson ? (
+                    <Link key={lesson.id} to={`/course/${courseSlug}/lesson/${lesson.id}`}>
+                      <CourseChapterLesson
+                        lesson={lessonWithPublicAccess}
+                        allowPreviewAccess={!isPublicVisitor}
+                      />
+                    </Link>
+                  ) : (
+                    <CourseChapterLesson
+                      key={lesson.id}
+                      lesson={lessonWithPublicAccess}
+                      allowPreviewAccess={!isPublicVisitor}
+                    />
+                  );
+                })}
+                {hasPlayableChapterAccess && (
+                  <Button
+                    variant="primary"
+                    className="mt-4 gap-2"
+                    onClick={() => playChapter(chapter)}
+                  >
+                    <Icon name="Play" className="size-4" />
+                    {t("studentCoursesView.button.playChapter")}
+                  </Button>
+                )}
+              </div>
+            </AccordionContent>
+          </div>
+        </div>
+      </AccordionItem>
+    </Accordion>
+  );
+};

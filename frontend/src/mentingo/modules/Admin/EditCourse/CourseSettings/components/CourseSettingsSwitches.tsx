@@ -1,0 +1,123 @@
+import { COURSE_FEATURE, COURSE_TYPE, isCourseFeatureEnabledForCourseType } from "@repo/shared";
+import { useTranslation } from "react-i18next";
+
+import { useUpdateCourseSettings } from "~/api/mutations/useUpdateCourseSettings";
+import { useCourseSettings } from "~/api/queries/useCourseSettings";
+import { Switch } from "~/components/ui/switch";
+
+import { COURSE_SETTINGS_HANDLES } from "../../../../../../e2e/data/courses/handles";
+
+import type { CourseFeature, CourseType } from "@repo/shared";
+
+type Props = {
+  courseId: string;
+  courseType?: CourseType;
+};
+
+type CourseSettingsSwitch = {
+  key: string;
+  feature?: CourseFeature;
+  label: string;
+  description: string;
+  isEnabled?: boolean;
+  onToggle: (nextValue: boolean) => void;
+  ariaLabel: string;
+};
+
+export const CourseSettingsSwitches = ({ courseId, courseType = COURSE_TYPE.DEFAULT }: Props) => {
+  const { t } = useTranslation();
+  const { data, isLoading } = useCourseSettings({ courseId });
+  const { mutate: updateCourseSettings, isPending: isUpdatingCourseSettings } =
+    useUpdateCourseSettings();
+
+  const handleLessonSequenceToggle = (nextValue: boolean) => {
+    if (!courseId) return;
+    updateCourseSettings({ courseId, data: { lessonSequenceEnabled: nextValue } });
+  };
+
+  const handleQuizFeedbackToggle = (nextValue: boolean) => {
+    if (!courseId) return;
+    updateCourseSettings({ courseId, data: { quizFeedbackEnabled: nextValue } });
+  };
+
+  const handleVideoCompletionTrackingToggle = (nextValue: boolean) => {
+    if (!courseId) return;
+    updateCourseSettings({ courseId, data: { videoCompletionTrackingEnabled: nextValue } });
+  };
+
+  const isDisabled = isLoading || isUpdatingCourseSettings;
+  const testIdBySettingKey: Record<string, string> = {
+    repetitionEnabled: COURSE_SETTINGS_HANDLES.REPETITION_SWITCH,
+    lessonSequenceEnabled: COURSE_SETTINGS_HANDLES.LESSON_SEQUENCE_SWITCH,
+    quizFeedbackEnabled: COURSE_SETTINGS_HANDLES.QUIZ_FEEDBACK_SWITCH,
+    videoCompletionTrackingEnabled: COURSE_SETTINGS_HANDLES.VIDEO_COMPLETION_TRACKING_SWITCH,
+  };
+
+  const settings: CourseSettingsSwitch[] = [
+    {
+      key: "lessonSequenceEnabled",
+      feature: COURSE_FEATURE.LESSON_SEQUENCE_SETTING,
+      label: t("adminCourseView.settings.other.enforceLessonSequence"),
+      description: t("adminCourseView.settings.other.requireSequentialLessons"),
+      isEnabled: data?.lessonSequenceEnabled,
+      onToggle: handleLessonSequenceToggle,
+      ariaLabel: t("adminCourseView.settings.other.enforceLessonSequence"),
+    },
+    {
+      key: "quizFeedbackEnabled",
+      feature: COURSE_FEATURE.QUIZ_FEEDBACK_SETTING,
+      label: t("adminCourseView.settings.other.enableQuizFeedback"),
+      description: t("adminCourseView.settings.other.enableQuizFeedbackDescription"),
+      isEnabled: data?.quizFeedbackEnabled,
+      onToggle: handleQuizFeedbackToggle,
+      ariaLabel: t("adminCourseView.settings.other.enableQuizFeedback"),
+    },
+    {
+      key: "videoCompletionTrackingEnabled",
+      feature: COURSE_FEATURE.VIDEO_COMPLETION_TRACKING_SETTING,
+      label: t("adminCourseView.settings.other.enableVideoCompletionTracking"),
+      description: t("adminCourseView.settings.other.enableVideoCompletionTrackingDescription"),
+      isEnabled: data?.videoCompletionTrackingEnabled,
+      onToggle: handleVideoCompletionTrackingToggle,
+      ariaLabel: t("adminCourseView.settings.other.enableVideoCompletionTracking"),
+    },
+    {
+      key: "repetitionEnabled",
+      feature: undefined,
+      label: t("courseRepetition.setting"),
+      description: t("courseRepetition.settingDescription"),
+      isEnabled: data?.repetitionEnabled ?? false,
+      onToggle: (nextValue: boolean) =>
+        updateCourseSettings({ courseId, data: { repetitionEnabled: nextValue } }),
+      ariaLabel: t("courseRepetition.setting"),
+    },
+  ].filter(
+    (setting) =>
+      !setting.feature || isCourseFeatureEnabledForCourseType(courseType, setting.feature),
+  );
+
+  if (!settings.length) return null;
+
+  return (
+    <div className="flex flex-col gap-3">
+      {settings.map((setting) => (
+        <div
+          key={setting.key}
+          className="rounded-lg border border-neutral-300 p-4 gap-3 items-center flex"
+        >
+          <Switch
+            data-testid={testIdBySettingKey[setting.key]}
+            checked={setting.isEnabled}
+            onCheckedChange={setting.onToggle}
+            disabled={isDisabled}
+            aria-label={setting.ariaLabel}
+          />
+          <div className="flex flex-col gap-1">
+            <p className="text-base text-neutral-950 font-semibold">{setting.label}</p>
+            <p className="text-sm text-neutral-800">{setting.description}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};

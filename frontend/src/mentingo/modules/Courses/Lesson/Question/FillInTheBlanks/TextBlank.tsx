@@ -1,0 +1,90 @@
+import { useEffect, useRef } from "react";
+import { useFormContext } from "react-hook-form";
+import { useTranslation } from "react-i18next";
+
+import { cn } from "~/lib/utils";
+import { useQuizContext } from "~/modules/Courses/components/QuizContextProvider";
+
+import type { QuizQuestionOption } from "../types";
+import type { QuizForm } from "~/modules/Courses/Lesson/types";
+
+type TextBlankProps = {
+  index: number;
+  studentAnswer?: QuizQuestionOption;
+  isQuizSubmitted?: boolean;
+  questionId: string;
+};
+
+export const TextBlank = ({
+  index,
+  studentAnswer,
+  isQuizSubmitted,
+  questionId,
+}: TextBlankProps) => {
+  const { t } = useTranslation();
+  const { register } = useFormContext<QuizForm>();
+  const { isQuizFeedbackRedacted } = useQuizContext();
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const formFieldId = `${index + 1}`;
+
+  const { ref: registerRef, ...registeredField } = register(
+    `fillInTheBlanksText.${questionId}.${formFieldId}`,
+  );
+
+  useEffect(() => {
+    if (!inputRef?.current) return;
+
+    if (isQuizSubmitted) {
+      inputRef.current.value = studentAnswer?.studentAnswer ?? "";
+    } else {
+      inputRef.current.value = "";
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isQuizSubmitted]);
+
+  const isCorrectAnswer = studentAnswer?.isCorrect && studentAnswer.isStudentAnswer;
+  const isUnanswered = Boolean(isQuizSubmitted && !studentAnswer?.studentAnswer);
+
+  const textBlankClasses = cn(
+    "mx-1.5 w-20 align-middle bg-transparent border-b border-dashed border-b-accent-foreground text-accent-foreground focus:outline-none focus:ring-0",
+    {
+      "border-b-neutral-400 text-neutral-600": isQuizFeedbackRedacted && isQuizSubmitted,
+      "border-b-success-500 text-success-500":
+        !isQuizFeedbackRedacted && isCorrectAnswer && studentAnswer?.isStudentAnswer,
+      "border-b-error-500 text-error-500":
+        !isQuizFeedbackRedacted &&
+        ((typeof studentAnswer?.isStudentAnswer === "boolean" && !studentAnswer.isStudentAnswer) ||
+          isUnanswered),
+      "w-28 italic placeholder:text-error-500": !isQuizFeedbackRedacted && isUnanswered,
+    },
+  );
+
+  const isDisabled = Boolean(isQuizSubmitted);
+
+  return (
+    <input
+      key={index}
+      type="text"
+      data-testid={`text-blank-${formFieldId}`}
+      placeholder={isUnanswered ? t("studentLessonView.other.notAnswered") : undefined}
+      className={textBlankClasses}
+      {...(studentAnswer?.studentAnswer && { defaultValue: studentAnswer.studentAnswer })}
+      disabled={isDisabled}
+      draggable={false}
+      onDragStart={(event) => event.preventDefault()}
+      onDrop={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      }}
+      onDragOver={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      }}
+      {...registeredField}
+      ref={(element) => {
+        inputRef.current = element;
+        registerRef(element);
+      }}
+    />
+  );
+};

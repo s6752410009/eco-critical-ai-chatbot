@@ -1,0 +1,242 @@
+import { useNavigate, useParams } from "@remix-run/react";
+import { ACCESS_GUARD, PERMISSIONS } from "@repo/shared";
+import { formatDate } from "date-fns";
+import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
+
+import { useDeleteNews } from "~/api/mutations";
+import { useCurrentUser, useNews } from "~/api/queries";
+import { hasPermission } from "~/common/permissions/permission.utils";
+import { AuthorName } from "~/components/AuthorName";
+import { Icon } from "~/components/Icon";
+import { PageWrapper } from "~/components/PageWrapper";
+import Viewer from "~/components/RichText/Viever";
+import { TOC } from "~/components/TOC/TOC";
+import { Button } from "~/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
+import { ContentAccessGuard } from "~/Guards/AccessGuard";
+import { usePermissions } from "~/hooks/usePermissions";
+import { cn } from "~/lib/utils";
+
+import { NEWS_DETAILS_PAGE_HANDLES } from "../../../e2e/data/news/handles";
+import Loader from "../common/Loader/Loader";
+import { useLanguageStore } from "../Dashboard/Settings/Language/LanguageStore";
+
+export default function NewsDetailsPage() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { newsId } = useParams();
+
+  const { language } = useLanguageStore();
+  const { data: currentUser } = useCurrentUser();
+  const { permissions } = usePermissions({
+    required: [PERMISSIONS.NEWS_MANAGE, PERMISSIONS.NEWS_MANAGE_OWN],
+  });
+  const { data: news, isLoading: isLoadingNews } = useNews(
+    newsId!,
+    { language },
+    { enabled: Boolean(newsId) },
+  );
+  const { mutateAsync: deleteNews, isPending: isDeleting } = useDeleteNews();
+
+  const [contentWithIds, setContentWithIds] = useState(news?.plainContent ?? "");
+  const handleContentWithIds = useCallback((html: string) => setContentWithIds(html || ""), []);
+
+  if (isLoadingNews) {
+    return (
+      <ContentAccessGuard type={ACCESS_GUARD.UNREGISTERED_NEWS_ACCESS}>
+        <PageWrapper>
+          <div className="py-10 flex justify-center">
+            <Loader />
+          </div>
+        </PageWrapper>
+      </ContentAccessGuard>
+    );
+  }
+
+  if (!news) {
+    return (
+      <ContentAccessGuard type={ACCESS_GUARD.UNREGISTERED_NEWS_ACCESS}>
+        <PageWrapper>
+          <div className="py-10 text-center text-neutral-700">{t("newsView.notFound")}</div>
+        </PageWrapper>
+      </ContentAccessGuard>
+    );
+  }
+
+  const headerImageUrl = news.resources?.coverImage?.fileUrl;
+  const publishedDate = news.publishedAt ? new Date(news.publishedAt) : null;
+  const canManageNews =
+    hasPermission(permissions, PERMISSIONS.NEWS_MANAGE) ||
+    (hasPermission(permissions, PERMISSIONS.NEWS_MANAGE_OWN) && currentUser?.id === news.authorId);
+
+  return (
+    <ContentAccessGuard type={ACCESS_GUARD.UNREGISTERED_NEWS_ACCESS}>
+      <PageWrapper
+        data-testid={NEWS_DETAILS_PAGE_HANDLES.PAGE}
+        breadcrumbs={[
+          { title: t("navigationSideBar.news"), href: "/news" },
+          { title: news.title, href: `/news/${news.id}` },
+        ]}
+        className="flex flex-col gap-10 bg-neutral-50/80"
+        rightSideContent={
+          <TOC contentHtml={news.content} onContentWithIds={handleContentWithIds} />
+        }
+      >
+        {canManageNews && (
+          <div className="flex justify-end gap-2 max-w-6xl mx-auto w-full">
+            <Button
+              data-testid={NEWS_DETAILS_PAGE_HANDLES.EDIT_BUTTON}
+              variant="outline"
+              className="gap-2"
+              onClick={() => {
+                navigate(`/news/${news.id}/edit`);
+              }}
+            >
+              <Icon name="Edit" className="size-4" />
+              <span className="text-sm font-semibold leading-5 text-neutral-800">
+                {t("newsView.edit")}
+              </span>
+            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  data-testid={NEWS_DETAILS_PAGE_HANDLES.DELETE_BUTTON}
+                  variant="destructive"
+                  className="w-28 gap-2"
+                  disabled={isDeleting}
+                >
+                  <Icon name="TrashIcon" className="size-4" />
+                  <span className="text-sm font-semibold leading-5">
+                    {t("newsView.button.delete")}
+                  </span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent
+                className="max-w-md"
+                noCloseButton={isDeleting}
+                data-testid={NEWS_DETAILS_PAGE_HANDLES.DELETE_DIALOG}
+              >
+                <DialogTitle>{t("newsView.deleteModal.title")}</DialogTitle>
+                <DialogDescription>{t("newsView.deleteModal.description")}</DialogDescription>
+                <div className="flex justify-end gap-2">
+                  <DialogClose asChild>
+                    <Button variant="ghost" disabled={isDeleting}>
+                      {t("common.button.cancel")}
+                    </Button>
+                  </DialogClose>
+                  <Button
+                    data-testid={NEWS_DETAILS_PAGE_HANDLES.DELETE_CONFIRM_BUTTON}
+                    variant="destructive"
+                    disabled={isDeleting}
+                    onClick={() => {
+                      void deleteNews(
+                        { id: news.id },
+                        {
+                          onSuccess: () => {
+                            navigate("/news");
+                          },
+                        },
+                      );
+                    }}
+                  >
+                    {t("newsView.button.delete")}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
+
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 bg-white rounded-3xl mb-8">
+          {headerImageUrl && (
+            <div className="overflow-hidden bg-white rounded-t-3xl px-10 pt-10 pb-6">
+              <img
+                src={headerImageUrl}
+                alt={news.title}
+                className="h-[380px] w-full object-cover md:h-[480px] rounded-3xl"
+              />
+            </div>
+          )}
+
+          <div
+            className={cn("flex flex-col gap-5 border-b border-neutral-200 pb-8 px-10", {
+              "pt-10": !headerImageUrl,
+            })}
+          >
+            <h1
+              className="text-[40px] font-bold leading-[1.1] text-neutral-950"
+              data-testid={NEWS_DETAILS_PAGE_HANDLES.TITLE}
+            >
+              {news.title}
+            </h1>
+            <p
+              className="text-lg font-normal leading-8 text-neutral-700"
+              data-testid={NEWS_DETAILS_PAGE_HANDLES.SUMMARY}
+            >
+              {news.summary}
+            </p>
+            <div className="flex flex-wrap items-center gap-3 text-sm font-normal leading-5 text-neutral-700">
+              <div className="flex items-center gap-2 rounded-full bg-white px-3 py-1 shadow-sm ring-1 ring-neutral-100">
+                <Icon name="Calendar" className="text-neutral-600 size-4" />
+                <p className="text-neutral-800">
+                  {publishedDate ? formatDate(publishedDate, "d MMMM yyyy") : "-"}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 rounded-full bg-white px-3 py-1 shadow-sm ring-1 ring-neutral-100">
+                <Icon name="User" className="text-neutral-600 size-4" />
+                <p className="text-neutral-800">
+                  <AuthorName name={news.authorName} deleted={news.authorDeleted} />
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {news.content && (
+            <Viewer variant="news" content={contentWithIds || news.content} className="px-10" />
+          )}
+
+          <div className="mx-auto w-full border-b border-primary-100" />
+
+          <div className="mx-auto flex w-full items-center justify-between pb-6 px-6">
+            <Button
+              data-testid={NEWS_DETAILS_PAGE_HANDLES.PREVIOUS_BUTTON}
+              variant="ghost"
+              className="flex items-center gap-2 select-none disabled:opacity-50"
+              onClick={() => {
+                navigate(`/news/${news.previousNews}`);
+              }}
+              disabled={!news.previousNews}
+            >
+              <Icon name="ChevronLeft" className="size-5 text-neutral-800" />
+              <span className="text-sm font-semibold leading-5 text-neutral-800">
+                {t("newsView.previousNews")}
+              </span>
+            </Button>
+            <Button
+              data-testid={NEWS_DETAILS_PAGE_HANDLES.NEXT_BUTTON}
+              variant="ghost"
+              className="flex items-center gap-2 select-none disabled:opacity-50"
+              onClick={() => {
+                navigate(`/news/${news.nextNews}`);
+              }}
+              disabled={!news.nextNews}
+            >
+              <span className="text-sm font-semibold leading-5 text-neutral-800">
+                {t("newsView.nextNews")}
+              </span>
+              <Icon name="ChevronRight" className="size-5 text-neutral-800" />
+            </Button>
+          </div>
+        </div>
+      </PageWrapper>
+    </ContentAccessGuard>
+  );
+}

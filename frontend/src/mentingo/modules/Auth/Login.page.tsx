@@ -1,0 +1,287 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Link, useLocation, useSearchParams } from "@remix-run/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
+import { z } from "zod";
+
+import { version } from "~/../version.json";
+import { useHandleMagicLink } from "~/api/mutations/useHandleMagicLink";
+import { useLoginUser } from "~/api/mutations/useLoginUser";
+import { useGlobalSettingsSuspense } from "~/api/queries/useGlobalSettings";
+import { useLoginMethods } from "~/api/queries/useLoginMethods";
+import useLoginPageFiles from "~/api/queries/useLoginPageFiles";
+import { FormCheckbox } from "~/components/Form/FormCheckbox";
+import { PlatformLogo } from "~/components/PlatformLogo";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Separator } from "~/components/ui/separator";
+import { toast } from "~/components/ui/use-toast";
+import { cn } from "~/lib/utils";
+import { UploadFilesToLoginPagePreviewDialog } from "~/modules/Dashboard/Settings/components/admin/UploadFilesToLoginPagePreviewDialog";
+import { setPageTitle } from "~/utils/setPageTitle";
+
+import { LOGIN_PAGE_HANDLES } from "../../../e2e/data/auth/handles";
+
+import { SocialLogin } from "./components";
+import { MagicLinkVerificationCard } from "./components/MagicLinkVerificationCard";
+
+import type { LoginPageResource } from "../Dashboard/Settings/components/admin/UploadFilesToLoginPageItem";
+import type { MetaFunction } from "@remix-run/react";
+import type { LoginBody } from "~/api/generated-api";
+
+export const meta: MetaFunction = ({ matches }) => setPageTitle(matches, "pages.login");
+
+const CHANGELOG_URL = "https://github.com/Selleo/mentingo/blob/main/CHANGELOG.md";
+
+const loginSchema = (t: (key: string) => string) =>
+  z.object({
+    email: z.string().email({ message: t("loginView.validation.email") }),
+    password: z.string().min(1, { message: t("loginView.validation.password") }),
+    rememberMe: z.boolean().optional(),
+  });
+
+export default function LoginPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const error = searchParams.get("error");
+  const magicLinkToken = searchParams.get("token");
+
+  const { data: loginPageFiles } = useLoginPageFiles();
+
+  const [previewResource, setPreviewResource] = useState<LoginPageResource | null>(null);
+  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
+
+  const {
+    mutate: handleMagicLink,
+    isPending: isMagicLinkPending,
+    isSuccess: isMagicLinkSuccess,
+    isError: isMagicLinkError,
+  } = useHandleMagicLink();
+
+  const hasTriggeredMagicLink = useRef(false);
+
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    if (error) {
+      toast({
+        variant: "destructive",
+        description: t(error),
+      });
+      setSearchParams({});
+    }
+  }, [error, setSearchParams, t]);
+
+  const { data: loginMethods } = useLoginMethods();
+
+  const handlePreviewClick = (resource: LoginPageResource) => {
+    setPreviewResource(resource);
+    setIsPreviewDialogOpen(true);
+  };
+
+  const handleClosePreviewDialog = () => {
+    setIsPreviewDialogOpen(false);
+    setPreviewResource(null);
+  };
+
+  const isGoogleOAuthEnabled = loginMethods?.google ?? false;
+  const isMicrosoftOAuthEnabled = loginMethods?.microsoft ?? false;
+  const isSlackOAuthEnabled = loginMethods?.slack ?? false;
+  const isMagicLinkEnabled = loginMethods?.magicLink ?? false;
+
+  const { mutateAsync: loginUser } = useLoginUser();
+
+  const {
+    data: {
+      enforceSSO: isSSOEnforced,
+      inviteOnlyRegistration: inviteOnlyRegistration,
+      loginBackgroundImageS3Key,
+    },
+    isLoading: isGlobalSettingsLoading,
+  } = useGlobalSettingsSuspense();
+
+  const isPasswordLoginVisible = !isSSOEnforced && Boolean(loginMethods?.password);
+
+  useEffect(() => {
+    if (magicLinkToken && !isGlobalSettingsLoading && !hasTriggeredMagicLink.current) {
+      hasTriggeredMagicLink.current = true;
+      handleMagicLink({ token: magicLinkToken });
+    }
+  }, [handleMagicLink, magicLinkToken, isGlobalSettingsLoading]);
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<LoginBody>({ resolver: zodResolver(loginSchema(t)) });
+
+  const isAnyProviderEnabled = useMemo(
+    () => isGoogleOAuthEnabled || isMicrosoftOAuthEnabled || isSlackOAuthEnabled,
+    [isGoogleOAuthEnabled, isMicrosoftOAuthEnabled, isSlackOAuthEnabled],
+  );
+
+  const loginResources = loginPageFiles?.resources ?? [];
+
+  const onSubmit = (data: LoginBody) => {
+    if (isSSOEnforced && isAnyProviderEnabled) return;
+
+    loginUser({ data });
+  };
+
+  if (magicLinkToken) {
+    const statusMessage = isMagicLinkPending
+      ? t("loginView.magicLink.checking")
+      : isMagicLinkSuccess
+        ? t("loginView.magicLink.success")
+        : t("loginView.magicLink.error");
+
+    return (
+      <MagicLinkVerificationCard
+        backgroundUrl={loginBackgroundImageS3Key}
+        statusMessage={statusMessage}
+        isPending={isMagicLinkPending}
+        isError={isMagicLinkError}
+        onBack={() => setSearchParams({})}
+      />
+    );
+  }
+
+  return (
+    <>
+      {loginBackgroundImageS3Key && (
+        <div
+          className="fixed inset-0 -z-10"
+          style={{
+            backgroundImage: `url(${loginBackgroundImageS3Key}) `,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
+      )}
+      <Card className="mx-auto w-full max-w-sm" data-testid={LOGIN_PAGE_HANDLES.PAGE}>
+        <CardHeader>
+          <CardTitle role="heading" className="text-2xl">
+            <div className="mb-6 flex justify-center">
+              <PlatformLogo className="h-16 w-auto py-3" alt="Platform Logo" />
+            </div>
+            {t("loginView.header")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isPasswordLoginVisible && (
+            <form
+              className="grid gap-4"
+              onSubmit={handleSubmit(onSubmit)}
+              data-testid={LOGIN_PAGE_HANDLES.PASSWORD_LOGIN_FORM}
+            >
+              <div className="grid gap-2">
+                <Label htmlFor="email">{t("loginView.field.email")}</Label>
+                <Input
+                  id="email"
+                  data-testid={LOGIN_PAGE_HANDLES.EMAIL}
+                  type="email"
+                  placeholder="user@example.com"
+                  className={cn({ "border-red-500": errors.email })}
+                  {...register("email")}
+                />
+                {errors.email && <div className="text-sm text-red-500">{errors.email.message}</div>}
+              </div>
+              <div className="grid gap-2">
+                <div className="flex items-center">
+                  <Label htmlFor="password">{t("loginView.field.password")}</Label>
+                  <Link
+                    to="/auth/password-recovery"
+                    data-testid={LOGIN_PAGE_HANDLES.FORGOT_PASSWORD_LINK}
+                    className="ml-auto inline-block text-sm underline"
+                  >
+                    {t("loginView.other.forgotPassword")}
+                  </Link>
+                </div>
+                <Input
+                  id="password"
+                  data-testid={LOGIN_PAGE_HANDLES.PASSWORD}
+                  type="password"
+                  className={cn({ "border-red-500": errors.password })}
+                  {...register("password")}
+                />
+                {errors.password && (
+                  <div className="text-sm text-red-500">{errors.password.message}</div>
+                )}
+              </div>
+              <FormCheckbox
+                control={control}
+                name="rememberMe"
+                label={t("loginView.other.rememberMe")}
+              />
+              <Button type="submit" className="w-full" data-testid={LOGIN_PAGE_HANDLES.LOGIN}>
+                {t("loginView.button.login")}
+              </Button>
+            </form>
+          )}
+
+          <SocialLogin
+            isEmailFormVisible={isPasswordLoginVisible}
+            isMagicLinkEnabled={isMagicLinkEnabled}
+            isGoogleOAuthEnabled={isGoogleOAuthEnabled}
+            isMicrosoftOAuthEnabled={isMicrosoftOAuthEnabled}
+            isSlackOAuthEnabled={isSlackOAuthEnabled}
+          />
+
+          {!inviteOnlyRegistration && isPasswordLoginVisible && (
+            <div className="mt-4 text-center text-sm">
+              {t("loginView.other.dontHaveAccount")}{" "}
+              <Link
+                to={`/auth/register${location.search}`}
+                data-testid={LOGIN_PAGE_HANDLES.REGISTER_LINK}
+                className="underline"
+              >
+                {t("loginView.other.signUp")}
+              </Link>
+            </div>
+          )}
+
+          {loginResources.length > 0 && (
+            <div className="mt-4 flex flex-wrap items-center justify-center text-sm text-neutral-400">
+              {loginResources.map((resource, index) => (
+                <div key={resource.id} className="flex items-center">
+                  {index > 0 && loginResources.length > 1 && (
+                    <Separator orientation="vertical" className="mx-2 h-4 bg-neutral-300" />
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handlePreviewClick(resource)}
+                    className="text-sm truncate underline"
+                  >
+                    {resource.name}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <p className="bottom-4 mt-4 text-center text-sm text-neutral-300">
+            <a
+              href={`${CHANGELOG_URL}#${version}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid={LOGIN_PAGE_HANDLES.VERSION_CHANGELOG_LINK}
+              className="underline-offset-2 hover:underline"
+            >
+              {version}
+            </a>
+          </p>
+        </CardContent>
+      </Card>
+      <UploadFilesToLoginPagePreviewDialog
+        open={isPreviewDialogOpen}
+        resourceName={previewResource?.name ?? t("loginFilesUpload.unnamedFile")}
+        resourceUrl={previewResource?.resourceUrl ?? ""}
+        onClose={handleClosePreviewDialog}
+      />
+    </>
+  );
+}

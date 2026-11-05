@@ -1,0 +1,535 @@
+import { TabsList } from "@radix-ui/react-tabs";
+import { PERMISSIONS } from "@repo/shared";
+import { Download } from "lucide-react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { useTranslation } from "react-i18next";
+import { match } from "ts-pattern";
+
+import { useCourseAverageScorePerQuiz } from "~/api/queries/admin/useCourseAverageScorePerQuiz";
+import { useCourseStatisticsFilter } from "~/api/queries/admin/useCourseLearningTimeStatisticsFilterOptions";
+import { useCourseStatistics } from "~/api/queries/admin/useCourseStatistics";
+import { useCourseStudentsAiMentorResults } from "~/api/queries/admin/useCourseStudentsAiMentorResults";
+import { useAIConfigured } from "~/api/queries/useAIConfigured";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader } from "~/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import { Tabs, TabsContent, TabsTrigger } from "~/components/ui/tabs";
+import { TooltipProvider } from "~/components/ui/tooltip";
+import { usePermissions } from "~/hooks/usePermissions";
+import { LessonType } from "~/modules/Admin/EditCourse/EditCourse.types";
+import {
+  SearchFilter,
+  type FilterValue,
+  type FilterConfig,
+} from "~/modules/common/SearchFilter/SearchFilter";
+import { CourseStudentsLearningTimeTable } from "~/modules/Courses/CourseView/CourseAdminStatistics/components/CourseStudentsLearningTimeTable";
+import { useLanguageStore } from "~/modules/Dashboard/Settings/Language/LanguageStore";
+import { useDownloadSummaryReport } from "~/modules/Statistics/Admin/hooks/useDownloadSummaryReport";
+
+import { COURSE_STATISTICS_HANDLES } from "../../../../../e2e/data/statistics/handles";
+
+import {
+  CourseAdminStatisticsCard,
+  CourseStatusDistributionChart,
+  AverageScorePerQuizChart,
+  CourseStudentsProgressTable,
+  CourseStudentsQuizResultsTable,
+} from "./components";
+import { CourseCertificateRowsTable } from "./components/CourseCertificateRowsTable";
+import { CourseStudentsAiMentorResultsTable } from "./components/CourseStudentsAiMentorResults";
+import {
+  CourseAdminStatisticsTabs,
+  getVisibleCourseStatisticsTabs,
+} from "./utils/courseAdminStatisticsTabs";
+
+import type { CourseAdminStatisticsTab } from "./utils/courseAdminStatisticsTabs";
+import type { GetCourseResponse } from "~/api/generated-api";
+import type { CourseLearningTimeFilterQuery } from "~/api/queries/admin/useCourseLearningTimeStatistics";
+import type { CourseStatisticsParams } from "~/api/queries/admin/useCourseStatistics";
+import type { CourseStudentsAiMentorResultsQueryParams } from "~/api/queries/admin/useCourseStudentsAiMentorResults";
+import type { CourseStudentsProgressQueryParams } from "~/api/queries/admin/useCourseStudentsProgress";
+import type { CourseStudentsQuizResultsQueryParams } from "~/api/queries/admin/useCourseStudentsQuizResults";
+
+interface CourseAdminStatisticsProps {
+  course?: GetCourseResponse["data"];
+  canManageCourse: boolean;
+}
+
+export const formatLearningTime = (totalSeconds: number) => {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m ${seconds}s`;
+  }
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`;
+  }
+  return `${seconds}s`;
+};
+
+export function CourseAdminStatistics({ course, canManageCourse }: CourseAdminStatisticsProps) {
+  const { t } = useTranslation();
+  const language = useLanguageStore((state) => state.language);
+  const courseId = course?.id || "";
+  const { downloadReport, isDownloading } = useDownloadSummaryReport();
+  const { hasAccess: canViewStatistics } = usePermissions({
+    required: [
+      PERMISSIONS.COURSE_UPDATE,
+      PERMISSIONS.COURSE_UPDATE_OWN,
+      PERMISSIONS.MANAGED_GROUP_RESULTS_READ,
+    ],
+  });
+  const { hasAccess: canDownloadCourseReport } = usePermissions({
+    required: [PERMISSIONS.REPORT_READ, PERMISSIONS.MANAGED_GROUP_RESULTS_READ],
+  });
+
+  const [groupId, setGroupId] = useState<string | undefined>(undefined);
+
+  const [courseStatisticsParams, setCourseStatisticsParams] = useState<CourseStatisticsParams>({});
+
+  const [activeTab, setActiveTab] = useState<CourseAdminStatisticsTab>(
+    CourseAdminStatisticsTabs.progress,
+  );
+
+  const [progressSearchParams, setProgressSearchParams] =
+    useState<CourseStudentsProgressQueryParams>({});
+
+  const [quizSearchParams, setQuizSearchParams] = useState<CourseStudentsQuizResultsQueryParams>(
+    {},
+  );
+
+  const [learningTimeParams, setLearningTimeParams] = useState<CourseLearningTimeFilterQuery>({});
+  const [certificateSearch, setCertificateSearch] = useState<string>();
+
+  const [aiMentorSearchParams, setAiMentorSearchParams] =
+    useState<CourseStudentsAiMentorResultsQueryParams>({});
+
+  const [isPending, startTransition] = useTransition();
+
+  const lessonCount = useMemo(
+    () => course?.chapters?.reduce((acc, chapter) => acc + chapter.lessons.length, 0) || 0,
+    [course],
+  );
+
+  const quizOptions = useMemo(() => {
+    return (
+      course?.chapters.flatMap((chapter) =>
+        chapter.lessons
+          .filter((lesson) => lesson.type === LessonType.QUIZ)
+          .map((lesson) => ({ id: lesson.id, title: lesson.title })),
+      ) || []
+    );
+  }, [course]);
+
+  const aiMentorLessons = useMemo(() => {
+    return (
+      course?.chapters.flatMap((chapter) =>
+        chapter.lessons
+          .filter((lesson) => lesson.type === LessonType.AI_MENTOR)
+          .map((lesson) => ({ id: lesson.id, title: lesson.title })),
+      ) || []
+    );
+  }, [course]);
+
+  const { data: learningTimeFilterOptions } = useCourseStatisticsFilter({
+    id: courseId,
+    enabled: canManageCourse,
+    language,
+  });
+
+  const { data: courseStatistics } = useCourseStatistics({
+    id: courseId,
+    enabled: canManageCourse,
+    query: courseStatisticsParams,
+  });
+  const { data: averageQuizScores } = useCourseAverageScorePerQuiz({
+    id: courseId,
+    enabled: canManageCourse,
+    query: { ...courseStatisticsParams, language },
+  });
+  const { data: aiConfigured } = useAIConfigured();
+
+  const isAIConfigured = aiConfigured?.enabled === true;
+
+  const { data: aiMentorResultsPreview } = useCourseStudentsAiMentorResults({
+    id: courseId,
+    enabled: canViewStatistics && Boolean(courseId),
+    query: {
+      page: 1,
+      perPage: 1,
+      language,
+    },
+  });
+
+  const hasAiMentorResults = (aiMentorResultsPreview?.pagination.totalItems ?? 0) > 0;
+
+  const visibleStatisticsTabs = useMemo(
+    () => getVisibleCourseStatisticsTabs({ hasAiMentorResults, isAIConfigured }),
+    [hasAiMentorResults, isAIConfigured],
+  );
+
+  useEffect(() => {
+    if (!visibleStatisticsTabs.includes(activeTab)) {
+      setActiveTab(CourseAdminStatisticsTabs.progress);
+    }
+  }, [activeTab, visibleStatisticsTabs]);
+
+  const filterConfig: FilterConfig[] = [
+    {
+      name: "search",
+      type: "text",
+      testId: COURSE_STATISTICS_HANDLES.DETAILS_SEARCH_INPUT,
+    },
+  ];
+
+  const timeFilterConfig: FilterConfig[] = [
+    {
+      name: "groupId",
+      type: "select",
+      options: learningTimeFilterOptions?.groups.map((group) => ({
+        label: group.name,
+        value: group.id,
+      })),
+      placeholder: t("adminCourseView.statistics.groupFilter.placeholder"),
+      testId: COURSE_STATISTICS_HANDLES.GROUP_FILTER,
+      optionTestId: (option) => COURSE_STATISTICS_HANDLES.groupFilterOption(option.value),
+    },
+  ];
+
+  const handleFilterChange = <T,>(
+    setter: React.Dispatch<React.SetStateAction<T>>,
+    name: string,
+    value: FilterValue,
+  ) => {
+    startTransition(() => {
+      setter((prev) => {
+        if ((name === "quizId" || name === "lessonId") && value === "all") {
+          const { [name]: _, ...rest } = prev as Record<string, unknown>;
+          return rest as T;
+        }
+
+        return {
+          ...prev,
+          [name]: value,
+        } as T;
+      });
+    });
+  };
+
+  const handleProgressFilterChange = (name: string, value: FilterValue) => {
+    handleFilterChange(setProgressSearchParams, name, value);
+  };
+
+  const handleQuizFilterChange = (name: string, value: FilterValue) => {
+    handleFilterChange(setQuizSearchParams, name, value);
+  };
+
+  const handleAiMentorFilterChange = (name: string, value: FilterValue) => {
+    handleFilterChange(setAiMentorSearchParams, name, value);
+  };
+
+  const handleLearningTimeFilterChange = (name: string, value: FilterValue) => {
+    handleFilterChange(setLearningTimeParams, name, value);
+  };
+
+  const handleGroupFilterChange = (_name: string, value: FilterValue) => {
+    const nextGroupId = value as string | undefined;
+
+    startTransition(() => {
+      setGroupId(nextGroupId);
+
+      const updateGroupId = <T,>(setter: React.Dispatch<React.SetStateAction<T>>) => {
+        setter((prev) => {
+          if (!nextGroupId) {
+            const { groupId: _, ...rest } = prev as Record<string, unknown>;
+            return rest as T;
+          }
+
+          return {
+            ...prev,
+            groupId: nextGroupId,
+          } as T;
+        });
+      };
+
+      updateGroupId(setCourseStatisticsParams);
+      updateGroupId(setProgressSearchParams);
+      updateGroupId(setQuizSearchParams);
+      updateGroupId(setLearningTimeParams);
+      updateGroupId(setAiMentorSearchParams);
+    });
+  };
+
+  const getSearchValue = () => {
+    switch (activeTab) {
+      case "progress":
+        return progressSearchParams.search;
+      case "quizResults":
+        return quizSearchParams.search;
+      case "aiMentorResults":
+        return aiMentorSearchParams.search;
+      case "learningTime":
+        return learningTimeParams.search;
+      case "certificates":
+        return certificateSearch;
+      default:
+        return undefined;
+    }
+  };
+
+  const handleTabSearchChange = (name: string, value: FilterValue) => {
+    switch (activeTab) {
+      case "progress":
+        handleProgressFilterChange(name, value);
+        break;
+      case "quizResults":
+        handleQuizFilterChange(name, value);
+        break;
+      case "aiMentorResults":
+        handleAiMentorFilterChange(name, value);
+        break;
+      case "learningTime":
+        handleLearningTimeFilterChange(name, value);
+        break;
+      case "certificates":
+        setCertificateSearch(value as string | undefined);
+        break;
+    }
+  };
+
+  return (
+    <TooltipProvider>
+      <Card data-testid={COURSE_STATISTICS_HANDLES.ROOT}>
+        <CardHeader>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h6 className="h6">{t("adminCourseView.statistics.title")}</h6>
+              <p className="body-base-md title-neutral-800">
+                {t("adminCourseView.statistics.subtitle")}
+              </p>
+            </div>
+            {canDownloadCourseReport && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void downloadReport(courseId)}
+                disabled={isDownloading}
+              >
+                <Download className="mr-2 size-4" />
+                {t("adminStatisticsView.other.downloadReport")}
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+
+        <CardContent className="flex flex-col gap-8">
+          <div>
+            <SearchFilter
+              filters={timeFilterConfig}
+              values={{
+                groupId,
+              }}
+              onChange={handleGroupFilterChange}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 grid-rows-auto md:grid-rows-4">
+            <CourseAdminStatisticsCard
+              data-testid={COURSE_STATISTICS_HANDLES.OVERVIEW_ENROLLED_COUNT_CARD}
+              title={t("adminCourseView.statistics.overview.enrolledCount")}
+              tooltipText={t("adminCourseView.statistics.overview.enrolledCountTooltip")}
+              statistic={courseStatistics?.enrolledCount ?? 0}
+            />
+            <CourseAdminStatisticsCard
+              data-testid={COURSE_STATISTICS_HANDLES.OVERVIEW_COMPLETION_RATE_CARD}
+              title={t("adminCourseView.statistics.overview.completionRate")}
+              tooltipText={t("adminCourseView.statistics.overview.completionRateTooltip")}
+              statistic={courseStatistics?.completionPercentage ?? 0}
+              type="percentage"
+            />
+            <CourseAdminStatisticsCard
+              data-testid={COURSE_STATISTICS_HANDLES.OVERVIEW_AVERAGE_COMPLETION_CARD}
+              title={t("adminCourseView.statistics.overview.averageCompletionPercentage")}
+              tooltipText={t(
+                "adminCourseView.statistics.overview.averageCompletionPercentageTooltip",
+              )}
+              statistic={courseStatistics?.averageCompletionPercentage ?? 0}
+              type="percentage"
+            />
+            <CourseAdminStatisticsCard
+              data-testid={COURSE_STATISTICS_HANDLES.OVERVIEW_AVERAGE_LEARNING_TIME_CARD}
+              title={t("adminCourseView.statistics.overview.averageLearningTime")}
+              tooltipText={t("adminCourseView.statistics.overview.averageLearningTimeTooltip")}
+              statistic={formatLearningTime(courseStatistics?.averageSeconds ?? 0)}
+              type="text"
+            />
+            <CourseStatusDistributionChart
+              courseStatistics={courseStatistics}
+              className="md:row-span-4 md:row-start-1 md:col-start-2"
+            />
+          </div>
+          <AverageScorePerQuizChart averageQuizScores={averageQuizScores} />
+          <Tabs value={activeTab} className="h-full">
+            <div className="flex items-start gap-2 flex-col pb-6">
+              <h6 className="h6">{t("adminCourseView.statistics.details")}</h6>
+              <div className="flex w-full flex-col gap-3">
+                <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                  <div className="w-full sm:w-[360px] sm:shrink-0">
+                    <SearchFilter
+                      filters={filterConfig}
+                      values={{ search: getSearchValue() }}
+                      onChange={handleTabSearchChange}
+                      isLoading={isPending}
+                      className="flex-nowrap py-0"
+                      key={activeTab}
+                    />
+                  </div>
+
+                  {match(activeTab)
+                    .with("quizResults", () => (
+                      <Select
+                        value={(quizSearchParams.quizId as string) || "all"}
+                        onValueChange={(value) => handleQuizFilterChange("quizId", value)}
+                      >
+                        <SelectTrigger
+                          data-testid={COURSE_STATISTICS_HANDLES.QUIZ_FILTER}
+                          className="max-w-52"
+                        >
+                          <SelectValue placeholder={t("adminCourseView.statistics.filterByQuiz")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem
+                            data-testid={COURSE_STATISTICS_HANDLES.quizFilterOption("all")}
+                            value="all"
+                          >
+                            {t("adminCourseView.statistics.allQuizzes")}
+                          </SelectItem>
+                          {quizOptions.map((quiz) => (
+                            <SelectItem
+                              key={quiz.id}
+                              data-testid={COURSE_STATISTICS_HANDLES.quizFilterOption(quiz.id)}
+                              value={quiz.id}
+                            >
+                              {quiz.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ))
+                    .with("aiMentorResults", () => (
+                      <Select
+                        value={(aiMentorSearchParams.lessonId as string) || "all"}
+                        onValueChange={(value) => handleAiMentorFilterChange("lessonId", value)}
+                      >
+                        <SelectTrigger
+                          data-testid={COURSE_STATISTICS_HANDLES.AI_MENTOR_LESSON_FILTER}
+                          className="max-w-52"
+                        >
+                          <SelectValue
+                            placeholder={t("adminCourseView.statistics.filterByLesson")}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem
+                            data-testid={COURSE_STATISTICS_HANDLES.aiMentorLessonFilterOption(
+                              "all",
+                            )}
+                            value="all"
+                          >
+                            {t("adminCourseView.statistics.allLessons")}
+                          </SelectItem>
+                          {aiMentorLessons.map((aiMentorLesson) => (
+                            <SelectItem
+                              key={aiMentorLesson.id}
+                              data-testid={COURSE_STATISTICS_HANDLES.aiMentorLessonFilterOption(
+                                aiMentorLesson.id,
+                              )}
+                              value={aiMentorLesson.id}
+                            >
+                              {aiMentorLesson.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ))
+                    .otherwise(() => null)}
+                </div>
+                <div className="w-full overflow-x-auto pb-1">
+                  <TabsList className="flex h-[42px] min-w-full w-max items-center justify-start rounded-sm bg-primary-50 p-1">
+                    {visibleStatisticsTabs.map((tab) => (
+                      <TabsTrigger
+                        key={tab}
+                        data-testid={
+                          {
+                            progress: COURSE_STATISTICS_HANDLES.PROGRESS_TAB,
+                            quizResults: COURSE_STATISTICS_HANDLES.QUIZ_RESULTS_TAB,
+                            aiMentorResults: COURSE_STATISTICS_HANDLES.AI_MENTOR_RESULTS_TAB,
+                            learningTime: COURSE_STATISTICS_HANDLES.LEARNING_TIME_TAB,
+                            certificates: undefined,
+                          }[tab]
+                        }
+                        className="h-full grow"
+                        value={tab}
+                        onClick={() => setActiveTab(tab)}
+                      >
+                        {t(`adminCourseView.statistics.tabs.${tab}`)}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </div>
+              </div>
+            </div>
+            <TabsContent value={CourseAdminStatisticsTabs.progress}>
+              <CourseStudentsProgressTable
+                courseId={courseId}
+                lessonCount={lessonCount}
+                searchParams={progressSearchParams}
+                onFilterChange={handleProgressFilterChange}
+              />
+            </TabsContent>
+            <TabsContent value={CourseAdminStatisticsTabs.quizResults}>
+              <CourseStudentsQuizResultsTable
+                courseId={courseId}
+                course={course}
+                searchParams={quizSearchParams}
+                onFilterChange={handleQuizFilterChange}
+              />
+            </TabsContent>
+            {visibleStatisticsTabs.includes(CourseAdminStatisticsTabs.aiMentorResults) && (
+              <TabsContent value={CourseAdminStatisticsTabs.aiMentorResults}>
+                <CourseStudentsAiMentorResultsTable
+                  courseId={courseId}
+                  course={course}
+                  searchParams={aiMentorSearchParams}
+                  onFilterChange={handleAiMentorFilterChange}
+                />
+              </TabsContent>
+            )}
+            <TabsContent value={CourseAdminStatisticsTabs.learningTime}>
+              <CourseStudentsLearningTimeTable
+                courseId={courseId}
+                searchParams={learningTimeParams}
+                onFilterChange={handleLearningTimeFilterChange}
+              />
+            </TabsContent>
+            <TabsContent value={CourseAdminStatisticsTabs.certificates}>
+              <CourseCertificateRowsTable
+                courseId={courseId}
+                groupId={groupId}
+                search={certificateSearch}
+              />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </TooltipProvider>
+  );
+}

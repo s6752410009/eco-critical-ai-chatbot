@@ -1,0 +1,209 @@
+import { PERMISSIONS } from "@repo/shared";
+
+import type { PermissionRequirement } from "~/common/permissions/permission.utils";
+
+type PathSegment = string;
+type ParamSegment = `:${string}`;
+type WildcardSegment = "*";
+
+type ValidSegment = PathSegment | ParamSegment | WildcardSegment;
+type ValidPath<T extends string = string> = T extends ""
+  ? T
+  : T extends `${infer First}/${infer Rest}`
+    ? First extends ValidSegment
+      ? Rest extends "*"
+        ? `${First}/*`
+        : `${First}/${ValidPath<Rest>}`
+      : never
+    : T extends ValidSegment
+      ? T
+      : never;
+
+type RouteConfig = {
+  [P in string]: P extends ValidPath ? PermissionRequirement : never;
+};
+
+const createRouteConfig = <T extends Record<string, PermissionRequirement>>(
+  config: T,
+): RouteConfig => {
+  Object.keys(config).forEach((path) => {
+    if (path.startsWith("/")) {
+      throw new Error(`Invalid path: ${path} - cannot start with /`);
+    }
+    if (path.endsWith("/")) {
+      throw new Error(`Invalid path: ${path} - cannot end with /`);
+    }
+    if (path.includes("//")) {
+      throw new Error(`Invalid path: ${path} - cannot contain double slashes`);
+    }
+    if (path.includes("*") && !path.endsWith("*")) {
+      throw new Error(`Invalid path: ${path} - wildcard can only be at the end`);
+    }
+  });
+
+  return config as RouteConfig;
+};
+
+const PUBLIC: PermissionRequirement = {};
+// UserDashboardLayout enforces session, MFA and password requirements for these routes.
+const AUTHENTICATED_USER_ACCESS: PermissionRequirement = {};
+const USER_MANAGEMENT_ACCESS: PermissionRequirement = {
+  allOf: [PERMISSIONS.USER_MANAGE],
+};
+const COURSE_EDIT_ACCESS: PermissionRequirement = {
+  anyOf: [PERMISSIONS.COURSE_UPDATE, PERMISSIONS.COURSE_UPDATE_OWN],
+};
+const ARTICLE_EDIT_ACCESS: PermissionRequirement = {
+  anyOf: [PERMISSIONS.ARTICLE_MANAGE, PERMISSIONS.ARTICLE_MANAGE_OWN],
+};
+const NEWS_EDIT_ACCESS: PermissionRequirement = {
+  anyOf: [PERMISSIONS.NEWS_MANAGE, PERMISSIONS.NEWS_MANAGE_OWN],
+};
+const QA_EDIT_ACCESS: PermissionRequirement = {
+  anyOf: [PERMISSIONS.QA_MANAGE, PERMISSIONS.QA_MANAGE_OWN],
+};
+const LEARNING_PATH_READ_ACCESS: PermissionRequirement = {
+  anyOf: [PERMISSIONS.LEARNING_PATH_READ, PERMISSIONS.MANAGED_GROUP_RESULTS_READ],
+};
+const CALENDAR_READ_ACCESS: PermissionRequirement = {
+  anyOf: [PERMISSIONS.CALENDAR_READ],
+};
+const LIVE_TRAINING_READ_ACCESS: PermissionRequirement = {
+  anyOf: [PERMISSIONS.LIVE_TRAINING_READ, PERMISSIONS.MANAGED_GROUP_RESULTS_READ],
+};
+const DASHBOARD_READ_ACCESS: PermissionRequirement = {
+  anyOf: [PERMISSIONS.DASHBOARD_READ],
+};
+const LEARNING_PATH_ADMIN_ACCESS: PermissionRequirement = {
+  anyOf: [
+    PERMISSIONS.LEARNING_PATH_CREATE,
+    PERMISSIONS.LEARNING_PATH_UPDATE,
+    PERMISSIONS.LEARNING_PATH_UPDATE_OWN,
+    PERMISSIONS.LEARNING_PATH_COURSE_UPDATE,
+    PERMISSIONS.LEARNING_PATH_COURSE_UPDATE_OWN,
+    PERMISSIONS.LEARNING_PATH_DELETE,
+    PERMISSIONS.LEARNING_PATH_ENROLLMENT,
+    PERMISSIONS.LEARNING_PATH_EXPORT,
+  ],
+};
+
+export const routeAccessConfig = createRouteConfig({
+  competencies: { allOf: [PERMISSIONS.COMPETENCIES_USE] },
+  phishing: { anyOf: [PERMISSIONS.PHISHING_MANAGE, PERMISSIONS.PHISHING_REPORT_READ] },
+  "phishing/new": { allOf: [PERMISSIONS.PHISHING_MANAGE, PERMISSIONS.COURSE_ENROLLMENT] },
+  "phishing/:id": { allOf: [PERMISSIONS.PHISHING_REPORT_READ] },
+  "content-marketplace": { allOf: [PERMISSIONS.CONTENT_MARKETPLACE_BROWSE] },
+  "auth/login": PUBLIC,
+  "auth/register": PUBLIC,
+  "auth/create-new-password": PUBLIC,
+  "auth/password-recovery": PUBLIC,
+  "auth/magic-link": PUBLIC,
+  "auth/mfa": PUBLIC,
+  "auth/change-password": PUBLIC,
+  "tenant-inactive": PUBLIC,
+  "oauth/connect": PUBLIC,
+
+  assistant: AUTHENTICATED_USER_ACCESS,
+  "assistant/:threadId": AUTHENTICATED_USER_ACCESS,
+
+  // Client part
+  "": PUBLIC,
+  notifications: {
+    allOf: [PERMISSIONS.ANNOUNCEMENT_READ],
+  },
+  settings: PUBLIC,
+  "profile/:id": PUBLIC,
+  "course/:courseId/lesson/:lessonId": PUBLIC,
+  "articles/:articleId/edit": ARTICLE_EDIT_ACCESS,
+  "news/add": NEWS_EDIT_ACCESS,
+  "news/:newsId/edit": NEWS_EDIT_ACCESS,
+  dashboard: DASHBOARD_READ_ACCESS,
+  reports: { anyOf: [PERMISSIONS.REPORT_READ, PERMISSIONS.MANAGED_GROUP_RESULTS_READ] },
+  "ai-mentor/practice/:id": {
+    allOf: [PERMISSIONS.AI_USE],
+  },
+  // Client and public
+  "course/:id": PUBLIC,
+  courses: PUBLIC,
+  "development-paths": LEARNING_PATH_READ_ACCESS,
+  calendar: CALENDAR_READ_ACCESS,
+  "live-training/:id": LIVE_TRAINING_READ_ACCESS,
+  "live-training/:id/room": LIVE_TRAINING_READ_ACCESS,
+  qa: PUBLIC,
+  "qa/:id": QA_EDIT_ACCESS,
+  articles: PUBLIC,
+  "articles/:articleId": PUBLIC,
+  news: PUBLIC,
+  "news/:newsId": PUBLIC,
+
+  // Admin part
+  "admin/courses": {
+    anyOf: [PERMISSIONS.COURSE_UPDATE, PERMISSIONS.COURSE_UPDATE_OWN],
+  },
+  "admin/courses/new": COURSE_EDIT_ACCESS,
+  "admin/course/:courseId/lesson/:lessonId/preview": COURSE_EDIT_ACCESS,
+  "admin/beta-courses/new": {
+    allOf: [PERMISSIONS.COURSE_CREATE],
+  },
+  "admin/beta-courses/new/standard": {
+    allOf: [PERMISSIONS.COURSE_CREATE],
+  },
+  "admin/courses/new-scorm": {
+    allOf: [PERMISSIONS.COURSE_CREATE],
+  },
+  "admin/courses/import-package": {
+    allOf: [PERMISSIONS.COURSE_CREATE],
+  },
+  "admin/courses/:id": COURSE_EDIT_ACCESS,
+  "admin/beta-courses/:id": COURSE_EDIT_ACCESS,
+  "admin/beta-courses/:id/authoring": {
+    allOf: [PERMISSIONS.COURSE_AI_GENERATION],
+    anyOf: [PERMISSIONS.COURSE_UPDATE, PERMISSIONS.COURSE_UPDATE_OWN],
+  },
+  "admin/development-paths": LEARNING_PATH_ADMIN_ACCESS,
+  "admin/development-paths/new": {
+    allOf: [PERMISSIONS.LEARNING_PATH_CREATE],
+  },
+  "admin/development-paths/:id": LEARNING_PATH_ADMIN_ACCESS,
+  "admin/users/*": USER_MANAGEMENT_ACCESS,
+  "admin/automations": {
+    anyOf: [
+      PERMISSIONS.AUTOMATION_MANAGE,
+      PERMISSIONS.EMAIL_TEMPLATE_MANAGE,
+      PERMISSIONS.AUTOMATION_LOG_READ,
+    ],
+  },
+  "admin/automations/*": { allOf: [PERMISSIONS.AUTOMATION_MANAGE] },
+  "admin/automation-logs/*": { allOf: [PERMISSIONS.AUTOMATION_LOG_READ] },
+  "admin/email-templates/*": { allOf: [PERMISSIONS.EMAIL_TEMPLATE_MANAGE] },
+  "admin/groups/*": {
+    allOf: [PERMISSIONS.GROUP_MANAGE],
+  },
+  "admin/categories/*": {
+    allOf: [PERMISSIONS.CATEGORY_MANAGE],
+  },
+  "admin/lessons/*": COURSE_EDIT_ACCESS,
+  "admin/lesson-items/*": COURSE_EDIT_ACCESS,
+  "provider-information": PUBLIC,
+  "admin/promotion-codes": {
+    allOf: [PERMISSIONS.BILLING_MANAGE],
+  },
+  "admin/promotion-codes/*": {
+    allOf: [PERMISSIONS.BILLING_MANAGE],
+  },
+  "admin/envs": {
+    allOf: [PERMISSIONS.ENV_MANAGE],
+  },
+  "admin/activity-logs": {
+    allOf: [PERMISSIONS.ACTIVITY_LOG_READ],
+  },
+  "admin/ai-conversations": {
+    allOf: [PERMISSIONS.AI_THREAD_READ],
+  },
+  "admin/ai-conversations/:threadId": {
+    allOf: [PERMISSIONS.AI_THREAD_READ],
+  },
+  "super-admin/*": {
+    allOf: [PERMISSIONS.TENANT_MANAGE],
+  },
+});

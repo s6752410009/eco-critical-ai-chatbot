@@ -1,0 +1,200 @@
+import type { QuestionType } from "~/modules/Admin/EditCourse/CourseLessons/NewLesson/QuizLessonForm/QuizLessonForm.types";
+
+export const LESSON_TYPE_OPTION_HANDLES = {
+  CONTENT: "content",
+  QUIZ: "quiz",
+  AI_MENTOR: "ai_mentor",
+  EMBED: "embed",
+  SCORM: "scorm",
+  LIVE_TRAINING: "live_training",
+} as const;
+
+export const CURRICULUM_HANDLES = {
+  ROOT: "curriculum-root",
+  CHAPTER_LIST: "curriculum-chapter-list",
+  ADD_CHAPTER_BUTTON: "curriculum-add-chapter-button",
+  COURSE_GENERATION_BUTTON: "curriculum-course-generation-button",
+  chapterCard: (chapterId: string) => `curriculum-chapter-card-${chapterId}`,
+  chapterDragHandle: (chapterId: string) => `curriculum-chapter-drag-handle-${chapterId}`,
+  chapterAccordion: (chapterId: string) => `curriculum-chapter-accordion-${chapterId}`,
+  chapterFreemiumSwitch: (chapterId: string) => `curriculum-chapter-freemium-switch-${chapterId}`,
+  addLessonButton: (chapterId: string) => `curriculum-add-lesson-button-${chapterId}`,
+  lessonCard: (lessonId: string) => `curriculum-lesson-card-${lessonId}`,
+  lessonDragHandle: (lessonId: string) => `curriculum-lesson-drag-handle-${lessonId}`,
+  lessonTitle: (lessonId: string) => `curriculum-lesson-title-${lessonId}`,
+  lessonTypeOption: (
+    type: (typeof LESSON_TYPE_OPTION_HANDLES)[keyof typeof LESSON_TYPE_OPTION_HANDLES],
+  ) => `curriculum-lesson-type-option-${type}`,
+} as const;
+
+export const CHAPTER_FORM_HANDLES = {
+  ROOT: "curriculum-chapter-form",
+  TITLE_INPUT: "curriculum-chapter-title-input",
+  SAVE_BUTTON: "curriculum-chapter-save-button",
+  DELETE_BUTTON: "curriculum-chapter-delete-button",
+  CANCEL_BUTTON: "curriculum-chapter-cancel-button",
+} as const;
+
+export const CONTENT_LESSON_FORM_HANDLES = {
+  ROOT: "curriculum-content-lesson-form",
+  TITLE_INPUT: "curriculum-content-lesson-title-input",
+  DESCRIPTION_EDITOR: "curriculum-content-lesson-description-editor",
+  SAVE_BUTTON: "curriculum-content-lesson-save-button",
+  DELETE_BUTTON: "curriculum-content-lesson-delete-button",
+  CANCEL_BUTTON: "curriculum-content-lesson-cancel-button",
+} as const;
+
+export const QUIZ_LESSON_FORM_HANDLES = {
+  ROOT: "curriculum-quiz-lesson-form",
+  TITLE_INPUT: "curriculum-quiz-lesson-title-input",
+  SAVE_BUTTON: "curriculum-quiz-lesson-save-button",
+  DELETE_BUTTON: "curriculum-quiz-lesson-delete-button",
+  CANCEL_BUTTON: "curriculum-quiz-lesson-cancel-button",
+  ADD_QUESTION_BUTTON: "curriculum-quiz-add-question-button",
+  questionTypeOption: (type: QuestionType) => `curriculum-quiz-question-type-option-${type}`,
+  questionCard: (questionIndex: number) => `curriculum-quiz-question-card-${questionIndex}`,
+  questionTitleInput: (questionIndex: number) =>
+    `curriculum-quiz-question-title-input-${questionIndex}`,
+  questionToggle: (questionIndex: number) => `curriculum-quiz-question-toggle-${questionIndex}`,
+  questionDeleteButton: (questionIndex: number) =>
+    `curriculum-quiz-question-delete-button-${questionIndex}`,
+  addOptionButton: (questionIndex: number) =>
+    `curriculum-quiz-question-add-option-button-${questionIndex}`,
+  optionInput: (questionIndex: number, optionIndex: number) =>
+    `curriculum-quiz-question-${questionIndex}-option-${optionIndex}-input`,
+  correctOptionControl: (questionIndex: number, optionIndex: number) =>
+    `curriculum-quiz-question-${questionIndex}-option-${optionIndex}-correct`,
+  fillBlanksEditor: (questionIndex: number) =>
+    `curriculum-quiz-question-${questionIndex}-fill-blanks-editor`,
+  addWordButton: (questionIndex: number) =>
+    `curriculum-quiz-question-${questionIndex}-add-word-button`,
+  newWordInput: (questionIndex: number) =>
+    `curriculum-quiz-question-${questionIndex}-new-word-input`,
+  saveWordButton: (questionIndex: number) =>
+    `curriculum-quiz-question-${questionIndex}-save-word-button`,
+  dragWordButton: (questionIndex: number, word: string) =>
+    `curriculum-quiz-question-${questionIndex}-drag-word-${word}`,
+  photoUploadInput: (questionIndex: number) =>
+    `curriculum-quiz-question-${questionIndex}-photo-upload-input`,
+  photoTypeSelect: (questionIndex: number) =>
+    `curriculum-quiz-question-${questionIndex}-photo-type-select`,
+  photoTypeOption: (questionIndex: number, type: QuestionType) =>
+    `curriculum-quiz-question-${questionIndex}-photo-type-option-${type}`,
+} as const;
+
+export const EMBED_LESSON_FORM_HANDLES = {
+  ROOT: "curriculum-embed-lesson-form",
+  TITLE_INPUT: "curriculum-embed-lesson-title-input",
+  SAVE_BUTTON: "curriculum-embed-lesson-save-button",
+  ADD_RESOURCE_BUTTON: "curriculum-embed-lesson-add-resource-button",
+  DELETE_BUTTON: "curriculum-embed-lesson-delete-button",
+  CANCEL_BUTTON: "curriculum-embed-lesson-cancel-button",
+  resourceCard: (resourceIndex: number) => `curriculum-embed-resource-card-${resourceIndex}`,
+  resourceUrlInput: (resourceIndex: number) =>
+    `curriculum-embed-resource-${resourceIndex}-url-input`,
+  resourceFullscreenCheckbox: (resourceIndex: number) =>
+    `curriculum-embed-resource-${resourceIndex}-fullscreen-checkbox`,
+  removeResourceButton: (resourceIndex: number) =>
+    `curriculum-embed-resource-${resourceIndex}-remove-button`,
+} as const;
+
+export const SCORM_LESSON_FORM_HANDLES = {
+  ROOT: "curriculum-scorm-lesson-form",
+  TITLE_INPUT: "curriculum-scorm-lesson-title-input",
+  PACKAGE_UPLOAD: "curriculum-scorm-lesson-package-upload",
+  PACKAGE_INPUT: "curriculum-scorm-lesson-package-input",
+  PACKAGE_SELECTED_FILE: "curriculum-scorm-lesson-package-selected-file",
+  PACKAGE_READONLY: "curriculum-scorm-lesson-package-readonly",
+  PACKAGE_INFO_TOOLTIP_TRIGGER: "curriculum-scorm-lesson-package-info-tooltip-trigger",
+  PACKAGE_REMOVE_BUTTON: "curriculum-scorm-lesson-package-remove-button",
+  PACKAGE_REPLACE_BUTTON: "curriculum-scorm-lesson-package-replace-button",
+  SAVE_BUTTON: "curriculum-scorm-lesson-save-button",
+  DELETE_BUTTON: "curriculum-scorm-lesson-delete-button",
+  CANCEL_BUTTON: "curriculum-scorm-lesson-cancel-button",
+  DELETE_DIALOG: "curriculum-scorm-lesson-delete-dialog",
+  DELETE_DIALOG_CONFIRM_BUTTON: "curriculum-scorm-lesson-delete-dialog-confirm-button",
+  DELETE_DIALOG_CANCEL_BUTTON: "curriculum-scorm-lesson-delete-dialog-cancel-button",
+} as const;
+
+export const LIVE_TRAINING_LESSON_FORM_HANDLES = {
+  ROOT: "curriculum-live-training-lesson-form",
+  TITLE_INPUT: "curriculum-live-training-lesson-title-input",
+  SAVE_BUTTON: "curriculum-live-training-lesson-save-button",
+  DELETE_BUTTON: "curriculum-live-training-lesson-delete-button",
+  CANCEL_BUTTON: "curriculum-live-training-lesson-cancel-button",
+  DELETE_DIALOG: "curriculum-live-training-lesson-delete-dialog",
+  DELETE_DIALOG_CONFIRM_BUTTON: "curriculum-live-training-lesson-delete-dialog-confirm-button",
+  DELETE_DIALOG_CANCEL_BUTTON: "curriculum-live-training-lesson-delete-dialog-cancel-button",
+} as const;
+
+export const AI_MENTOR_LESSON_FORM_HANDLES = {
+  ROOT: "curriculum-ai-mentor-lesson-form",
+  TITLE_INPUT: "curriculum-ai-mentor-lesson-title-input",
+  DESCRIPTION_INPUT: "curriculum-ai-mentor-lesson-description-input",
+  NAME_INPUT: "curriculum-ai-mentor-lesson-name-input",
+  MENTOR_CONFIGURATION_BUTTON: "curriculum-ai-mentor-configuration-button",
+  MENTOR_CONFIGURATION_DIALOG: "curriculum-ai-mentor-configuration-dialog",
+  MENTOR_TASK_GOAL_INPUT: "curriculum-ai-mentor-configuration-task-goal-input",
+  MENTOR_EXPERTISE_INPUT: "curriculum-ai-mentor-configuration-expertise-input",
+  MENTOR_CONTENT_SCOPE_INPUT: "curriculum-ai-mentor-configuration-content-scope-input",
+  MENTOR_SCENARIO_INPUT: "curriculum-ai-mentor-configuration-scenario-input",
+  MENTOR_AI_ROLE_INPUT: "curriculum-ai-mentor-configuration-ai-role-input",
+  MENTOR_LEARNER_ROLE_INPUT: "curriculum-ai-mentor-configuration-learner-role-input",
+  MENTOR_CHARACTER_GOAL_INPUT: "curriculum-ai-mentor-configuration-character-goal-input",
+  MENTOR_CONFIGURATION_APPLY_BUTTON: "curriculum-ai-mentor-configuration-apply-button",
+  MENTOR_GENERATION_DIALOG: "curriculum-ai-mentor-generation-dialog",
+  MENTOR_GENERATION_MODE: "curriculum-ai-mentor-generation-mode",
+  SAVE_BUTTON: "curriculum-ai-mentor-lesson-save-button",
+  DELETE_BUTTON: "curriculum-ai-mentor-lesson-delete-button",
+  CANCEL_BUTTON: "curriculum-ai-mentor-lesson-cancel-button",
+  PREVIEW_BUTTON: "curriculum-ai-mentor-lesson-preview-button",
+  RESOURCE_FILE_INPUT: "curriculum-ai-mentor-lesson-resource-file-input",
+  AVATAR_FILE_INPUT: "curriculum-ai-mentor-lesson-avatar-file-input",
+  JUDGE_CONFIGURE_BUTTON: "curriculum-ai-mentor-judge-configure-button",
+  JUDGE_DIALOG: "curriculum-ai-mentor-judge-dialog",
+  JUDGE_TASK_GOAL_INPUT: "curriculum-ai-mentor-judge-task-goal-input",
+  JUDGE_ADD_CRITERION_BUTTON: "curriculum-ai-mentor-judge-add-criterion-button",
+  judgeCriterion: (criterionIndex: number) =>
+    `curriculum-ai-mentor-judge-criterion-${criterionIndex}`,
+  judgeCriterionToggle: (criterionIndex: number) =>
+    `curriculum-ai-mentor-judge-criterion-${criterionIndex}-toggle`,
+  judgeCriterionTitleInput: (criterionIndex: number) =>
+    `curriculum-ai-mentor-judge-criterion-${criterionIndex}-title-input`,
+  judgeCriterionMaxScoreInput: (criterionIndex: number) =>
+    `curriculum-ai-mentor-judge-criterion-${criterionIndex}-max-score-input`,
+  judgeCriterionExpectedBehaviorInput: (criterionIndex: number) =>
+    `curriculum-ai-mentor-judge-criterion-${criterionIndex}-expected-behavior-input`,
+  judgeScoringGuidanceToggle: (criterionIndex: number) =>
+    `curriculum-ai-mentor-judge-criterion-${criterionIndex}-scoring-guidance-toggle`,
+  judgeScoreDescriptionInput: (criterionIndex: number, score: number) =>
+    `curriculum-ai-mentor-judge-criterion-${criterionIndex}-score-${score}-description-input`,
+  judgeScoreExampleInput: (criterionIndex: number, score: number) =>
+    `curriculum-ai-mentor-judge-criterion-${criterionIndex}-score-${score}-example-input`,
+  JUDGE_PASSING_THRESHOLD_INPUT: "curriculum-ai-mentor-judge-passing-threshold-input",
+  JUDGE_BLOCKING_ERRORS_SECTION: "curriculum-ai-mentor-judge-blocking-errors-section",
+  JUDGE_ADD_BLOCKING_ERROR_BUTTON: "curriculum-ai-mentor-judge-add-blocking-error-button",
+  judgeBlockingErrorInput: (blockingErrorIndex: number) =>
+    `curriculum-ai-mentor-judge-blocking-error-${blockingErrorIndex}-input`,
+  JUDGE_APPLY_BUTTON: "curriculum-ai-mentor-judge-apply-button",
+} as const;
+
+export const COURSE_AUTHORING_HANDLES = {
+  DRAWER: "course-authoring-drawer",
+  RESIZE_HANDLE: "course-authoring-resize-handle",
+  RESIZE_TOGGLE: "course-authoring-resize-toggle",
+  SESSION_MENU_TRIGGER: "course-authoring-session-menu-trigger",
+  SESSION_MENU_SEARCH: "course-authoring-session-menu-search",
+  NEW_CHAT_BUTTON: "course-authoring-new-chat-button",
+  SESSION_MENU_LIST: "course-authoring-session-menu-list",
+  sessionMenuItem: (sessionId: string) => `course-authoring-session-menu-item-${sessionId}`,
+  SOURCES_TRIGGER: "course-authoring-sources-trigger",
+  OPTIONS_TRIGGER: "course-authoring-options-trigger",
+  ROOT: "course-authoring-workspace",
+  BRIEF_PANEL: "course-authoring-brief-panel",
+  BRIEF_INPUT: "course-authoring-brief-input",
+  BRIEF_SUBMIT_BUTTON: "course-authoring-brief-submit-button",
+  SNAPSHOT_CONTENT: "course-authoring-snapshot-content",
+  SOURCE_REFRESH_PANEL: "course-authoring-source-refresh-panel",
+  SOURCE_REFRESH_RESOLVE_BUTTON: "course-authoring-source-refresh-resolve-button",
+  TOOLS_TRIGGER: "course-authoring-tools-trigger",
+} as const;

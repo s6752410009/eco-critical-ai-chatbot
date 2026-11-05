@@ -1,0 +1,7 @@
+{
+  "repository": "https://github.com/Selleo/mentingo",
+  "commit": "1490a8d56119cb78b2a5a781dfdfdaacf05cded9",
+  "source": "apps/web/app",
+  "license": "MIT",
+  "purpose": "Native frontend UI base, existing Eco data connected through dedicated adapters"
+}

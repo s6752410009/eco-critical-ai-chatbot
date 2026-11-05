@@ -1,0 +1,112 @@
+import { Link, useLocation, useParams } from "@remix-run/react";
+import { PERMISSIONS } from "@repo/shared";
+import { useTranslation } from "react-i18next";
+
+import { useEnrollCourse } from "~/api/mutations";
+import {
+  availableCoursesQueryOptions,
+  courseQueryOptions,
+  studentCoursesQueryOptions,
+  useCurrentUser,
+} from "~/api/queries";
+import { topCoursesQueryOptions } from "~/api/queries/useTopCourses";
+import { queryClient } from "~/api/queryClient";
+import { Enroll } from "~/assets/svgs";
+import { hasPermission } from "~/common/permissions/permission.utils";
+import { CopyUrlButton } from "~/components/CopyUrlButton/CopyUrlButton";
+import { Icon } from "~/components/Icon";
+import { Button } from "~/components/ui/button";
+import { useIsRegistrationEnabled } from "~/hooks/useIsRegistrationEnabled";
+import { useLanguageStore } from "~/modules/Dashboard/Settings/Language/LanguageStore";
+import { PaymentModal } from "~/modules/stripe/PaymentModal";
+
+import { COURSE_OVERVIEW_HANDLES } from "../../../../../e2e/data/courses/handles";
+
+import type { GetCourseResponse } from "~/api/generated-api";
+
+type CourseOptionsProps = {
+  course: GetCourseResponse["data"];
+};
+
+export const CourseOptions = ({ course }: CourseOptionsProps) => {
+  const { t } = useTranslation();
+  const { id = "" } = useParams();
+  const location = useLocation();
+  const { language } = useLanguageStore();
+
+  const { mutateAsync: enrollCourse } = useEnrollCourse();
+  const { data: currentUser } = useCurrentUser();
+  const isRegistrationEnabled = useIsRegistrationEnabled();
+
+  const isGroupManager = hasPermission(
+    currentUser?.permissions ?? [],
+    PERMISSIONS.MANAGED_GROUP_RESULTS_READ,
+  );
+
+  const handleEnrollCourse = async () => {
+    await enrollCourse({ id: course?.id }).then(() => {
+      queryClient.invalidateQueries(courseQueryOptions(course?.id));
+      queryClient.invalidateQueries(courseQueryOptions(id));
+      queryClient.invalidateQueries(topCoursesQueryOptions({ language }));
+      queryClient.invalidateQueries(availableCoursesQueryOptions({ language }));
+      queryClient.invalidateQueries(studentCoursesQueryOptions({ language }));
+    });
+  };
+
+  const renderEnrollButton = () => {
+    if (!currentUser) {
+      const registerPath = isRegistrationEnabled ? "/auth/register" : "/auth/login";
+
+      return (
+        <Link
+          data-testid={COURSE_OVERVIEW_HANDLES.LOGIN_ENROLL_LINK}
+          to={`${registerPath}?returnTo=${encodeURIComponent(`${location.pathname}${location.search}`)}`}
+        >
+          <Button className="w-full gap-x-2" variant="primary">
+            <Enroll />
+            <span>{t("studentCourseView.sideSection.button.enrollCourse")}</span>
+          </Button>
+        </Link>
+      );
+    }
+
+    return (
+      <Button
+        data-testid={COURSE_OVERVIEW_HANDLES.ENROLL_BUTTON}
+        onClick={handleEnrollCourse}
+        className="gap-x-2"
+        variant="primary"
+      >
+        <Enroll />
+        <span>{t("studentCourseView.sideSection.button.enrollCourse")}</span>
+      </Button>
+    );
+  };
+
+  return (
+    <>
+      <h4 className="h6 pb-1 text-neutral-950">
+        {t("studentCourseView.sideSection.optionHeader")}
+      </h4>
+      <div className="flex flex-col gap-y-2">
+        <CopyUrlButton variant="outline" className="gap-x-2">
+          <Icon name="Share" className="h-auto w-6 text-primary-800" />
+          <span>{t("studentCourseView.sideSection.button.shareCourse")}</span>
+        </CopyUrlButton>
+        {!isGroupManager &&
+          (course.priceInCents && course.currency && course.stripePriceId ? (
+            <PaymentModal
+              courseCurrency={course.currency}
+              coursePrice={course.priceInCents}
+              courseTitle={course.title}
+              courseDescription={course.description}
+              courseId={course.id}
+              coursePriceId={course.stripePriceId}
+            />
+          ) : (
+            renderEnrollButton()
+          ))}
+      </div>
+    </>
+  );
+};

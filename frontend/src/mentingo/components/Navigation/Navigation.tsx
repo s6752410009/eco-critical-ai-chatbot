@@ -1,0 +1,227 @@
+import { useLocation } from "@remix-run/react";
+import { PERMISSIONS } from "@repo/shared";
+import { useEffect, useState, Fragment } from "react";
+import { useTranslation } from "react-i18next";
+
+import { useCurrentUser } from "~/api/queries";
+import { useConfigurationState } from "~/api/queries/admin/useConfigurationState";
+import { useCompetenciesConfiguration } from "~/api/queries/useCompetenciesConfiguration";
+import { useGlobalSettings } from "~/api/queries/useGlobalSettings";
+import { useLearningPaths } from "~/api/queries/useLearningPaths";
+import { usePhishingConfiguration } from "~/api/queries/usePhishingConfiguration";
+import { useStripeConfigured } from "~/api/queries/useStripeConfigured";
+import { matchesRequirement } from "~/common/permissions/permission.utils";
+import { Icon } from "~/components/Icon";
+import { Separator } from "~/components/ui/separator";
+import { TooltipProvider } from "~/components/ui/tooltip";
+import { getNavigationConfig, mapNavigationItems } from "~/config/navigationConfig";
+import { routeAccessConfig } from "~/config/routeAccessConfig";
+import { usePermissions } from "~/hooks/usePermissions";
+import { cn } from "~/lib/utils";
+import { shouldHideTopbarAndSidebar } from "~/modules/Admin/Admin.layout";
+import { useLanguageStore } from "~/modules/Dashboard/Settings/Language/LanguageStore";
+
+import { Button } from "../ui/button";
+
+import { NavigationFooter } from "./NavigationFooter";
+import { NavigationGlobalSearchWrapper } from "./NavigationGlobalSearchWrapper";
+import { NavigationHeader } from "./NavigationHeader";
+import { NavigationMenu } from "./NavigationMenu";
+import { useNavigationStore } from "./stores/navigationStore";
+import { useMobileNavigation } from "./useMobileNavigation";
+
+import type { LeafMenuItem, NavigationGroups } from "~/config/navigationConfig";
+
+type DashboardNavigationProps = { menuItems?: NavigationGroups[] };
+
+export function Navigation({ menuItems }: DashboardNavigationProps) {
+  const { isMobileNavOpen, setIsMobileNavOpen } = useMobileNavigation();
+
+  const { hasAccess: canManageEnvs, permissions } = usePermissions({
+    required: [PERMISSIONS.ENV_MANAGE],
+  });
+  const { hasAccess: canAccessLearningPathAdmin } = usePermissions({
+    required: [
+      PERMISSIONS.LEARNING_PATH_CREATE,
+      PERMISSIONS.LEARNING_PATH_UPDATE,
+      PERMISSIONS.LEARNING_PATH_UPDATE_OWN,
+      PERMISSIONS.LEARNING_PATH_COURSE_UPDATE,
+      PERMISSIONS.LEARNING_PATH_COURSE_UPDATE_OWN,
+      PERMISSIONS.LEARNING_PATH_DELETE,
+      PERMISSIONS.LEARNING_PATH_ENROLLMENT,
+      PERMISSIONS.LEARNING_PATH_EXPORT,
+    ],
+  });
+  const { hasAccess: canReadLearningPaths } = usePermissions({
+    required: [PERMISSIONS.LEARNING_PATH_READ, PERMISSIONS.MANAGED_GROUP_RESULTS_READ],
+  });
+
+  const { t } = useTranslation();
+  const { pathname } = useLocation();
+  const [is2xlBreakpoint, setIs2xlBreakpoint] = useState(false);
+  const { data: isStripeConfigured } = useStripeConfigured();
+  const { data: phishingConfiguration, isError: isPhishingConfigurationError } =
+    usePhishingConfiguration(matchesRequirement(permissions, routeAccessConfig.phishing));
+  const { data: competenciesConfiguration, isError: isCompetenciesConfigurationError } =
+    useCompetenciesConfiguration(matchesRequirement(permissions, routeAccessConfig.competencies));
+
+  const { data: globalSettings } = useGlobalSettings();
+
+  const language = useLanguageStore((state) => state.language);
+
+  const { data: user } = useCurrentUser();
+
+  const { data: configurationState } = useConfigurationState({
+    enabled: canManageEnvs,
+  });
+
+  const hasConfigurationIssues =
+    canManageEnvs && configurationState?.hasIssues && !configurationState?.isWarningDismissed;
+
+  const { isSidebarCollapsed, toggleSidebarCollapsed } = useNavigationStore();
+
+  const isLearningPathsEnabled = globalSettings?.learningPathsEnabled !== false;
+
+  const { data: studentLearningPaths } = useLearningPaths(
+    { page: 1, perPage: 1, language },
+    {
+      enabled:
+        isLearningPathsEnabled && canReadLearningPaths && !canAccessLearningPathAdmin && !!user?.id,
+    },
+  );
+
+  const shouldShowLearningPaths =
+    canAccessLearningPathAdmin || Boolean(studentLearningPaths?.pagination.totalItems);
+
+  useEffect(() => {
+    const updateBreakpoint = () => {
+      const width = window.innerWidth;
+      setIs2xlBreakpoint(width >= 1440);
+    };
+    updateBreakpoint();
+    window.addEventListener("resize", updateBreakpoint);
+    return () => {
+      window.removeEventListener("resize", updateBreakpoint);
+    };
+  }, []);
+
+  if (!menuItems) {
+    menuItems = mapNavigationItems(
+      getNavigationConfig(
+        t,
+        globalSettings?.QAEnabled,
+        globalSettings?.newsEnabled,
+        globalSettings?.articlesEnabled,
+        isStripeConfigured?.enabled,
+        isLearningPathsEnabled,
+        shouldShowLearningPaths,
+        phishingConfiguration?.enabled === true && !isPhishingConfigurationError,
+        user?.roleSlugs ?? [],
+        competenciesConfiguration?.enabled === true && !isCompetenciesConfigurationError,
+      ),
+    );
+  }
+
+  if (shouldHideTopbarAndSidebar(pathname)) return null;
+
+  const showNavigationLabels = !isSidebarCollapsed || !is2xlBreakpoint;
+  const shouldShowTooltips = isSidebarCollapsed && is2xlBreakpoint;
+
+  return (
+    <TooltipProvider>
+      <header
+        className={cn(
+          "sticky top-0 h-min max-h-[100dvh] w-full overflow-hidden transition-all duration-300 ease-in-out",
+          "2xl:flex 2xl:h-full 2xl:flex-col 2xl:gap-y-4",
+          "3xl:static",
+          isSidebarCollapsed
+            ? "2xl:w-14 2xl:px-2 2xl:py-4 3xl:w-14 3xl:px-2 3xl:py-4"
+            : "2xl:w-64 2xl:p-4 3xl:w-64 3xl:p-4",
+        )}
+      >
+        {is2xlBreakpoint && (
+          <div className="flex justify-end">
+            <Button
+              onClick={toggleSidebarCollapsed}
+              className="gap-2 py-2.5"
+              variant="outline"
+              size="icon"
+            >
+              <Icon
+                name={isSidebarCollapsed ? "PanelLeftOpen" : "PanelLeftClose"}
+                className="size-5"
+              />
+            </Button>
+          </div>
+        )}
+
+        <NavigationHeader
+          isMobileNavOpen={isMobileNavOpen}
+          setIsMobileNavOpen={setIsMobileNavOpen}
+          is2xlBreakpoint={is2xlBreakpoint}
+          hasConfigurationIssues={hasConfigurationIssues}
+          isSidebarCollapsed={isSidebarCollapsed}
+        />
+
+        {/* Mount one search per breakpoint: a CSS-hidden copy still registers ⌘K and opens a
+            second dialog. Below 2xl the header renders the search instead. */}
+        {is2xlBreakpoint && (
+          <NavigationGlobalSearchWrapper
+            useCompactVariant={isSidebarCollapsed}
+            containerClassName={cn("w-full", { "flex justify-center": isSidebarCollapsed })}
+          />
+        )}
+
+        <Separator className="sr-only bg-neutral-200 2xl:not-sr-only 2xl:h-px" />
+        <nav
+          className={cn("2xl:flex 2xl:h-full 2xl:min-h-0 2xl:flex-col 2xl:justify-between", {
+            "flex h-[calc(100dvh-4rem)] min-h-0 flex-col overflow-hidden bg-primary-50 px-4 pb-4 pt-7 2xl:bg-transparent 2xl:p-0 2xl:overflow-hidden":
+              isMobileNavOpen,
+            "sr-only 2xl:not-sr-only": !isMobileNavOpen,
+          })}
+        >
+          <div className="scrollbar-hide flex min-h-0 flex-1 flex-col gap-y-3 overflow-y-auto overscroll-contain">
+            {menuItems.map((group) => {
+              const { restrictedAccessRequirement, restrictedManagingTenantAdmin } = group;
+
+              if (!matchesRequirement(permissions, restrictedAccessRequirement)) return null;
+              if (
+                restrictedManagingTenantAdmin &&
+                (!user?.isManagingTenantAdmin || user?.isSupportMode)
+              )
+                return null;
+
+              return (
+                <Fragment key={group.title}>
+                  <NavigationMenu
+                    menuItems={group.items as unknown as LeafMenuItem[]}
+                    permissions={permissions}
+                    setIsMobileNavOpen={setIsMobileNavOpen}
+                    isExpandable={group.isExpandable}
+                    expandableLabel={group.title}
+                    expandableIcon={group.icon}
+                    testId={group.testId}
+                    showNavigationLabels={showNavigationLabels}
+                    shouldShowTooltips={shouldShowTooltips}
+                    isSidebarCollapsed={isSidebarCollapsed}
+                  />
+                  <Separator className="bg-neutral-200 2xl:h-px" />
+                </Fragment>
+              );
+            })}
+          </div>
+
+          <div className="shrink-0 mt-3">
+            <NavigationFooter
+              setIsMobileNavOpen={setIsMobileNavOpen}
+              hasConfigurationIssues={hasConfigurationIssues}
+              showNavigationLabels={showNavigationLabels}
+              shouldShowTooltips={shouldShowTooltips}
+              isSidebarCollapsed={isSidebarCollapsed}
+            />
+          </div>
+        </nav>
+      </header>
+    </TooltipProvider>
+  );
+}

@@ -1,0 +1,401 @@
+import { COURSE_TYPE, ENTITY_TYPES } from "@repo/shared";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+
+import { ApiClient } from "~/api/api-client";
+import { useDeleteCourseTrailer } from "~/api/mutations/admin/useDeleteCourseTrailer";
+import { useInitVideoUpload } from "~/api/mutations/admin/useInitVideoUpload";
+import { useUploadFile } from "~/api/mutations/admin/useUploadFile";
+import { availableCoursesQueryOptions, studentCoursesQueryOptions } from "~/api/queries";
+import { COURSE_QUERY_KEY } from "~/api/queries/admin/useBetaCourse";
+import { useCategoriesSuspense } from "~/api/queries/useCategories";
+import { topCoursesQueryOptions } from "~/api/queries/useTopCourses";
+import { useUserDetails } from "~/api/queries/useUserDetails";
+import { queryClient } from "~/api/queryClient";
+import ImageUploadInput from "~/components/FileUploadInput/ImageUploadInput";
+import { FormTextField } from "~/components/Form/FormTextField";
+import { Icon } from "~/components/Icon";
+import { BaseEditor } from "~/components/RichText/Editor";
+import { Button } from "~/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "~/components/ui/form";
+import { Label } from "~/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import { useTusVideoUpload } from "~/hooks/useTusVideoUpload";
+import { MissingTranslationsAlert } from "~/modules/Admin/EditCourse/components/MissingTranslationsAlert";
+import { stripHtmlTags } from "~/utils/stripHtmlTags";
+
+import { COURSE_SETTINGS_HANDLES } from "../../../../../e2e/data/courses/handles";
+import {
+  MAX_COURSE_DESCRIPTION_HTML_LENGTH,
+  MAX_COURSE_DESCRIPTION_LENGTH,
+} from "../../AddCourse/constants";
+import { InlineCategoryCreationForm } from "../../Categories/components/InlineCategoryCreationForm";
+import CourseCardPreview from "../components/CourseCardPreview";
+
+import CourseCertificateSetting from "./components/CourseCertificateSetting";
+import { CourseSettingsSwitches } from "./components/CourseSettingsSwitches";
+import { CourseTrailerUploadField } from "./components/CourseTrailerUploadField";
+import { useCourseSettingsForm } from "./hooks/useCourseSettingsForm";
+
+import type { CourseType, SupportedLanguages } from "@repo/shared";
+
+const isEmbedUrl = (url?: string) => {
+  if (!url) return false;
+  return url.includes("iframe.mediadelivery.net/embed") || url.includes("youtube.com/embed");
+};
+
+type CourseSettingsProps = {
+  courseId: string;
+  authorId: string;
+  title?: string;
+  description?: string;
+  categoryId?: string;
+  thumbnailS3SingedUrl?: string | null;
+  thumbnailS3Key?: string;
+  trailerUrl?: string | null;
+  hasCertificate?: boolean;
+  courseLanguage: SupportedLanguages;
+  courseType?: CourseType;
+};
+
+const CourseSettings = ({
+  courseId,
+  authorId,
+  title,
+  description,
+  categoryId,
+  thumbnailS3SingedUrl,
+  thumbnailS3Key,
+  trailerUrl,
+  hasCertificate = false,
+  courseLanguage,
+  courseType = COURSE_TYPE.DEFAULT,
+}: CourseSettingsProps) => {
+  const { t } = useTranslation();
+
+  const { form, onSubmit, saveCategory } = useCourseSettingsForm({
+    title,
+    description,
+    categoryId,
+    thumbnailS3Key,
+    courseLanguage,
+    courseId: courseId || "",
+  });
+
+  const { data: categories } = useCategoriesSuspense({ language: courseLanguage });
+  const { mutateAsync: uploadFile } = useUploadFile();
+  const { mutateAsync: deleteTrailer } = useDeleteCourseTrailer();
+  const { mutateAsync: initVideoUpload } = useInitVideoUpload();
+  const { getSessionForFile, uploadVideo } = useTusVideoUpload();
+  const { data: userDetails } = useUserDetails(authorId);
+
+  const isFormValid = form.formState.isDirty;
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [isTrailerUploading, setIsTrailerUploading] = useState(false);
+  const [displayThumbnailUrl, setDisplayThumbnailUrl] = useState<string | undefined>(
+    thumbnailS3SingedUrl || undefined,
+  );
+  const [displayTrailerUrl, setDisplayTrailerUrl] = useState<string | undefined>(
+    trailerUrl || undefined,
+  );
+
+  const trailerEmbedUrl = useMemo(
+    () => (displayTrailerUrl && isEmbedUrl(displayTrailerUrl) ? displayTrailerUrl : undefined),
+    [displayTrailerUrl],
+  );
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const trailerInputRef = useRef<HTMLInputElement | null>(null);
+
+  const watchedTitle = form.watch("title");
+  const watchedDescription = form.watch("description");
+  const watchedCategoryId = form.watch("categoryId");
+
+  const strippedDescriptionTextLength = stripHtmlTags(watchedDescription).length;
+  const descriptionFieldCharactersLeft =
+    MAX_COURSE_DESCRIPTION_LENGTH - strippedDescriptionTextLength;
+
+  const categoryName = useMemo(() => {
+    return categories.find((category) => category.id === watchedCategoryId)?.title;
+  }, [categories, watchedCategoryId]);
+
+  const handleImageUpload = useCallback(
+    async (file: File) => {
+      setIsUploading(true);
+      try {
+        const result = await uploadFile({ file, resource: "course" });
+        form.setValue("thumbnailS3Key", result.fileKey, { shouldValidate: true });
+        setDisplayThumbnailUrl(result.fileUrl);
+        form.handleSubmit(onSubmit)();
+      } catch (error) {
+        console.error("Error uploading image:", error);
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [form, uploadFile, onSubmit],
+  );
+
+  const removeThumbnail = () => {
+    form.setValue("thumbnailS3Key", "");
+    setDisplayThumbnailUrl(undefined);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+
+    form.handleSubmit(onSubmit)();
+  };
+
+  const handleTrailerUpload = useCallback(
+    async (file: File) => {
+      if (!courseId) return;
+      setIsTrailerUploading(true);
+      try {
+        const session = await getSessionForFile({
+          file,
+          init: () =>
+            initVideoUpload({
+              filename: file.name,
+              sizeBytes: file.size,
+              mimeType: file.type,
+              title: file.name,
+              resource: ENTITY_TYPES.COURSE,
+              entityId: courseId,
+              entityType: ENTITY_TYPES.COURSE,
+              relationshipType: "trailer",
+            }),
+        });
+
+        await uploadVideo({ file, session });
+
+        const courseResponse = await ApiClient.api.courseControllerGetBetaCourseById({
+          id: courseId,
+          language: courseLanguage,
+        });
+        setDisplayTrailerUrl(courseResponse.data.data.trailerUrl ?? undefined);
+
+        queryClient.invalidateQueries({
+          queryKey: [COURSE_QUERY_KEY, { id: courseId }],
+        });
+        queryClient.invalidateQueries({ queryKey: ["course"] });
+        queryClient.invalidateQueries(topCoursesQueryOptions({ language: courseLanguage }));
+        queryClient.invalidateQueries(availableCoursesQueryOptions({ language: courseLanguage }));
+        queryClient.invalidateQueries(studentCoursesQueryOptions({ language: courseLanguage }));
+      } catch (error) {
+        console.error("Error uploading trailer:", error);
+      } finally {
+        setIsTrailerUploading(false);
+        if (trailerInputRef.current) {
+          trailerInputRef.current.value = "";
+        }
+      }
+    },
+    [courseId, getSessionForFile, initVideoUpload, uploadVideo, courseLanguage],
+  );
+
+  const removeTrailer = useCallback(async () => {
+    if (!courseId) return;
+    try {
+      await deleteTrailer({ courseId });
+      setDisplayTrailerUrl(undefined);
+      if (trailerInputRef.current) {
+        trailerInputRef.current.value = "";
+      }
+    } catch (error) {
+      console.error("Error removing trailer:", error);
+    }
+  }, [courseId, deleteTrailer]);
+
+  const isMissingContent = !title?.trim() || !description?.trim();
+
+  return (
+    <div className="flex h-full w-full gap-x-6">
+      <div className="w-full basis-full">
+        <div className="flex h-full w-full flex-col gap-y-6 overflow-y-auto">
+          <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-md">
+            {isMissingContent && <MissingTranslationsAlert />}
+
+            <div className="flex flex-col gap-y-1">
+              <h5 className="h5 text-neutral-950">{t("adminCourseView.settings.editHeader")}</h5>
+              <p className="body-lg-md text-neutral-800">
+                {t("adminCourseView.settings.editSubHeader")}
+              </p>
+            </div>
+            <Form {...form}>
+              <form className="flex flex-col gap-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+                <div className="flex gap-x-6 *:w-full">
+                  <FormTextField
+                    data-testid={COURSE_SETTINGS_HANDLES.TITLE_INPUT}
+                    control={form.control}
+                    name="title"
+                    required
+                    label={t("adminCourseView.settings.field.title")}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="categoryId"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col gap-y-1.5">
+                        <Label htmlFor="categoryId">
+                          <span className="mr-1 text-error-600">*</span>
+                          {t("adminCourseView.settings.field.category")}
+                        </Label>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger
+                              data-testid={COURSE_SETTINGS_HANDLES.CATEGORY_SELECT}
+                              id="categoryId"
+                            >
+                              <SelectValue placeholder={t("selectCategory")} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories.map((category) => (
+                              <SelectItem
+                                data-testid={COURSE_SETTINGS_HANDLES.categoryOption(category.title)}
+                                value={category.id}
+                                key={category.id}
+                              >
+                                {category.title}
+                              </SelectItem>
+                            ))}
+                            <InlineCategoryCreationForm
+                              onCategoryCreated={async (categoryId) => {
+                                form.setValue("categoryId", categoryId, {
+                                  shouldDirty: true,
+                                  shouldTouch: true,
+                                  shouldValidate: true,
+                                });
+                                await saveCategory(categoryId);
+                                form.resetField("categoryId", { defaultValue: categoryId });
+                              }}
+                            />
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div data-testid={COURSE_SETTINGS_HANDLES.DESCRIPTION_EDITOR}>
+                  <BaseEditor
+                    id="description"
+                    content={description}
+                    onChange={(value) =>
+                      form.setValue("description", value, {
+                        shouldDirty: true,
+                        shouldTouch: true,
+                      })
+                    }
+                  />
+                </div>
+                {watchedDescription.length > MAX_COURSE_DESCRIPTION_HTML_LENGTH && (
+                  <p className="text-sm text-red-500">
+                    {t("adminCourseView.settings.other.reachedCharactersLimitHtml")}
+                  </p>
+                )}
+                {descriptionFieldCharactersLeft <= 0 && (
+                  <p className="text-sm text-red-500">
+                    {t("adminCourseView.settings.other.reachedCharactersLimit")}
+                  </p>
+                )}
+                {courseId && (
+                  <CourseCertificateSetting
+                    courseId={courseId}
+                    hasCertificate={hasCertificate}
+                    courseTitle={watchedTitle || title}
+                  />
+                )}
+                {courseId && <CourseSettingsSwitches courseId={courseId} courseType={courseType} />}
+                <FormField
+                  control={form.control}
+                  name="thumbnailS3Key"
+                  render={({ field }) => (
+                    <FormItem className="max-w-md">
+                      <Label htmlFor="thumbnailS3Key">
+                        {t("adminCourseView.settings.field.thumbnail")}
+                      </Label>
+                      <FormControl>
+                        <ImageUploadInput
+                          field={field}
+                          handleImageUpload={handleImageUpload}
+                          isUploading={isUploading}
+                          imageUrl={displayThumbnailUrl}
+                          fileInputRef={fileInputRef}
+                          variant="video"
+                        />
+                      </FormControl>
+                      {isUploading && (
+                        <p className="text-xs font-medium text-neutral-500">
+                          {t("common.other.uploadingImage")}
+                        </p>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex items-center justify-start gap-x-2">
+                  {displayThumbnailUrl && (
+                    <Button onClick={removeThumbnail} className="bg-red-500 px-6 py-2 text-white">
+                      <Icon name="TrashIcon" className="mr-2" />
+                      {t("adminCourseView.settings.button.removeThumbnail")}
+                    </Button>
+                  )}
+                </div>
+                <div className="flex flex-col gap-3">
+                  <Label htmlFor="course-trailer">
+                    {t("adminCourseView.settings.field.trailer")}
+                  </Label>
+                  <CourseTrailerUploadField
+                    inputId="course-trailer"
+                    trailerUrl={displayTrailerUrl}
+                    trailerEmbedUrl={trailerEmbedUrl}
+                    isUploading={isTrailerUploading}
+                    inputRef={trailerInputRef}
+                    onFileSelect={(file) => {
+                      void handleTrailerUpload(file);
+                    }}
+                    onDelete={() => {
+                      void removeTrailer();
+                    }}
+                  />
+                </div>
+                <div className="flex space-x-5">
+                  <Button
+                    data-testid={COURSE_SETTINGS_HANDLES.SAVE_BUTTON}
+                    type="submit"
+                    disabled={!isFormValid || isUploading}
+                  >
+                    {t("common.button.save")}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
+        </div>
+      </div>
+      <div className="w-full max-w-[480px]">
+        <CourseCardPreview
+          imageUrl={displayThumbnailUrl}
+          title={watchedTitle}
+          description={watchedDescription}
+          category={categoryName}
+          data={{
+            username: `${userDetails?.firstName} ${userDetails?.lastName}`,
+            email: `${userDetails?.contactEmail}`,
+            profilePictureUrl: userDetails?.profilePictureUrl,
+          }}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default CourseSettings;

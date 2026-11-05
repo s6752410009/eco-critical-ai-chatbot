@@ -1,0 +1,72 @@
+import { useTranslation } from "react-i18next";
+
+import Viewer from "~/components/RichText/Viever";
+import { Card } from "~/components/ui/card";
+import { useQuizContext } from "~/modules/Courses/components/QuizContextProvider";
+
+import { LEARNING_HANDLES } from "../../../../../../e2e/data/learning/handles";
+
+import { getCorrectSentence } from "./correctSentence";
+import { FillInTheTextBlanks } from "./FillInTheTextBlanks";
+import { TextBlank } from "./TextBlank";
+
+import type { QuizQuestion } from "../types";
+
+type FillInTheBlanksProps = {
+  question: QuizQuestion;
+  isCompleted: boolean;
+};
+
+export const FillInTheBlanks = ({ question, isCompleted }: FillInTheBlanksProps) => {
+  const { t } = useTranslation();
+  const { isQuizFeedbackRedacted } = useQuizContext();
+  const hasSubmittedAnswer = question.options?.some(
+    ({ isStudentAnswer, studentAnswer }) =>
+      Boolean(studentAnswer) || typeof isStudentAnswer === "boolean",
+  );
+  const correctSentence = getCorrectSentence(question);
+  const showCorrectSentence =
+    Boolean(isCompleted || hasSubmittedAnswer) &&
+    Boolean(correctSentence) &&
+    !question.passQuestion &&
+    !isQuizFeedbackRedacted;
+
+  if (!question.description) return null;
+
+  return (
+    <Card className="flex flex-col gap-4 border-neutral-200 p-8">
+      <div className="details uppercase text-primary-700">
+        {t("studentLessonView.other.question")} {question.displayOrder}
+      </div>
+      <div className="h6 text-neutral-950">{t("studentLessonView.other.fillInTheBlanks")}</div>
+      <FillInTheTextBlanks
+        content={question.description}
+        replacement={(index, answerId) => {
+          const blankDisplayOrder = index + 1;
+
+          const studentAnswerForBlank =
+            question.options?.find((option) => option.id === answerId) ??
+            question.options?.find((option) => option.displayOrder === blankDisplayOrder) ??
+            question.options?.[index];
+
+          return (
+            <TextBlank
+              questionId={question.id}
+              studentAnswer={studentAnswerForBlank}
+              index={index}
+              isQuizSubmitted={isCompleted}
+            />
+          );
+        }}
+      />
+      {showCorrectSentence && (
+        <div data-testid={LEARNING_HANDLES.FILL_IN_THE_BLANKS_CORRECT_SENTENCE}>
+          <span className="body-base-md text-error-700">
+            {t("studentLessonView.other.correctSentence")}
+          </span>
+          <Viewer content={correctSentence ?? ""} />
+        </div>
+      )}
+    </Card>
+  );
+};

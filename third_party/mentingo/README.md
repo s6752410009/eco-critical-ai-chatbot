@@ -1,18 +1,17 @@
-# Mentingo UI source
+# Mentingo native UI integration
 
 Upstream: https://github.com/Selleo/mentingo
+Pinned revision: `1490a8d56119cb78b2a5a781dfdfdaacf05cded9`
+MIT, copyright (c) 2024 Selleo. Original LICENSE retained here and in `frontend/src/mentingo/`.
 
-Pinned commit: `1490a8d56119cb78b2a5a781dfdfdaacf05cded9`
+The original `apps/web/app` source tree is imported into `frontend/src/mentingo/` in the existing React/Vite app. Upstream test files are excluded. `UPSTREAM.json` records provenance. This replaces the earlier hand-adapted card/hero implementation; those legacy files are not the active student dashboard.
 
-License: MIT, copyright (c) 2024 Selleo. The complete upstream notice is preserved in `LICENSE`. `SOURCE.json` records the original paths and SHA-256 hashes. Files below `apps/` are unmodified reference snapshots, not another runnable project or a second backend.
+Directly rendered upstream components include ModernCoursesView, HeroBanner, ModernCourseCard, ModernCourseCarousel, LessonPage, LessonContent, LessonSidebar, NavigationMenuButton, PageWrapper, Table, Button, Input, Textarea, Icon and Tooltip. Teacher management uses these native primitives with the existing classroom, lesson and document handlers.
 
-## Used in the existing Eco-Critical React application
+`frontend/src/mentingo-bridge/` supplies the existing Eco classroom/lesson/progress data through the upstream hook contracts and maps Remix links to existing React Router URLs. Query/client, i18n and permission adapters serve the explicitly labelled local demo. Optional marketplace, trailers, remote enrollment and time tracking are disabled because this product does not implement those capabilities. This is frontend reuse, not a migration to the Mentingo backend. Existing Express/collector/Gemini paths remain separate.
 
-- `ModernCourseCard.tsx` → `frontend/src/pages/Classroom/MentingoCourseCard.jsx`: adapted the image/media layer, contrast overlay, overlaid title, duration/lesson metadata, progress indicator and memoized component. Remix navigation and generated backend contracts are replaced with the existing app's lesson callbacks. Video trailers and hover-only essential content are omitted because the existing lessons have no trailers and must work on touch/keyboard.
-- `HeroBanner.tsx`: cover-image and action composition adapted to the existing compact continuation card; the upstream 70vh marketing-sized banner is not imported.
-- `NavigationMenuButton.tsx`: compact icon-navigation treatment, with labels retained as accessible names and native tooltips.
-- Continue-learning widget and progress utilities: source references for resume/progress composition. Existing Eco progress and storage remain authoritative.
+Native source patches: tooltip trigger uses asChild to avoid nested buttons; breadcrumb separators are siblings rather than nested list items; lesson heading levels and previous/next accessible names are corrected; empty progress tracks have a visible background; tooltip portals stay inside the scoped native style root. Native shared constants/utilities are copied into `mentingo-shared` and bridge modules.
 
-Brand changes: Eco-Critical name, cool-white/slate canvas, forest action color and sky context accents, the native social-app sans stack. The MIT source attribution stays in the repository rather than adding vendor language to the student UI.
+The original Tailwind configuration is `frontend/mentingo.tailwind.config.ts`. `scripts/build-mentingo-styles.mjs` compiles scoped native styles before either production build; external font imports are removed. `native-brand.css` provides blue/white Eco branding, platform fonts, existing activity styling and mobile teacher table adaptation. Original source layout and interactions remain the basis of the catalog.
 
-Environmental cover photographs and their separate Unsplash license are recorded in `frontend/public/classroom/photos.json`. The dashboard uses device fonts; it does not redistribute Instagram Sans or Meta-owned font files.
+Environmental photographs have separate licensing in `frontend/public/classroom/photos.json`. Platform fonts are used; no proprietary Meta font is redistributed. Earlier reference snapshots and hashes remain under `apps/` and SOURCE.json for traceability.

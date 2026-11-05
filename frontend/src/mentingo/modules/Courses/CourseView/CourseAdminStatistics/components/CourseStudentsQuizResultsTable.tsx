@@ -1,0 +1,287 @@
+import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { format } from "date-fns";
+import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+
+import { useCourseStudentsQuizResults } from "~/api/queries/admin/useCourseStudentsQuizResults";
+import { ArrowRight } from "~/assets/svgs";
+import { Pagination } from "~/components/Pagination/Pagination";
+import SortButton from "~/components/TableSortButton/TableSortButton";
+import { Button } from "~/components/ui/button";
+import { CircularProgress } from "~/components/ui/circular-progress";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
+import { UserAvatar } from "~/components/UserProfile/UserAvatar";
+import { usePermissions } from "~/hooks/usePermissions";
+import { cn } from "~/lib/utils";
+import Loader from "~/modules/common/Loader/Loader";
+import { useLanguageStore } from "~/modules/Dashboard/Settings/Language/LanguageStore";
+import { tanstackSortingToParam } from "~/utils/tanstackSortingToParam";
+
+import { COURSE_STATISTICS_HANDLES } from "../../../../../../e2e/data/statistics/handles";
+import { COURSE_STATISTICS_VIEW_PERMISSIONS } from "../utils/courseStatisticsAccess";
+
+import LessonPreviewDialog from "./LessonPreviewDialog";
+
+import type { ColumnDef, SortingState } from "@tanstack/react-table";
+import type { GetCourseResponse, GetCourseStudentsQuizResultsResponse } from "~/api/generated-api";
+import type { CourseStudentsQuizResultsQueryParams } from "~/api/queries/admin/useCourseStudentsQuizResults";
+import type { ITEMS_PER_PAGE_OPTIONS } from "~/components/Pagination/Pagination";
+import type { FilterValue } from "~/modules/common/SearchFilter/SearchFilter";
+
+type CourseStudentsQuizResultsColumn = GetCourseStudentsQuizResultsResponse["data"][number];
+
+export const getCourseStudentsQuizResultsRowId = (row: CourseStudentsQuizResultsColumn) =>
+  `${row.studentId}-${row.lessonId}`;
+
+interface CourseStudentsQuizResultsTableProps {
+  courseId: string;
+  course?: GetCourseResponse["data"];
+  searchParams: CourseStudentsQuizResultsQueryParams;
+  onFilterChange: (name: string, value: FilterValue) => void;
+}
+
+export function CourseStudentsQuizResultsTable({
+  courseId,
+  course,
+  searchParams,
+  onFilterChange,
+}: CourseStudentsQuizResultsTableProps) {
+  const { t } = useTranslation();
+  const language = useLanguageStore((state) => state.language);
+
+  const { hasAccess: canViewStatistics } = usePermissions({
+    required: COURSE_STATISTICS_VIEW_PERMISSIONS,
+  });
+
+  const [sorting, setSorting] = useState<SortingState>([]);
+
+  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
+  const [previewDialogData, setPreviewDialogData] = useState<{
+    lessonId: string;
+    userId: string;
+    studentName: string;
+    studentAvatarUrl?: string | null;
+  } | null>(null);
+
+  const query = useMemo(() => {
+    const sort = tanstackSortingToParam(sorting) as CourseStudentsQuizResultsQueryParams["sort"];
+    return { ...searchParams, sort, language };
+  }, [language, searchParams, sorting]);
+
+  const {
+    data: courseStudentsQuizResults,
+    isLoading,
+    isFetching,
+  } = useCourseStudentsQuizResults({
+    id: courseId,
+    enabled: canViewStatistics,
+    query,
+  });
+
+  const tableData = useMemo(() => {
+    return courseStudentsQuizResults?.data || [];
+  }, [courseStudentsQuizResults]);
+
+  const columns: ColumnDef<CourseStudentsQuizResultsColumn>[] = useMemo(
+    () => [
+      {
+        accessorKey: "studentName",
+        header: ({ column }) => (
+          <SortButton<CourseStudentsQuizResultsColumn> column={column}>
+            {t("adminCourseView.statistics.field.studentName")}
+          </SortButton>
+        ),
+        cell: ({ row }) => (
+          <div className="max-w-md truncate flex items-center gap-2">
+            <UserAvatar
+              className="size-7"
+              userName={row.original.studentName}
+              profilePictureUrl={row.original.studentAvatarUrl}
+            />
+            {row.original.studentName}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "quizName",
+        header: ({ column }) => (
+          <SortButton<CourseStudentsQuizResultsColumn> column={column}>
+            {t("adminCourseView.statistics.field.quizName")}
+          </SortButton>
+        ),
+        cell: ({ row }) => (
+          <div className="text-neutral-800 font-semibold">{row.original.quizName}</div>
+        ),
+      },
+      {
+        accessorKey: "quizScore",
+        header: ({ column }) => (
+          <SortButton<CourseStudentsQuizResultsColumn> column={column}>
+            {t("adminCourseView.statistics.field.quizScore")}
+          </SortButton>
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <CircularProgress value={row.original.quizScore} size={32} strokeWidth={2} />
+            {row.original.quizScore}%
+          </div>
+        ),
+      },
+      {
+        accessorKey: "attempts",
+        header: ({ column }) => (
+          <SortButton<CourseStudentsQuizResultsColumn> column={column}>
+            {t("adminCourseView.statistics.field.attempts")}
+          </SortButton>
+        ),
+      },
+      {
+        accessorKey: "lastAttempt",
+        header: ({ column }) => (
+          <SortButton<CourseStudentsQuizResultsColumn> column={column}>
+            {t("adminCourseView.statistics.field.lastAttempt")}
+          </SortButton>
+        ),
+        cell: ({ row }) =>
+          row.original.lastAttempt
+            ? format(new Date(row.original.lastAttempt), "MMM dd, yyyy")
+            : null,
+      },
+      {
+        id: "actions",
+        cell: ({ row }) => (
+          <div className="flex justify-center">
+            <Button
+              data-testid={COURSE_STATISTICS_HANDLES.quizResultsPreviewButton(
+                row.original.studentId,
+                row.original.lessonId,
+              )}
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                setPreviewDialogData({
+                  lessonId: row.original.lessonId,
+                  userId: row.original.studentId,
+                  studentName: row.original.studentName,
+                  studentAvatarUrl: row.original.studentAvatarUrl,
+                });
+                setIsPreviewDialogOpen(true);
+              }}
+            >
+              <ArrowRight className="size-4 text-black" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [t],
+  );
+
+  const handleSortingChange = useCallback(
+    (updaterOrValue: SortingState | ((old: SortingState) => SortingState)) => {
+      setSorting(updaterOrValue);
+    },
+    [],
+  );
+
+  const table = useReactTable({
+    getRowId: getCourseStudentsQuizResultsRowId,
+    data: tableData,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    onSortingChange: handleSortingChange,
+    manualSorting: true,
+    state: {
+      sorting,
+    },
+  });
+
+  const handleFilterChange = (name: string, value: FilterValue) => {
+    onFilterChange(name, value);
+  };
+
+  const { totalItems, perPage, page } = courseStudentsQuizResults?.pagination || {};
+
+  if (isLoading && tableData.length === 0) {
+    return (
+      <div className="min-h-80 grid place-items-center">
+        <Loader />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      data-testid={COURSE_STATISTICS_HANDLES.QUIZ_RESULTS_TABLE}
+      className={cn(
+        "rounded-lg overflow-hidden border border-neutral-200 relative",
+        isFetching && "shimmer-45",
+      )}
+    >
+      <Table>
+        <TableHeader>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <TableHead key={header.id} className="text-neutral-900 body-base-md bg-neutral-50">
+                  {flexRender(header.column.columnDef.header, header.getContext())}
+                </TableHead>
+              ))}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows.map((row) => (
+            <TableRow
+              key={row.id}
+              data-testid={COURSE_STATISTICS_HANDLES.quizResultsRow(
+                row.original.studentId,
+                row.original.lessonId,
+              )}
+              data-state={row.getIsSelected() && "selected"}
+              className="cursor-pointer hover:bg-neutral-100"
+            >
+              {row.getVisibleCells().map((cell) => (
+                <TableCell key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <Pagination
+        className="border-t"
+        totalItems={totalItems}
+        itemsPerPage={perPage as (typeof ITEMS_PER_PAGE_OPTIONS)[number]}
+        currentPage={page}
+        onPageChange={(newPage) => handleFilterChange("page", String(newPage))}
+        onItemsPerPageChange={(newPerPage) => {
+          handleFilterChange("page", "1");
+          handleFilterChange("perPage", newPerPage);
+        }}
+      />
+      {previewDialogData && course && (
+        <LessonPreviewDialog
+          course={course}
+          lessonId={previewDialogData.lessonId}
+          userId={previewDialogData.userId}
+          studentName={previewDialogData.studentName}
+          studentAvatarUrl={previewDialogData.studentAvatarUrl}
+          isOpen={isPreviewDialogOpen}
+          onClose={() => {
+            setIsPreviewDialogOpen(false);
+            setPreviewDialogData(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}

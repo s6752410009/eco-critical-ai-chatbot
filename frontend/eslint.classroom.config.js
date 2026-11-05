@@ -4,7 +4,7 @@ import reactHooks from "eslint-plugin-react-hooks"
 export default [
   { ignores: ["dist/**", "node_modules/**"] },
   {
-    files: ["src/pages/Classroom/**/*.{js,jsx}", "src/pages/Main/index.jsx"],
+    files: ["src/pages/Classroom/**/*.{js,jsx}", "src/pages/Main/index.jsx", "src/mentingo-bridge/**/*.{js,jsx}"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",

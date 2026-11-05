@@ -1,0 +1,240 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Link, useNavigate } from "@remix-run/react";
+import { useRef } from "react";
+import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
+
+import { useCompleteScormImport } from "~/api/mutations/admin/useCompleteScormImport";
+import { useInitScormImport } from "~/api/mutations/admin/useInitScormImport";
+import { useUploadFile } from "~/api/mutations/admin/useUploadFile";
+import { useCategoriesSuspense } from "~/api/queries/useCategories";
+import SplashScreenImage from "~/assets/svgs/splash-screen-image.svg";
+import { Button } from "~/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "~/components/ui/form";
+import { Label } from "~/components/ui/label";
+import { useTusScormUpload } from "~/hooks/useTusScormUpload";
+import { CourseDescriptionLimitMessage } from "~/modules/Admin/AddCourse/components/CourseDescriptionLimitMessage";
+import { CourseMetadataFields } from "~/modules/Admin/AddCourse/components/CourseMetadataFields";
+import { CourseThumbnailUploadField } from "~/modules/Admin/AddCourse/components/CourseThumbnailUploadField";
+import { useObjectUrl } from "~/modules/Admin/AddCourse/hooks/useObjectUrl";
+import { useLanguageStore } from "~/modules/Dashboard/Settings/Language/LanguageStore";
+import { isBrowserFile } from "~/utils/isBrowserFile";
+import { setPageTitle } from "~/utils/setPageTitle";
+
+import { CREATE_SCORM_COURSE_PAGE_HANDLES } from "../../../../e2e/data/courses/handles";
+import Breadcrumb from "../AddCourse/components/Breadcrumb";
+
+import { ScormPackageUploadField } from "./components/ScormPackageUploadField";
+import { scormCourseFormSchema } from "./validators/scormCourseFormSchema";
+
+import type { ScormCourseFormValues } from "./validators/scormCourseFormSchema";
+import type { MetaFunction } from "@remix-run/react";
+
+export const meta: MetaFunction = ({ matches }) => setPageTitle(matches, "pages.createNewCourse");
+
+const CreateNewScormCourse = () => {
+  const { data: categories } = useCategoriesSuspense();
+  const { language } = useLanguageStore();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { mutateAsync: uploadFile, isPending: isUploadingThumbnail } = useUploadFile();
+  const { mutateAsync: initScormImport, isPending: isInitializingScormImport } =
+    useInitScormImport();
+  const { mutateAsync: completeScormImport, isPending: isCompletingScormImport } =
+    useCompleteScormImport();
+  const { uploadScormPackage, isUploading: isUploadingScormPackage } = useTusScormUpload();
+  const thumbnailInputRef = useRef<HTMLInputElement | null>(null);
+
+  const form = useForm<ScormCourseFormValues>({
+    resolver: zodResolver(scormCourseFormSchema),
+    mode: "onChange",
+    defaultValues: {
+      title: "",
+      description: "",
+      categoryId: "",
+      language,
+      thumbnailFile: undefined,
+      scormFile: undefined,
+    },
+  });
+
+  const scormFile = form.watch("scormFile");
+  const thumbnailFile = form.watch("thumbnailFile");
+  const description = form.watch("description");
+  const thumbnailPreviewUrl = useObjectUrl(thumbnailFile);
+
+  const removeThumbnail = () => {
+    form.setValue("thumbnailFile", undefined, { shouldDirty: true, shouldValidate: true });
+    if (thumbnailInputRef.current) thumbnailInputRef.current.value = "";
+  };
+
+  const onSubmit = async (values: ScormCourseFormValues) => {
+    if (!isBrowserFile(values.scormFile)) return;
+
+    const thumbnailS3Key = isBrowserFile(values.thumbnailFile)
+      ? (await uploadFile({ file: values.thumbnailFile, resource: "course" })).fileKey
+      : undefined;
+
+    const session = await initScormImport({
+      action: "create-course",
+      filename: values.scormFile.name,
+      sizeBytes: values.scormFile.size,
+      mimeType: values.scormFile.type || "application/zip",
+      metadata: {
+        title: values.title,
+        description: values.description,
+        categoryId: values.categoryId,
+        language: values.language,
+        status: "draft",
+        thumbnailS3Key,
+      },
+    });
+
+    await uploadScormPackage({ file: values.scormFile, session });
+    await completeScormImport(session.packageId);
+    navigate("/admin/courses");
+  };
+
+  const isCreatingScormCourse =
+    isUploadingThumbnail ||
+    isInitializingScormImport ||
+    isUploadingScormPackage ||
+    isCompletingScormImport;
+
+  return (
+    <div
+      data-testid={CREATE_SCORM_COURSE_PAGE_HANDLES.PAGE}
+      className="flex h-screen overflow-auto bg-white px-20 py-8"
+    >
+      <div className="flex w-full items-center justify-center">
+        <img src={SplashScreenImage} alt="splashScreenImage" className="rounded" />
+      </div>
+      <div className="flex w-full max-w-[820px] flex-col gap-y-6 px-8">
+        <Breadcrumb
+          backTo="/admin/beta-courses/new"
+          currentLabel={t("adminCourseTypeSelector.scorm.title")}
+        />
+        <hgroup className="gapy-y-1 flex flex-col">
+          <p className="body-base-md text-emerald-700">{t("adminScorm.create.eyebrow")}</p>
+          <h1
+            data-testid={CREATE_SCORM_COURSE_PAGE_HANDLES.HEADING}
+            className="h3 text-neutral-950"
+          >
+            {t("adminScorm.create.title")}
+          </h1>
+          <p className="body-lg-md text-neutral-800">{t("adminScorm.create.subtitle")}</p>
+        </hgroup>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="mt-2">
+              <Label className="body-base-md">
+                <span className="text-red-500">*</span> {t("adminScorm.create.packageSection")}
+              </Label>
+              <p className="body-sm mb-3 mt-1 text-neutral-700">
+                {t("adminScorm.create.packageSectionDescription")}
+              </p>
+              <FormField
+                control={form.control}
+                name="scormFile"
+                render={({ field, fieldState }) => (
+                  <FormItem>
+                    <FormControl>
+                      <ScormPackageUploadField
+                        file={isBrowserFile(field.value) ? field.value : undefined}
+                        error={fieldState.error?.message}
+                        importNotice={t("adminScorm.create.importNotice")}
+                        testIds={{
+                          root: CREATE_SCORM_COURSE_PAGE_HANDLES.PACKAGE_UPLOAD,
+                          input: CREATE_SCORM_COURSE_PAGE_HANDLES.PACKAGE_INPUT,
+                          selectedFile: CREATE_SCORM_COURSE_PAGE_HANDLES.PACKAGE_SELECTED_FILE,
+                          replaceButton: CREATE_SCORM_COURSE_PAGE_HANDLES.PACKAGE_REPLACE_BUTTON,
+                          removeButton: CREATE_SCORM_COURSE_PAGE_HANDLES.PACKAGE_REMOVE_BUTTON,
+                        }}
+                        onChange={(file) => field.onChange(file)}
+                        onClear={() => field.onChange(undefined)}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="mt-5">
+              <CourseMetadataFields
+                control={form.control}
+                setValue={form.setValue}
+                categories={categories}
+                testIds={{
+                  titleInput: CREATE_SCORM_COURSE_PAGE_HANDLES.TITLE_INPUT,
+                  categorySelect: CREATE_SCORM_COURSE_PAGE_HANDLES.CATEGORY_SELECT,
+                  categoryOption: CREATE_SCORM_COURSE_PAGE_HANDLES.categoryOption,
+                  languageSelect: CREATE_SCORM_COURSE_PAGE_HANDLES.LANGUAGE_SELECT,
+                  languageOption: CREATE_SCORM_COURSE_PAGE_HANDLES.languageOption,
+                  descriptionEditor: CREATE_SCORM_COURSE_PAGE_HANDLES.DESCRIPTION_EDITOR,
+                }}
+              />
+            </div>
+            <CourseDescriptionLimitMessage
+              description={description ?? ""}
+              charactersLeftLabel={t("adminCourseView.settings.other.charactersLeft")}
+              reachedCharactersLimitLabel={t(
+                "adminCourseView.settings.other.reachedCharactersLimit",
+              )}
+              reachedCharactersLimitHtmlLabel={t(
+                "adminCourseView.settings.other.reachedCharactersLimitHtml",
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="thumbnailFile"
+              render={({ field }) => (
+                <FormItem className="mt-5">
+                  <Label htmlFor="thumbnailFile" className="body-base-md">
+                    {t("adminCourseView.settings.field.thumbnail")}
+                  </Label>
+                  <FormControl>
+                    <CourseThumbnailUploadField
+                      inputId="thumbnailFile"
+                      inputRef={thumbnailInputRef}
+                      inputTestId={CREATE_SCORM_COURSE_PAGE_HANDLES.THUMBNAIL_INPUT}
+                      imageUrl={thumbnailPreviewUrl}
+                      onFileSelect={field.onChange}
+                      onClear={removeThumbnail}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="pb-5">
+              <div className="mb-10 mt-5 flex space-x-5">
+                <Button
+                  data-testid={CREATE_SCORM_COURSE_PAGE_HANDLES.CANCEL_BUTTON}
+                  type="button"
+                  className="rounded border-2 bg-white px-6 py-2 text-primary-800"
+                  asChild
+                >
+                  <Link to="/admin/beta-courses/new">{t("common.button.cancel")}</Link>
+                </Button>
+                <Button
+                  data-testid={CREATE_SCORM_COURSE_PAGE_HANDLES.SUBMIT_BUTTON}
+                  type="submit"
+                  disabled={!form.formState.isValid || !scormFile || isCreatingScormCourse}
+                >
+                  {isCreatingScormCourse
+                    ? t("adminScorm.create.creating")
+                    : t("adminScorm.create.submit")}
+                </Button>
+              </div>
+            </div>
+          </form>
+        </Form>
+      </div>
+    </div>
+  );
+};
+
+export default CreateNewScormCourse;

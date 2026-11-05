@@ -1,6 +1,8 @@
 # Eco-Critical AI Chatbot
 
-Thai-first environmental EdTech for ม.4–ม.6 and teachers. **React/Vite**, adapted in the same codebase from [AnythingLLM](https://github.com/Mintplex-Labs/anything-llm), MIT. The student dashboard adapts MIT [Mentingo](https://github.com/Selleo/mentingo) learner catalog components with Eco-Critical branding, environmental course covers, contextual Eco AI and source inspection. [Source attribution](third_party/mentingo/README.md).
+Thai-first environmental EdTech for ม.4–ม.6 and teachers. **React/Vite**, adapted in the same codebase from [AnythingLLM](https://github.com/Mintplex-Labs/anything-llm), MIT. The student catalog and lesson pages directly render original MIT [Mentingo](https://github.com/Selleo/mentingo) frontend components, with native teacher tables/forms, Eco-Critical branding, real environmental course photographs and source inspection. [Source attribution](third_party/mentingo/README.md).
+
+**Public demo:** [https://eco-critical-ai-chatbot.demo-agent-jum.workers.dev/demo](https://eco-critical-ai-chatbot.demo-agent-jum.workers.dev/demo) — browser-local teacher/student preview; no live Gemini calls.
 
 ![Student dashboard](docs/screenshots/desktop.png)
 
@@ -28,7 +30,7 @@ Open [localhost:3415/demo](http://localhost:3415/demo). `frontend/dist-demo/` is
 
 ## Implemented experience
 
-- Mentingo-based student dashboard with four environmental image covers, cool-white surfaces, native social-app typography, genuine per-browser progress, continue learning and a working inline tutor.
+- Mentingo-based student dashboard with four environmental image covers, cool-white surfaces, native social-app typography, genuine per-browser progress, continue learning and access to the working contextual tutor.
 - Two sample classrooms and four visual lessons: air pollution, water pollution, plastic waste, climate change. Air and water include full explanations and comprehension checks; plastic includes waste sorting.
 - PM2.5 conceptual slider, waste sorting with immediate feedback, quizzes with correct-answer explanations. Values are explicitly illustrative, not live sensor readings or health thresholds.
 - Contextual tutor beside lessons on desktop; an explicit tutor view on narrow screens. Source references open the actual retrieved passage and section. No fabricated page numbers.
@@ -79,4 +81,4 @@ Browser QA runs a compiled production demo with no API interception and uses ins
 
 ## Attribution and design
 
-Original MIT `LICENSE` is retained. [Upstream provenance](docs/OPEN_SOURCE.md) · [original README](README.upstream.md) · [client brief](docs/CLIENT_BRIEF.md) · [design decisions](docs/UI_DESIGN.md). UI/UX Pro Max was installed and used with ui-design and impeccable; the rejected marketing layout was removed. Font OFL licenses are included in `frontend/public/fonts/`.
+Original MIT `LICENSE` is retained. [Upstream provenance](docs/OPEN_SOURCE.md) · [original README](README.upstream.md) · [client brief](docs/CLIENT_BRIEF.md) · [design decisions](docs/UI_DESIGN.md). Native Mentingo source integration, impeccable, audit, animate and adapt were applied. Current UI uses platform fonts. [UI audit](docs/UI_AUDIT.md).

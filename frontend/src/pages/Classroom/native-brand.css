@@ -1,0 +1,1018 @@
+/* Brand layer only. Page composition and components come directly from Mentingo. */
+.learning-app.mentingo-root {
+  --primary-50: #edf6ff;
+  --primary-100: #d7ebff;
+  --primary-200: #b9dcff;
+  --primary-300: #8cc6ff;
+  --primary-400: #4da5fa;
+  --primary-500: #238bf1;
+  --primary-600: #1475db;
+  --primary-700: #0867ce;
+  --primary-800: #1455a4;
+  --primary-900: #16467f;
+  --primary-950: #13355a;
+  --color-white: #fff;
+  --contrast: #fff;
+  --color-contrast: #fff;
+  --background: 0 0% 100%;
+  --input: 214 29% 86%;
+  --ring: 211 88% 54%;
+  --radius: 8px;
+  --neutral-50: #f6f8fb;
+  --neutral-100: #edf1f6;
+  --neutral-200: #dce4ee;
+  --neutral-300: #c1cedb;
+  --neutral-400: #9aaabd;
+  --neutral-500: #617489;
+  --neutral-600: #617489;
+  --neutral-700: #4b6075;
+  --neutral-800: #354c62;
+  --neutral-900: #20384d;
+  --neutral-950: #14283a;
+  --canvas: #f6f8fb;
+  --surface: #fff;
+  --ink: #14283a;
+  --eco-muted: #617489;
+  --line: #dce4ee;
+  --mint: #edf6ff;
+  --pale-blue: #edf6ff;
+  --social-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, "Thonburi", sans-serif;
+  background: var(--canvas);
+  color: var(--ink);
+  font: 400 16px/1.65 var(--social-font);
+}
+.learning-app.mentingo-root h1,
+.learning-app.mentingo-root h2,
+.learning-app.mentingo-root h3,
+.learning-app.mentingo-root .font-gothic {
+  font-family: var(--social-font);
+  letter-spacing: -0.015em;
+}
+.mentingo-root .learning-sidebar {
+  width: 72px;
+  padding: 22px 8px 16px;
+  background: #fff;
+  border-color: var(--line);
+  gap: 24px;
+}
+.mentingo-root .product-brand {
+  justify-content: center;
+  padding: 0;
+  gap: 0;
+}
+.mentingo-root .product-brand > div,
+.mentingo-root .workspace-label,
+.mentingo-root .workspace-user > div,
+.mentingo-root .demo-note,
+.mentingo-root .nav-ai {
+  display: none;
+}
+.mentingo-root .product-monogram {
+  color: #205840;
+  width: 32px;
+  font-size: 30px;
+  letter-spacing: -5px;
+}
+.mentingo-root .sidebar-bottom {
+  align-items: center;
+}
+.mentingo-root .sidebar-help {
+  font-size: 0;
+  gap: 0;
+  justify-content: center;
+}
+.mentingo-root .workspace-user {
+  justify-content: center;
+  padding-top: 18px;
+  width: 100%;
+}
+.mentingo-root .workspace-user > span {
+  background: #e6f2ff;
+  color: #0867ce;
+}
+.mentingo-root .eco-native-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.mentingo-root .eco-native-nav-list li {
+  margin: 0;
+  list-style: none;
+}
+.mentingo-root .learning-sidebar nav .eco-native-nav-list button {
+  width: 48px;
+  height: 48px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid transparent;
+  color: #617489;
+  margin: 0 auto;
+}
+.mentingo-root .learning-sidebar nav .eco-native-nav-list button:hover {
+  background: #edf6ff;
+  color: #0867ce;
+  border-color: #b9dcff;
+}
+.mentingo-root
+  .learning-sidebar
+  nav
+  .eco-native-nav-list
+  button.eco-native-nav-active {
+  background: #0867ce;
+  color: #fff;
+  border-color: #0867ce;
+  box-shadow: 0 3px 8px #0867ce22;
+}
+.mentingo-root .learning-sidebar nav .eco-native-nav-list button svg {
+  width: 24px;
+  height: 24px;
+}
+.mentingo-root .learning-workspace {
+  min-width: 0;
+}
+.mentingo-root .learning-main {
+  max-width: none;
+  padding: 16px 24px 40px;
+}
+.mentingo-root .learning-topbar {
+  height: 60px;
+  background: #fff;
+  padding: 0 24px;
+  border-color: var(--line);
+}
+.mentingo-root .breadcrumbs button {
+  font-size: 16px;
+  font-weight: 600;
+  color: #14283a;
+}
+.mentingo-root .breadcrumbs,
+.mentingo-root .role-switch {
+  font-size: 13px;
+  color: #617489;
+}
+.mentingo-root .role-switch select {
+  color: #20384d;
+  background: #fff;
+  border-color: var(--line);
+}
+.mentingo-root .demo-badge,
+.mentingo-root .chat-mode.is-demo {
+  background: #e6f2ff;
+  color: #0867ce;
+  border-color: #c3ddf8;
+}
+.mentingo-root .classroom-context {
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+.mentingo-root .classroom-context select {
+  color: #354c62;
+  font-size: 14px;
+}
+.native-catalog-view .learning-main {
+  padding: 0 0 32px;
+}
+.native-catalog-view .classroom-context {
+  position: absolute;
+  left: 28px;
+  top: 20px;
+  z-index: 50;
+  margin: 0;
+  padding: 0 10px;
+  background: #fffffff0;
+  border: 1px solid #dce4ee;
+  border-radius: 6px;
+}
+.native-catalog-view .context-divider,
+.native-catalog-view .classroom-context > span:last-child {
+  display: none;
+}
+.mentingo-root .eco-native-lesson-body {
+  overflow: hidden;
+}
+.mentingo-root .eco-native-photo {
+  margin: 0;
+  position: relative;
+}
+.mentingo-root .eco-native-photo img {
+  display: block;
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+}
+.mentingo-root .eco-native-photo figcaption {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  padding: 3px 7px;
+  background: #14283ac9;
+  color: #fff;
+  font-size: 10px;
+  border-radius: 3px;
+}
+.mentingo-root .eco-native-lesson-copy {
+  padding: 28px 36px 32px;
+}
+.learning-app.mentingo-root .eco-native-lesson-copy > h1 {
+  font-size: 28px;
+  line-height: 1.5;
+  color: #14283a;
+  margin: 0 0 12px;
+}
+.mentingo-root .eco-native-lead {
+  font-size: 16px;
+  color: #617489;
+  line-height: 1.9;
+}
+.mentingo-root .eco-native-reading {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  margin: 32px 0;
+}
+.mentingo-root .eco-native-reading > section {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 12px;
+}
+.mentingo-root .eco-reading-number {
+  font-size: 14px;
+  color: #0867ce;
+  font-weight: 600;
+  padding-top: 3px;
+}
+.learning-app.mentingo-root .eco-native-reading h2 {
+  font-size: 21px;
+  line-height: 1.5;
+  color: #20384d;
+  margin-bottom: 6px;
+}
+.mentingo-root .eco-native-reading p {
+  color: #4b6075;
+  font-size: 16px;
+  line-height: 1.9;
+}
+.mentingo-root .activity {
+  border: 1px solid #d4e2ef;
+  background: #f5faff;
+  border-radius: 8px;
+  padding: 24px;
+  margin: 28px 0;
+}
+.mentingo-root .section-kicker {
+  color: #0867ce;
+  font-size: 12px;
+}
+.mentingo-root .activity h3 {
+  font-size: 22px;
+  color: #14283a;
+}
+.mentingo-root .waste-item {
+  font-size: 20px;
+  padding: 20px 0;
+  color: #20384d;
+}
+.mentingo-root .item-selector button {
+  border-color: #d4e2ef;
+  color: #617489;
+  background: #fff;
+  min-width: 42px;
+  min-height: 42px;
+}
+.mentingo-root .item-selector button.selected {
+  color: #fff;
+  background: #0867ce;
+  border-color: #0867ce;
+}
+.mentingo-root .bin {
+  border: 1px solid #dce4ee;
+  border-radius: 7px;
+  color: #354c62;
+  background: #fff;
+  padding: 18px 8px;
+}
+.mentingo-root .bin.selected {
+  background: #edf6ff;
+  border-color: #238bf1;
+}
+.mentingo-root .bin-shape {
+  display: none;
+}
+.mentingo-root .bin svg {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 9px;
+}
+.mentingo-root .bin-รีไซเคิล svg {
+  color: #0baf6d;
+}
+.mentingo-root .bin-อินทรีย์ svg {
+  color: #efaa00;
+}
+.mentingo-root .bin-อันตราย svg {
+  color: #ef4444;
+}
+.mentingo-root .bin-ทั่วไป svg {
+  color: #167bdf;
+}
+.mentingo-root .answer-feedback.correct {
+  background: #e1faee;
+  border-color: #a1e8c2;
+  color: #087a46;
+}
+.mentingo-root .answer-feedback.incorrect {
+  background: #fff1ee;
+  border-color: #f9c7ba;
+  color: #b83725;
+}
+.mentingo-root .critical-question {
+  border-color: #dce4ee;
+  padding: 18px 0;
+  color: #0867ce;
+}
+.mentingo-root .critical-question summary {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.mentingo-root .critical-question p {
+  color: #4b6075;
+}
+.mentingo-root .quiz-options button {
+  background: #fff;
+  border-color: #dce4ee;
+  color: #20384d;
+  min-height: 52px;
+  border-radius: 7px;
+}
+.mentingo-root .quiz-options button.is-chosen {
+  border-color: #238bf1;
+  background: #edf6ff;
+}
+.mentingo-root .quiz-options button.is-correct {
+  border-color: #0baf6d;
+  background: #e1faee;
+}
+.mentingo-root .quiz-options button > span {
+  color: #0867ce;
+  background: #edf6ff;
+  border-radius: 5px;
+}
+.mentingo-root .quiz-explanation {
+  color: #0867ce;
+  background: #edf6ff;
+  border: 0;
+  border-radius: 6px;
+}
+.mentingo-root .quiz-result {
+  background: #e1faee;
+  color: #087a46;
+  border-color: #a1e8c2;
+}
+.mentingo-root .button {
+  background: #0867ce;
+  color: #fff;
+  border-color: #0867ce;
+  border-radius: 6px;
+}
+.mentingo-root .button.secondary {
+  background: #fff;
+  color: #0867ce;
+  border-color: #c3ddf8;
+}
+.mentingo-root .eco-native-reference {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  color: #0867ce;
+  font-size: 13px;
+  margin-top: 18px;
+}
+.mentingo-root .eco-native-tutor {
+  margin-top: 32px;
+}
+.mentingo-root .eco-native-tutor > h2 {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  color: #0867ce;
+  margin-bottom: 16px;
+  font-size: 21px;
+}
+.mentingo-root .eco-native-tutor .eco-chat {
+  height: 580px;
+}
+.mentingo-root .eco-chat {
+  border: 1px solid #cbdced;
+  border-radius: 8px;
+  background: #fff;
+}
+.mentingo-root .ai-mark {
+  background: #e6f2ff;
+  color: #0867ce;
+}
+.mentingo-root .chat-context {
+  background: #f1f7ff;
+  color: #356381;
+  border-color: #d4e2ef;
+}
+.mentingo-root .send-button {
+  background: #0867ce;
+  color: #fff;
+  border-radius: 6px;
+}
+.mentingo-root .suggested-questions button {
+  color: #35536d;
+  border-color: #d4e2ef;
+  background: #fff;
+}
+.mentingo-root .suggested-questions button:hover {
+  color: #0867ce;
+  border-color: #8cc6ff;
+  background: #edf6ff;
+}
+.mentingo-root .pm-scene {
+  background: #e6f2ff;
+}
+.mentingo-root .pm-value {
+  color: #0867ce;
+}
+.mentingo-root #pm-slider {
+  accent-color: #0867ce;
+}
+@media (max-width: 1000px) {
+  .mentingo-root .eco-native-lesson-copy {
+    padding: 24px;
+  }
+}
+@media (max-width: 760px) {
+  .mentingo-root .learning-sidebar {
+    width: 72px;
+  }
+  .mentingo-root .learning-topbar {
+    height: 56px;
+    padding: 0 16px;
+  }
+  .mentingo-root .learning-main {
+    padding: 12px 16px 100px;
+  }
+  .native-catalog-view .learning-main {
+    padding: 0 0 100px;
+  }
+  .native-catalog-view .classroom-context {
+    position: relative;
+    top: auto;
+    left: auto;
+    margin: 8px 16px;
+    border: 0;
+    padding: 0;
+    background: transparent;
+  }
+  .mentingo-root .classroom-context > span:last-child {
+    display: none;
+  }
+  .mentingo-root .eco-native-photo img {
+    height: 190px;
+  }
+  .mentingo-root .eco-native-lesson-copy {
+    padding: 20px 16px;
+  }
+  .learning-app.mentingo-root .eco-native-lesson-copy > h1 {
+    font-size: 24px;
+  }
+  .mentingo-root .eco-native-reading > section {
+    grid-template-columns: 26px minmax(0, 1fr);
+    gap: 10px;
+  }
+  .mentingo-root .activity {
+    padding: 18px 14px;
+  }
+  .mentingo-root .waste-bins {
+    gap: 8px;
+  }
+  .mentingo-root .bin {
+    font-size: 12px;
+    padding: 14px 4px;
+  }
+  .mentingo-root .bin svg {
+    width: 29px;
+    height: 29px;
+  }
+  .mentingo-root .student-bottom-nav {
+    background: #fff;
+    border-color: #dce4ee;
+  }
+  .mentingo-root .student-bottom-nav button {
+    color: #617489;
+  }
+  .mentingo-root .student-bottom-nav button.active {
+    color: #0867ce;
+    background: #edf6ff;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .mentingo-root .eco-native-photo {
+    animation: eco-native-arrive 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .mentingo-root .eco-native-lesson-copy {
+    animation: eco-native-arrive 340ms 50ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .mentingo-root .answer-feedback,
+  .mentingo-root .quiz-explanation,
+  .mentingo-root .waste-item {
+    animation: eco-native-arrive 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .mentingo-root .bin {
+    transition:
+      transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 160ms;
+  }
+  .mentingo-root .bin:hover {
+    transform: translateY(-3px);
+  }
+  .mentingo-root .bin:active {
+    transform: scale(0.97);
+  }
+  @keyframes eco-native-arrive {
+    from {
+      opacity: 0;
+      transform: translateY(7px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mentingo-root *,
+  .mentingo-root *::before,
+  .mentingo-root *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+/* Photo-specific readability correction; retains the source hero layout. */
+.native-catalog-view .group\/hero > div:first-child > div.pointer-events-none {
+  background-image: linear-gradient(
+    0deg,
+    #f6f8fb 0%,
+    #f6f8fbf0 20%,
+    #f6f8fbaf 43%,
+    #f6f8fb00 80%
+  ) !important;
+}
+.mentingo-root .item-selector button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.mentingo-root .native-ask-ai {
+  display: inline-flex;
+  gap: 7px;
+  min-height: 40px;
+}
+@media (max-width: 760px) {
+  .mentingo-root .native-ask-ai {
+    padding: 9px;
+    min-width: 38px;
+  }
+  .mentingo-root .native-ai-label {
+    display: none;
+  }
+}
+/* The native lesson supplies its own reading gutters. */
+.mentingo-root .eco-native-lesson-copy {
+  padding: 24px 0 0;
+}
+.mentingo-root {
+  --muted: 214 35% 96%;
+  --muted-foreground: 214 17% 44%;
+  --border: 214 29% 86%;
+  --foreground: 214 39% 18%;
+  --accent: 211 100% 96%;
+  --accent-foreground: 211 93% 42%;
+  --primary: 211 93% 42%;
+  --primary-foreground: 0 0% 100%;
+}
+.mentingo-root .native-teacher-workspace .page-heading {
+  margin-bottom: 22px;
+  align-items: center;
+}
+.mentingo-root .native-teacher-workspace .page-heading h1 {
+  font-size: 26px;
+  line-height: 1.4;
+}
+.mentingo-root .native-teacher-workspace .page-heading p {
+  font-size: 14px;
+  margin-top: 5px;
+}
+.mentingo-root .native-teacher-table {
+  display: block;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+.mentingo-root .native-teacher-table table {
+  min-width: 680px;
+}
+.mentingo-root .native-teacher-table thead {
+  background: #f7faff;
+  color: #617489;
+}
+.mentingo-root .native-teacher-table th {
+  font-size: 12px;
+  height: 44px;
+  border-color: var(--line);
+  font-weight: 400;
+}
+.mentingo-root .native-teacher-table td {
+  font-size: 14px;
+  border-color: #e8eef5;
+}
+.mentingo-root .native-teacher-table tr:hover {
+  background: #f7faff;
+}
+.mentingo-root .native-class-cell {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-width: 240px;
+}
+.mentingo-root .native-class-cell img {
+  width: 88px;
+  height: 58px;
+  object-fit: cover;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+.mentingo-root .native-class-cell h2,
+.mentingo-root .native-class-cell h3 {
+  color: #20384d;
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 0;
+}
+.mentingo-root .native-class-cell p {
+  color: #617489;
+  font-size: 12px;
+  line-height: 1.6;
+  margin-top: 4px;
+  max-width: 42ch;
+}
+.mentingo-root .native-active-class {
+  display: inline-block;
+  margin-top: 5px;
+  font-size: 10px;
+  color: #0867ce;
+  background: #edf6ff;
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+.mentingo-root .native-table-count {
+  font-size: 16px;
+  color: #354c62;
+}
+.mentingo-root .native-table-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.mentingo-root .native-table-actions button {
+  min-height: 40px;
+  gap: 7px;
+}
+.mentingo-root .native-actions-head {
+  text-align: right;
+}
+.mentingo-root .native-topic-label {
+  display: inline-block;
+  font-size: 11px;
+  padding: 4px 7px;
+  border-radius: 4px;
+  color: #0867ce;
+  background: #edf6ff;
+  white-space: nowrap;
+}
+.mentingo-root .native-topic-label.plastic {
+  color: #087a46;
+  background: #e1faee;
+}
+.mentingo-root .native-topic-label.climate {
+  color: #8c5c00;
+  background: #fff5d6;
+}
+.mentingo-root .native-document-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 200px;
+}
+.mentingo-root .native-document-cell h3 {
+  color: #20384d;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.mentingo-root .native-document-cell small {
+  color: #617489;
+  font-size: 11px;
+}
+.mentingo-root .native-document-icon {
+  color: #0867ce;
+  background: #edf6ff;
+  border-radius: 6px;
+  padding: 10px;
+}
+.mentingo-root .native-document-status {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  color: #087a46;
+  background: #e1faee;
+  border-radius: 4px;
+  padding: 3px 7px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.mentingo-root .native-document-chunks {
+  display: block;
+  font-size: 10px;
+  color: #617489;
+  margin-top: 3px;
+}
+.mentingo-root .native-remove {
+  color: #e44343;
+}
+.mentingo-root .editor-form {
+  background: #fff;
+  border: 1px solid #cbdced;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 24px;
+  max-width: 680px;
+}
+.mentingo-root .editor-form label {
+  color: #354c62;
+  font-size: 14px;
+}
+.mentingo-root .editor-form input,
+.mentingo-root .editor-form textarea,
+.mentingo-root .editor-form select {
+  background: #fff;
+  color: #14283a;
+  border-color: #cbdced;
+  border-radius: 6px;
+}
+.mentingo-root .editor-form input:focus,
+.mentingo-root .editor-form textarea:focus {
+  border-color: #238bf1;
+  outline: 2px solid #d7ebff;
+}
+.mentingo-root .upload-workspace {
+  background: #fff;
+  border: 1px solid #cbdced;
+  border-radius: 8px;
+  padding: 24px;
+  gap: 20px;
+}
+.mentingo-root .upload-workspace > div > svg {
+  color: #0867ce;
+}
+.mentingo-root .upload-workspace h2 {
+  color: #20384d;
+  font-size: 20px;
+}
+.mentingo-root .upload-workspace p {
+  color: #617489;
+}
+.mentingo-root .upload-workspace select {
+  border-color: #cbdced;
+  background: #fff;
+  color: #354c62;
+  border-radius: 6px;
+}
+.mentingo-root .document-preview {
+  background: #fff;
+  border: 1px solid #cbdced;
+  border-radius: 8px;
+}
+.mentingo-root .native-preview-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 24px 10px;
+}
+@media (max-width: 760px) {
+  .mentingo-root .native-teacher-workspace .page-heading {
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .mentingo-root .native-teacher-workspace .page-heading h1 {
+    font-size: 23px;
+  }
+  .mentingo-root .native-teacher-workspace .page-heading p {
+    display: none;
+  }
+  .mentingo-root .native-teacher-table td {
+    padding: 12px;
+  }
+  .mentingo-root .native-class-cell img {
+    width: 64px;
+    height: 48px;
+  }
+  .mentingo-root .native-class-cell h2,
+  .mentingo-root .native-class-cell h3 {
+    font-size: 14px;
+  }
+  .mentingo-root .editor-form,
+  .mentingo-root .upload-workspace {
+    padding: 18px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .mentingo-root .native-teacher-table tbody tr {
+    animation: eco-native-arrive 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .mentingo-root .editor-form {
+    animation: eco-native-arrive 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+.mentingo-root .native-table-actions button {
+  min-width: 44px;
+  min-height: 44px;
+}
+.mentingo-root select {
+  min-height: 44px;
+}
+.mentingo-root [aria-roledescription="carousel"] button {
+  min-width: 44px;
+  min-height: 44px;
+}
+.mentingo-root .upload-button:focus-within {
+  outline: 3px solid #238bf1;
+  outline-offset: 3px;
+}
+/* Native tables inherit the upstream preflight border color without resetting the retained backend UI. */
+.mentingo-root *,
+.mentingo-root *::before,
+.mentingo-root *::after {
+  border-color: var(--neutral-200);
+}
+.mentingo-root .native-title-link {
+  padding: 0;
+  min-height: 44px;
+  height: auto;
+  white-space: normal;
+  text-align: left;
+  justify-content: flex-start;
+  color: #20384d;
+  font: inherit;
+}
+.mentingo-root .native-title-link:hover {
+  color: #0867ce;
+}
+.mentingo-root .classroom-context select {
+  min-width: 0;
+  max-width: 100%;
+}
+@media (max-width: 760px) {
+  .mentingo-root .learning-topbar {
+    padding: 0 12px;
+    gap: 6px;
+  }
+  .mentingo-root .mobile-menu {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px;
+  }
+  .mentingo-root .topbar-actions {
+    gap: 6px;
+  }
+  .mentingo-root .breadcrumbs {
+    gap: 4px;
+  }
+  .mentingo-root .breadcrumbs button {
+    font-size: 14px;
+    letter-spacing: -0.4px;
+  }
+  .mentingo-root .native-ask-ai {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 10px;
+  }
+  .mentingo-root .role-switch select {
+    font-size: 12px;
+    min-height: 44px;
+    padding: 5px 4px;
+  }
+  .mentingo-root .demo-badge {
+    font-size: 8px;
+    padding: 2px 4px;
+    letter-spacing: 0;
+  }
+  .mentingo-root .native-teacher-table table {
+    min-width: 0;
+    width: 100%;
+  }
+  .mentingo-root .native-teacher-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+  .mentingo-root .native-teacher-table tbody {
+    display: block;
+    width: 100%;
+  }
+  .mentingo-root .native-teacher-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    width: 100%;
+    border-bottom: 1px solid var(--line);
+  }
+  .mentingo-root .native-teacher-table td {
+    display: block;
+    padding: 12px;
+    min-width: 0;
+  }
+  .mentingo-root .classroom-grid td:nth-child(2),
+  .mentingo-root .classroom-grid td:nth-child(3),
+  .mentingo-root .teacher-lesson-list td:nth-child(2),
+  .mentingo-root .teacher-lesson-list td:nth-child(3) {
+    display: none;
+  }
+  .mentingo-root .native-class-cell {
+    min-width: 0;
+    gap: 9px;
+  }
+  .mentingo-root .native-class-cell > div {
+    min-width: 0;
+  }
+  .mentingo-root .native-class-cell img {
+    width: 42px;
+    height: 42px;
+  }
+  .mentingo-root .native-class-cell p {
+    display: none;
+  }
+  .mentingo-root .native-class-cell h2,
+  .mentingo-root .native-class-cell h3 {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .mentingo-root .native-table-actions {
+    gap: 2px;
+  }
+  .mentingo-root .native-table-actions button {
+    padding: 10px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .mentingo-root .native-action-label {
+    display: none;
+  }
+  .mentingo-root .knowledge-list td:first-child {
+    grid-column: 1 / -1;
+    padding-bottom: 4px;
+  }
+  .mentingo-root .knowledge-list td:nth-child(2) {
+    display: none;
+  }
+  .mentingo-root .knowledge-list td:nth-child(3) {
+    grid-column: 1;
+  }
+  .mentingo-root .knowledge-list td:last-child {
+    grid-column: 2;
+  }
+  .mentingo-root .native-document-cell {
+    min-width: 0;
+  }
+  .mentingo-root .native-document-cell > div {
+    min-width: 0;
+  }
+  .mentingo-root .native-document-cell h3 {
+    overflow-wrap: anywhere;
+  }
+  .mentingo-root .native-document-chunks {
+    font-size: 11px;
+  }
+}
+@media (max-width: 380px) {
+  .mentingo-root .native-teacher-workspace .page-heading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}

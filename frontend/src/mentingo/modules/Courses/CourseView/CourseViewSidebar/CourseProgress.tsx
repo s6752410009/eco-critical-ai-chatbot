@@ -1,0 +1,85 @@
+import { useNavigate } from "@remix-run/react";
+import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
+
+import { CopyUrlButton } from "~/components/CopyUrlButton";
+import { Icon } from "~/components/Icon";
+import { Button } from "~/components/ui/button";
+import { useCourseAccessProvider } from "~/modules/Courses/context/CourseAccessProvider";
+import { CourseProgressChart } from "~/modules/Courses/CourseView/components/CourseProgressChart";
+
+import { COURSE_OVERVIEW_HANDLES } from "../../../../../e2e/data/courses/handles";
+import { CourseRepetition } from "../../components/CourseRepetition";
+import { findFirstInProgressLessonId, findFirstNotStartedLessonId } from "../../Lesson/utils";
+import { navigateToNextLesson } from "../../utils/navigateToNextLesson";
+
+import type { GetCourseResponse } from "~/api/generated-api";
+
+type CourseProgressProps = {
+  course: GetCourseResponse["data"];
+};
+
+export const CourseProgress = ({ course }: CourseProgressProps) => {
+  const { isEffectiveStudentExperience, isPreviewMode } = useCourseAccessProvider();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const notStartedLessonId = findFirstNotStartedLessonId(course);
+
+  const firstInProgressLessonId = findFirstInProgressLessonId(course);
+  const hasCourseProgress = course.chapters.some(
+    ({ completedLessonCount }) => completedLessonCount,
+  );
+  const isCourseEmpty = !course.chapters.length || course.chapters?.[0]?.lessonCount === 0;
+
+  const handleNavigateToLesson = useCallback(() => {
+    navigateToNextLesson(course, navigate, { openFirstLesson: isPreviewMode });
+  }, [course, isPreviewMode, navigate]);
+
+  return (
+    <>
+      <h4 className="h6 pb-1 text-neutral-950">
+        {isPreviewMode
+          ? t("studentCourseView.sideSection.other.options")
+          : t("studentCourseView.sideSection.other.courseProgress")}
+      </h4>
+      {isEffectiveStudentExperience && (
+        <CourseProgressChart
+          chaptersCount={course?.courseChapterCount}
+          completedChaptersCount={course?.completedChapterCount}
+        />
+      )}
+      <div className="flex flex-col gap-y-2">
+        {isEffectiveStudentExperience && <CourseRepetition course={course} />}
+        <CopyUrlButton className="gap-x-2" variant="outline">
+          <Icon name="Share" className="h-auto w-6 text-primary-800" />
+          <span>{t("studentCourseView.sideSection.button.shareCourse")}</span>
+        </CopyUrlButton>
+        <>
+          <Button
+            data-testid={COURSE_OVERVIEW_HANDLES.START_LEARNING_BUTTON}
+            className="gap-x-2"
+            onClick={handleNavigateToLesson}
+            disabled={isCourseEmpty}
+          >
+            <Icon name="Play" className="text-contrast h-auto w-6" />
+            <span>
+              {t(
+                isPreviewMode
+                  ? "adminCourseView.common.preview"
+                  : !hasCourseProgress
+                    ? "studentCourseView.sideSection.button.startLearning"
+                    : notStartedLessonId || firstInProgressLessonId
+                      ? "studentCourseView.sideSection.button.continueLearning"
+                      : "studentCourseView.sideSection.button.repeatLessons",
+              )}
+            </span>
+          </Button>
+          <p className="details flex items-center justify-center gap-x-2 text-neutral-800">
+            <Icon name="Info" className="h-auto w-4 text-neutral-800 details" />
+            <span>{t("studentCourseView.sideSection.other.informationText")}</span>
+          </p>
+        </>
+      </div>
+    </>
+  );
+};

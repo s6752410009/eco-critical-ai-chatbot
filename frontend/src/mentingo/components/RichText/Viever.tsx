@@ -1,0 +1,139 @@
+import { EditorContent, useEditor } from "@tiptap/react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+
+import { useRichTextContentPolicy } from "~/components/RichText/contentPolicyContext";
+import { cn } from "~/lib/utils";
+
+import { baseViewerPlugins, contentViewerPlugins } from "./plugins";
+import {
+  newsVariantClasses,
+  articleVariantClasses,
+  defaultClasses,
+  contentVariantClasses,
+} from "./styles";
+import { normalizeMarkdownCode } from "./viewer.utils";
+import { RICH_TEXT_VIEWER_VARIANT, type RichTextViewerVariant } from "./viewerTypes";
+
+import type { SupportedLanguages } from "@repo/shared";
+import type { VideoCoverageSnapshotChange } from "~/components/VideoPlayer/videoCoverage.types";
+
+type ViewerProps = {
+  content: string;
+  style?: "default" | "prose";
+  className?: string;
+  variant?: RichTextViewerVariant;
+  onVideoEnded?: (index: number | null) => void;
+  videoCoverageTracking?: {
+    enabled: boolean;
+    showCoverageMarkers?: boolean;
+    lessonId?: string;
+    language?: SupportedLanguages;
+    onSnapshotChange?: (change: VideoCoverageSnapshotChange) => void;
+    onVideoActivated?: (resourceEntityId: string) => void;
+  };
+};
+
+const Viewer = ({
+  content,
+  style,
+  className,
+  variant = RICH_TEXT_VIEWER_VARIANT.DEFAULT,
+  onVideoEnded,
+  videoCoverageTracking,
+}: ViewerProps) => {
+  const variantStyles = {
+    default: {
+      wrapper: "",
+      editor: [],
+      content: "",
+    },
+    article: {
+      wrapper: articleVariantClasses.wrapper,
+      editor: [articleVariantClasses.layout],
+      content: ["prose prose-neutral max-w-none", articleVariantClasses.links].join(" "),
+    },
+    news: {
+      wrapper: newsVariantClasses.wrapper,
+      editor: [newsVariantClasses.layout],
+      content: ["prose prose-neutral max-w-none", newsVariantClasses.links].join(" "),
+    },
+    content: {
+      wrapper: contentVariantClasses.wrapper,
+      editor: [contentVariantClasses.layout],
+      content: ["prose prose-neutral max-w-none", contentVariantClasses.links].join(" "),
+    },
+  } as const;
+
+  const selectedVariant = variantStyles[variant] ?? variantStyles.default;
+  const onVideoEndedRef = useRef<typeof onVideoEnded>();
+
+  useEffect(() => {
+    onVideoEndedRef.current = onVideoEnded;
+  }, [onVideoEnded]);
+
+  const handleVideoEnded = useCallback((index: number | null) => {
+    onVideoEndedRef.current?.(index);
+  }, []);
+
+  const classNames = cn(
+    {
+      "prose max-w-none dark:prose-invert prose": style === "prose",
+    },
+    selectedVariant.wrapper,
+    className,
+  );
+
+  const editorClasses = cn(
+    "h-full flex flex-col",
+    defaultClasses.codeBlock,
+    defaultClasses.ul,
+    defaultClasses.ol,
+    defaultClasses.taskList,
+    selectedVariant.editor,
+  );
+
+  const extensions = useMemo(() => {
+    const plugins =
+      variant === RICH_TEXT_VIEWER_VARIANT.DEFAULT ? baseViewerPlugins : contentViewerPlugins;
+
+    return plugins.map((extension) =>
+      extension.name === "video" && variant === RICH_TEXT_VIEWER_VARIANT.CONTENT
+        ? extension.configure({ onVideoEnded: handleVideoEnded, videoCoverageTracking })
+        : extension,
+    );
+  }, [handleVideoEnded, variant, videoCoverageTracking]);
+
+  const mediaPolicy = useRichTextContentPolicy();
+  const normalizedContent = useMemo(
+    () => normalizeMarkdownCode(mediaPolicy ? mediaPolicy(content) : content),
+    [content, mediaPolicy],
+  );
+
+  const editor = useEditor(
+    {
+      extensions,
+      content: normalizedContent,
+      editable: false,
+      editorProps: {
+        attributes: {
+          class: cn(selectedVariant.content),
+        },
+      },
+    },
+    [normalizedContent],
+  );
+
+  if (!editor) return <></>;
+
+  return (
+    <article className={classNames}>
+      <EditorContent editor={editor} readOnly={true} className={editorClasses} />
+    </article>
+  );
+};
+
+export const ContentViewer = (props: Omit<ViewerProps, "variant">) => (
+  <Viewer {...props} variant={RICH_TEXT_VIEWER_VARIANT.CONTENT} />
+);
+
+export default Viewer;

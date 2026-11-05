@@ -1,0 +1,47 @@
+import { SUPPORTED_LANGUAGES } from "@repo/shared";
+import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+
+import { ApiClient } from "../api-client";
+
+import type { GetCourseResponse } from "../generated-api";
+import type { SupportedLanguages } from "@repo/shared";
+
+export const COURSE_VIEW_QUERY_KEY = ["course"];
+
+export const getCourseQueryKey = (idOrSlug: string, language?: SupportedLanguages) => [
+  ...COURSE_VIEW_QUERY_KEY,
+  { id: idOrSlug, ...(language ? { language } : {}) },
+];
+
+export const courseQueryOptions = (
+  idOrSlug: string,
+  language?: SupportedLanguages,
+  enabled = true,
+) =>
+  queryOptions({
+    queryKey: getCourseQueryKey(idOrSlug, language),
+    enabled,
+    queryFn: async () => {
+      const response = await ApiClient.api.courseControllerGetCourse({
+        id: idOrSlug ?? "",
+        language,
+      });
+      return response.data;
+    },
+    select: (data: GetCourseResponse) => data.data,
+  });
+
+export function useCourse(
+  idOrSlug: string,
+  language: SupportedLanguages = SUPPORTED_LANGUAGES.EN,
+  enabled = true,
+) {
+  return useQuery(courseQueryOptions(idOrSlug, language, enabled));
+}
+
+export function useCourseSuspense(
+  idOrSlug: string,
+  language: SupportedLanguages = SUPPORTED_LANGUAGES.EN,
+) {
+  return useSuspenseQuery(courseQueryOptions(idOrSlug, language));
+}

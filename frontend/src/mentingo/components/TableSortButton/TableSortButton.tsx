@@ -1,0 +1,49 @@
+import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+
+import { Button } from "../ui/button";
+
+import type { Column } from "@tanstack/react-table";
+import type React from "react";
+
+interface SortButtonProps<T> {
+  column: Column<T, unknown>;
+  children: React.ReactNode;
+  testId?: string;
+}
+
+const SortButton = <T,>({ column, children, testId }: SortButtonProps<T>) => {
+  const handleSort = () => {
+    const currentDirection = column.getIsSorted();
+    let sortDescending = column.getFirstSortDir() === "desc";
+
+    if (currentDirection) sortDescending = currentDirection === "asc";
+
+    column.toggleSorting(sortDescending);
+  };
+
+  const renderSortIcon = () => {
+    const sortDirection = column.getIsSorted();
+
+    if (sortDirection === "asc") {
+      return <ArrowUp className="ml-2 size-4" />;
+    }
+    if (sortDirection === "desc") {
+      return <ArrowDown className="ml-2 size-4" />;
+    }
+    return <ArrowUpDown className="ml-2 size-4" />;
+  };
+
+  return (
+    <Button
+      data-testid={testId}
+      variant="ghost"
+      onClick={handleSort}
+      className="flex items-center p-0 hover:bg-transparent hover:text-primary-600"
+    >
+      {children}
+      {renderSortIcon()}
+    </Button>
+  );
+};
+
+export default SortButton;
