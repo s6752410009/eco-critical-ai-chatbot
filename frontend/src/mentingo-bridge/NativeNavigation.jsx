@@ -2,6 +2,7 @@ import { NavigationMenuButton } from "../mentingo/components/Navigation/Navigati
 const icons = {
   members: "Users",
   "ai-settings": "Settings",
+  "ai-usage": "ChartNoAxes",
   cases: "Globe",
   discussions: "MessagesSquare",
   dashboard: "Dashboard",

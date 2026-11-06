@@ -1,3 +1,4 @@
+import {usageRoute} from "./school-usage.mjs";
 import { answerFromSources } from "./school-openai.mjs";
 import {
   makeSeed,
@@ -184,13 +185,15 @@ async function provider(env) {
     apiKey:
       env.OPENAI_API_KEY ||
       (values.openai_key ? await open(values.openai_key, env) : ""),
+    accounting: env,
     model: values.openai_model || "gpt-6-luna",
   };
 }
-export async function callGPT(env, question, sources) {
-  return answerFromSources(await provider(env), question, sources);
+export async function callGPT(env, question, sources, purpose = "chat") {
+  return answerFromSources({...await provider(env), purpose}, question, sources);
 }
 export async function storeRoute(request, env, user, path) {
+  if(path === "/usage")return usageRoute(request,env,user);
   if (path === "/ocr/files" && request.method === "POST") return createOcrFile(request, env, user);
   const ocrPath=path.match(/^\/ocr\/([a-f0-9-]{36})\/(process|file)$/);
   if(ocrPath){
@@ -412,7 +415,7 @@ export async function storeRoute(request, env, user, path) {
         section: "ส่วนที่ 1",
         text: "เชื่อมต่อสำเร็จ",
       },
-    ]);
+    ], "connection_test");
     return reply({ success: true });
   }
   if (path === "/chat" && request.method === "POST") {

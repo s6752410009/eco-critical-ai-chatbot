@@ -701,3 +701,43 @@ test("OCR rejects invalid PDF, missing keys, blank results, and partial page out
   assert.equal((await request(env,path,{method:"POST",cookie:admin})).status,422);
   db.close();
 });
+
+test('usage reports enforce roles, persist budgets, aggregate costs and expose threshold warnings', async()=>{
+ const {db,env}=await setup(), admin=await owner(env), learner=await student(env);
+ db.prepare("UPDATE school_users SET status='active' WHERE id=?").run(learner.user.id);
+ const s=await loginStudent(env);
+ assert.equal((await request(env,'/api/school/usage',{cookie:s})).status,403);
+ db.prepare("UPDATE school_users SET role='teacher' WHERE id=?").run(learner.user.id);
+ const t=await loginStudent(env);
+ assert.equal((await request(env,'/api/school/usage',{cookie:t})).status,200);
+ assert.equal((await request(env,'/api/school/usage',{cookie:t,method:'POST',body:{monthlyUsd:1,warningPercent:80}})).status,403);
+ for(const body of [{monthlyUsd:-1,warningPercent:80},{monthlyUsd:1,warningPercent:100},{monthlyUsd:'10',warningPercent:80}])assert.equal((await request(env,'/api/school/usage',{cookie:admin,method:'POST',body})).status,400);
+ assert.equal((await request(env,'/api/school/usage',{cookie:admin,method:'POST',headers:{Origin:'https://evil.example'},body:{monthlyUsd:1,warningPercent:80}})).status,403);
+ assert.equal((await request(env,'/api/school/usage',{cookie:admin,method:'POST',body:{monthlyUsd:1,warningPercent:80}})).status,200);
+ const insert=(id,cost,status='completed')=>db.prepare('INSERT INTO school_ai_usage(id,created_at,purpose,model,status,input_tokens,output_tokens,cost_nano) VALUES(?,?,?,?,?,?,?,?)').run(id,Date.now(),'ocr','gpt-6-luna',status,1000,100,cost);
+ insert('one',800000000);insert('unknown',null,'connection_unknown');
+ let report=await(await request(env,'/api/school/usage',{cookie:t})).json();
+ assert.equal(report.alert,'warning');assert.equal(report.totals.costNano,800000000);assert.equal(report.totals.unpriced,1);assert.equal(report.daily.length,1);
+ insert('two',200000000);report=await(await request(env,'/api/school/usage',{cookie:t})).json();assert.equal(report.alert,'exceeded');
+ await request(env,'/api/school/usage',{cookie:admin,method:'POST',body:{monthlyUsd:0,warningPercent:80}});
+ report=await(await request(env,'/api/school/usage',{cookie:t})).json();assert.equal(report.alert,'disabled');
+ const old=await(await request(env,'/api/school/usage?month=2020-01',{cookie:t})).json();assert.equal(old.totals.requests,0);
+ assert.equal((await request(env,'/api/school/usage?month=invalid',{cookie:t})).status,400);
+ db.close();
+});
+
+test('provider accounting records usage before rejecting incomplete or invalid answers', async()=>{
+ const {db,env}=await setup();
+ const {openaiResponse}=await import('../../cloudflare/school-openai.mjs');
+ const original=globalThis.fetch;
+ const config={apiKey:'unit-test',model:'gpt-6-luna',accounting:env,purpose:'connection_test'};
+ try {
+  globalThis.fetch=async()=>Response.json({id:'test-response',model:'gpt-6-luna',status:'incomplete',usage:{input_tokens:1000,output_tokens:200,input_tokens_details:{cached_tokens:0}},output:[]});
+  await assert.rejects(()=>openaiResponse(config,[],'',{},'test'));
+  let row=db.prepare('SELECT * FROM school_ai_usage').get();assert.equal(row.cost_nano,200000);assert.equal(row.status,'incomplete');assert.equal(row.purpose,'connection_test');
+  globalThis.fetch=async()=>{throw Error('timeout');};
+  await assert.rejects(()=>openaiResponse(config,[],'',{},'test'));
+  row=db.prepare("SELECT * FROM school_ai_usage WHERE status='connection_unknown'").get();assert.equal(row.cost_nano,null);
+  globalThis.fetch=original;
+ }finally{globalThis.fetch=original;db.close();}
+});

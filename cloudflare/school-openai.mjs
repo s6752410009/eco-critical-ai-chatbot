@@ -1,20 +1,23 @@
+import {beginUsage, finishUsage} from "./school-usage.mjs";
 import { ApiError } from "./school-auth.mjs";
 export async function openaiResponse(config, input, instructions, schema, name, maxTokens = 3000) {
   if (!config.apiKey) throw new ApiError("ยังไม่ได้ตั้งค่า OpenAI API key ให้ผู้ดูแลไปที่ ตั้งค่า AI", 503);
+  const usageId=await beginUsage(config, config.purpose || (name === "document_ocr" ? "ocr" : "chat"));
   let response;
   try {
     response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST", signal: AbortSignal.timeout(90000),
       headers: {"Content-Type":"application/json", Authorization:`Bearer ${config.apiKey}`},
-      body: JSON.stringify({model:config.model, store:false, instructions, input,
+      body: JSON.stringify({model:config.model, service_tier:"default", store:false, instructions, input,
         ...(/^gpt-6/.test(config.model) ? {reasoning:{effort:"low"}} : {}),
         max_output_tokens:maxTokens,
         text:{format:{type:"json_schema",name,strict:true,schema}}})
     });
-  } catch { throw new ApiError("OpenAI ใช้เวลานานหรือเชื่อมต่อไม่ได้ กรุณาลองอีกครั้ง", 504); }
-  if (!response.ok) throw new ApiError(response.status === 429 ? "OpenAI ใช้โควตาครบหรือมีคำขอมาก กรุณาตรวจเครดิตแล้วลองใหม่" : "เชื่อมต่อ OpenAI ไม่สำเร็จ ให้ผู้ดูแลตรวจ API key และชื่อโมเดล", 502);
+  } catch { await finishUsage(config,usageId,null,"connection_unknown"); throw new ApiError("OpenAI ใช้เวลานานหรือเชื่อมต่อไม่ได้ กรุณาลองอีกครั้ง", 504); }
+  if (!response.ok) { await finishUsage(config,usageId,null,"http_"+response.status); throw new ApiError(response.status === 429 ? "OpenAI ใช้โควตาครบหรือมีคำขอมาก กรุณาตรวจเครดิตแล้วลองใหม่" : "เชื่อมต่อ OpenAI ไม่สำเร็จ ให้ผู้ดูแลตรวจ API key และชื่อโมเดล", 502); }
   let result;
-  try {result=await response.json();} catch {throw new ApiError("อ่านผล OpenAI ไม่สำเร็จ",502);}
+  try {result=await response.json();} catch {await finishUsage(config,usageId,null,"unreadable");throw new ApiError("อ่านผล OpenAI ไม่สำเร็จ",502);}
+  await finishUsage(config,usageId,result,result.status || "unknown");
   if(result.status !== "completed") throw new ApiError("OpenAI อ่านข้อมูลไม่ครบ กรุณาแบ่งเอกสารให้สั้นลงแล้วลองใหม่",502);
   const text=(result.output || []).flatMap(item=>item.content || []).filter(item=>item.type === "output_text").map(item=>item.text).join("");
   try {return JSON.parse(text);} catch {throw new ApiError("OpenAI ไม่ส่งผลที่ตรวจสอบได้ กรุณาลองใหม่",502);}

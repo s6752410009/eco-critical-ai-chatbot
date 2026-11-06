@@ -16,7 +16,7 @@ async function login(page,username,password){
  await page.goto(base+"/login");await page.getByLabel("ชื่อผู้ใช้",{exact:true}).fill(username);await page.getByLabel("รหัสผ่าน",{exact:true}).fill(password);
  await page.getByRole("button",{name:"เข้าสู่ระบบ",exact:true}).click();await expect(page.locator(".learning-topbar")).toBeVisible();
 }
-async function screenshot(page,name){await page.screenshot({path:new URL(name+".png",out).pathname});}
+async function screenshot(page,name){await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));await page.screenshot({path:new URL(name+".png",out).pathname});}
 async function textImage(text){
  await fixture.setContent(`<html lang="th"><meta charset="utf-8"><body style="margin:0;background:white;font:30px -apple-system,sans-serif;color:#152735"><main style="padding:55px;line-height:1.8"><h1 style="font-size:40px">ข้อมูลสำหรับทดสอบระบบ</h1><p>${text}</p><p>ข้อมูลสมมติสำหรับทดสอบ ไม่ใช่ค่าคุณภาพอากาศจริง</p></main></body></html>`);
  await fixture.evaluate(()=>document.fonts.ready);return fixture.screenshot();
@@ -96,6 +96,21 @@ try{
  const unrelated=await api(student,"/chat",{question:"สูตรพุดดิ้งวานิลลา",lessonId:"air-1"});
  if(unrelated.sources.length || unrelated.model)throw Error("Unsupported topic should not invoke model or cite unrelated content");
  checks.push({case:"unrelated query refusal",passed:true});
+ const usage=await api(teacher,"/usage");
+ if(usage.totals.requests!==7 || usage.totals.costNano<=0 || usage.totals.unpriced!==0 || usage.breakdown.length!==3)throw Error("Usage accounting mismatch: "+JSON.stringify(usage.totals));
+ const forbidden=await student.request.get(base+"/api/school/usage");if(forbidden.status()!==403)throw Error("Student can read usage report");
+ await teacher.goto(base+"/app?screen=ai-usage");
+ await teacher.getByLabel("งบต่อเดือน (USD)").fill("0.01");await teacher.getByLabel("แจ้งเตือนเมื่อใช้ถึง (%)").fill("1");
+ await teacher.getByRole("button",{name:"บันทึกงบ",exact:true}).click();
+ await expect(teacher.getByText("บันทึกงบและเกณฑ์แจ้งเตือนแล้ว")).toBeVisible();
+ await expect(teacher.locator(".usage-alert")).toContainText("งบ");
+ const downloadPromise=teacher.waitForEvent("download");await teacher.getByRole("button",{name:"ดาวน์โหลด CSV"}).click();
+ const download=await downloadPromise;const csv=await readFile(await download.path(),"utf8");if(!csv.includes((usage.totals.costNano/1e9).toFixed(9)))throw Error("CSV total differs from ledger");
+ await screenshot(teacher,"usage-desktop");await teacher.setViewportSize({width:390,height:844});await screenshot(teacher,"usage-mobile");
+ if(await teacher.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1))throw Error("Usage mobile overflow");
+ await teacher.goto(base+"/app");await expect(teacher.locator(".usage-notice")).toContainText("งบ");await screenshot(teacher,"usage-dashboard-alert");
+ checks.push({case:"live usage ledger, budget save, CSV and dashboard alert",requests:usage.totals.requests,costNano:usage.totals.costNano,passed:true});
+ console.log("PASS live usage: 7 real API calls, priced token totals, CSV, budget notification, student denied");
  if(errors.length)throw Error(errors.join(";"));
  console.log("PASS live GPT: Thai image, text PDF, scanned PDF, original downloads and page-specific answers from another account");
 }catch(error){console.error("LIVE OCR QA FAILED:",String(error.message).split("Call log:")[0].slice(0,500));process.exitCode=1;}

@@ -1,3 +1,4 @@
+import AIUsage, { UsageNotice } from "./AIUsage";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
@@ -132,6 +133,7 @@ export default function Classroom({
           },
         ]
       : []),
+    ...(school && role === "teacher" ? [{id:"ai-usage",label:"ค่าใช้จ่าย GPT",icon:Settings}] : []),
     ...(school?.user.role === "admin"
       ? [{ id: "ai-settings", label: "ตั้งค่า AI", icon: Settings }]
       : []),
@@ -646,6 +648,8 @@ export default function Classroom({
                   {school && screen === "members" && (
                     <Members school={school} lessons={data.lessons} />
                   )}
+                  {school && role === "teacher" && screen === "dashboard" && <UsageNotice onOpen={() => go("ai-usage")} />}
+                  {school && role === "teacher" && screen === "ai-usage" && <AIUsage school={school} />}
                   {school?.user.role === "admin" &&
                     screen === "ai-settings" && <AISettings />}
                   {school && screen === "account" && (

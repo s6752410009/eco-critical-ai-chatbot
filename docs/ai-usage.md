@@ -1,0 +1,11 @@
+# GPT usage and budgets
+
+Teachers and admins can open `/app?screen=ai-usage`. Only admins can change the monthly budget (USD) and warning percentage. Defaults: $10, 80%; 100% always warns. Zero disables budget alerts. Alerts appear in the report and the teacher/admin dashboard, refreshed every minute while visible. This is a notification budget, not a hard spending cap. No email is sent.
+
+Accounting starts at deployment; historical calls are not reconstructed. Every server-side Responses call (chat, OCR, connection test) creates a durable pending row before contacting OpenAI. Returned usage is stored before validating structured content, so incomplete or rejected answers still count. Unavailable usage, pending calls, unsupported models or service tiers are explicitly unpriced and not represented as free calls. No questions, documents or API keys are included in the ledger.
+
+Costs use integer nanodollars and a per-request rate snapshot, based on standard GPT-6 Luna rates verified 2026-11-06 at https://developers.openai.com/api/docs/models/gpt-6-luna . Input cache reads/writes and long-context rates are accounted for; reasoning is already part of output usage. Requests explicitly select the default service tier. Unknown models retain tokens but no estimated cost. Changing models requires adding a verified pricing rule before costs can be estimated.
+
+Reports use Asia/Bangkok calendar months, include daily and purpose/model breakdowns, and export daily CSV. Budget changes apply to all month views; usage totals do not reset or disappear when the budget changes. This is an estimate of this app's usage, not an OpenAI invoice; it excludes taxes and external usage of the same API key.
+
+Validation: unit coverage includes pricing, cache accounting, long context, invalid usage, incomplete responses, unknown prices, timezone boundaries, role checks, CSRF, budget validation, warning/exceeded/disabled states and month filtering. Live integration checks seven real calls, positive known costs, three purposes, CSV totals, budget saving, dashboard alerts and student denial. All live QA materials/accounts remain in isolated local storage. The deployed app receives only read-only public smoke checks.

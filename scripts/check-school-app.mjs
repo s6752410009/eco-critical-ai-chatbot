@@ -437,7 +437,7 @@ try {
   );
   await check("all teacher and student pages: desktop/mobile render, scrolling and image loading", async () => {
     for (const [page, role, screens] of [
-      [admin,"teacher",["dashboard","classrooms","lessons","knowledge","questions","cases","discussions","members","ai-settings","account","guide"]],
+      [admin,"teacher",["dashboard","classrooms","lessons","knowledge","questions","cases","discussions","members","ai-settings","ai-usage","account","guide"]],
       [student,"student",["dashboard","classrooms","lessons","chat","progress","cases","discussions","account","guide"]]
     ]) for (const [width,height] of [[1440,900],[390,844]]) {
       await page.setViewportSize({width,height});
