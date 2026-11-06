@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Check,
   KeyRound,
@@ -22,6 +22,8 @@ export function Members({ school, lessons }) {
     [temporary, setTemporary] = useState(null),
     [selected, setSelected] = useState(null),
     [hasMore, setHasMore] = useState(false);
+  const detailDialog = useRef(null);
+  useEffect(() => { if (selected) detailDialog.current?.showModal(); }, [selected]);
   const load = useCallback(async (search = "") => {
     setBusy(true);
     setError("");
@@ -234,7 +236,7 @@ export function Members({ school, lessons }) {
         {hasMore && <p>แสดง 100 รายการแรก ใช้คำค้นเพื่อค้นหาผู้ใช้เพิ่มเติม</p>}
       </div>
       {selected && (
-        <section className="school-member-detail">
+        <dialog ref={detailDialog} className="teacher-document-dialog school-member-detail" aria-label="รายละเอียดสมาชิก" onCancel={() => setSelected(null)}>
           <div className="board-form-heading">
             <h2>
               {selected.resetConfirm
@@ -281,7 +283,7 @@ export function Members({ school, lessons }) {
               })}
             </div>
           )}
-        </section>
+        </dialog>
       )}
     </section>
   );

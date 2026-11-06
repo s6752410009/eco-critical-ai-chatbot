@@ -218,14 +218,14 @@ try {
       const editor=admin.getByRole("dialog",{name:"แก้ไขเนื้อหาบทเรียน",exact:true});
       await admin.getByRole("button",{name:"เพิ่มคำถาม",exact:true}).click();
       await editor.evaluate(el=>{el.scrollTop=el.scrollHeight});
-      await expect(editor.getByRole("button",{name:"บันทึก",exact:true})).toBeInViewport();
-      await expect(editor.getByRole("button",{name:"ปิดฟอร์ม",exact:true})).toBeInViewport();
+      await expect(editor.getByRole("button",{name:"บันทึก",exact:true})).toBeInViewport({ratio:1});
+      await expect(editor.getByRole("button",{name:"ปิดฟอร์ม",exact:true})).toBeInViewport({ratio:1});
       await editor.evaluate(el=>{el.scrollTop=0});
       await snapshot(admin, "teacher-editor-desktop");
       await admin.setViewportSize({width:390,height:844});
       await snapshot(admin, "teacher-editor-mobile");
       await editor.evaluate(el=>{el.scrollTop=el.scrollHeight});
-      await expect(editor.getByRole("button",{name:"บันทึก",exact:true})).toBeInViewport();
+      await expect(editor.getByRole("button",{name:"บันทึก",exact:true})).toBeInViewport({ratio:1});
       if(await editor.evaluate(el=>el.scrollWidth>el.clientWidth+1))throw new Error("Editor horizontal overflow");
       await admin.getByRole("button",{name:"นำคำถามนี้ออก",exact:true}).click();
       await admin.setViewportSize({width:1440,height:900});
@@ -239,6 +239,14 @@ try {
         .fill(
           "ข้อมูลลมและเวลา\nการตรวจสอบสมมติฐานเรื่องควันต้องเปรียบเทียบตำแหน่งสถานี ทิศทางลม และช่วงเวลาเดียวกัน"
         );
+      const photo = await readFile(new URL("../frontend/public/classroom/air.jpg", import.meta.url));
+      await admin.getByLabel("อัปโหลดรูปบทเรียน").setInputFiles({name:"air.jpg",mimeType:"image/jpeg",buffer:photo});
+      await expect(admin.getByLabel("คำบรรยายรูป 1")).toBeVisible();
+      await admin.getByLabel("คำบรรยายรูป 1").fill("ภาพประกอบหลักฐานควันจากคุณครู");
+      await snapshot(admin,"teacher-image-editor-desktop");
+      await admin.setViewportSize({width:390,height:844});
+      await snapshot(admin,"teacher-image-editor-mobile");
+      await admin.setViewportSize({width:1440,height:900});
       await admin.getByRole("button", { name: "บันทึก", exact: true }).click();
       await expect(admin.locator(".toast-notice")).toContainText(
         "บันทึกข้อมูลบนเซิร์ฟเวอร์แล้ว"
@@ -262,6 +270,8 @@ try {
       await expect(admin.locator(".knowledge-list")).toContainText(
         "qa-evidence.txt"
       );
+      await admin.getByLabel("อัปโหลดเอกสารการสอน").setInputFiles({name:"qa-map.jpg",mimeType:"image/jpeg",buffer:photo});
+      await expect(admin.locator(".toast-notice")).toContainText("บันทึกรูปบนเซิร์ฟเวอร์แล้ว");
       await student.goto(base + "/app?screen=lessons&class=eco-m5");
       const card = student
         .locator('[data-testid="modern-course-card-link"]')
@@ -279,6 +289,12 @@ try {
           exact: true,
         })
       ).toContainText("ตำแหน่งสถานี");
+      await expect(student.getByAltText("ภาพประกอบหลักฐานควันจากคุณครู")).toBeVisible();
+      if(!await student.getByAltText("ภาพประกอบหลักฐานควันจากคุณครู").evaluate(image=>image.complete && image.naturalWidth>0))throw new Error("Saved lesson image did not load");
+      await student.getByRole("button",{name:"qa-map.jpg",exact:true}).click();
+      const imageRegion=student.getByRole("region",{name:"เนื้อหาไฟล์ qa-map.jpg",exact:true});
+      await expect(imageRegion.locator("img")).toBeVisible();
+      await expect.poll(()=>imageRegion.locator("img").evaluate(image=>image.naturalWidth)).toBeGreaterThan(0);
       await snapshot(student, "school-materials-mobile");
       await student
         .getByRole("button", { name: "บันทึกว่าเรียนจบแล้ว", exact: true })
@@ -420,6 +436,63 @@ try {
       await student.goto(base + "/app?screen=cases");
     }
   );
+  await check("all teacher and student pages: desktop/mobile render, scrolling and image loading", async () => {
+    for (const [page, role, screens] of [
+      [admin,"teacher",["dashboard","classrooms","lessons","knowledge","questions","cases","discussions","members","ai-settings","account","guide"]],
+      [student,"student",["dashboard","classrooms","lessons","chat","progress","cases","discussions","account","guide"]]
+    ]) for (const [width,height] of [[1440,900],[390,844]]) {
+      await page.setViewportSize({width,height});
+      for (const screen of screens) {
+        await page.goto(`${base}/app?screen=${screen}`);
+        await expect(page.locator(".learning-main")).toBeVisible();
+        await expect(page.locator(".learning-main")).not.toBeEmpty();
+        await page.evaluate(()=>document.fonts.ready);
+        if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1))throw new Error(`Page overflow ${role} ${screen} ${width}`);
+        await page.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));
+        await page.evaluate(()=>window.scrollTo(0,0));
+        await snapshot(page,`audit-${role}-${screen}-${width}`);
+      }
+    }
+    await admin.setViewportSize({width:1440,height:900});
+    await admin.goto(base+"/app?screen=members");
+  });
+  await check("member details, classroom edits, document actions and case filters respond to clicks", async () => {
+    const row=admin.locator(".school-user-row").filter({hasText:qa.studentUsername});
+    await row.getByRole("button",{name:"ดูรายละเอียด",exact:true}).click();
+    const detail=admin.getByRole("dialog",{name:"รายละเอียดสมาชิก",exact:true});
+    await expect(detail).toBeVisible();
+    await expect(detail).toContainText(lessonTitle);
+    await admin.setViewportSize({width:390,height:844});
+    await snapshot(admin,"teacher-member-details-mobile");
+    await admin.keyboard.press("Escape");
+    await expect(detail).toHaveCount(0);
+    await row.getByRole("button",{name:"รีเซ็ตรหัส",exact:true}).click();
+    await expect(detail).toContainText("ยืนยันรีเซ็ตรหัสผ่าน");
+    await detail.getByRole("button",{name:"ปิด",exact:true}).click();
+    await admin.setViewportSize({width:1440,height:900});
+    await nav(admin,"จัดการห้องเรียน");
+    await admin.getByRole("button",{name:/^แก้ไข /}).click();
+    await expect(admin.getByRole("dialog",{name:"แก้ไขห้องเรียน"})).toBeVisible();
+    await admin.getByRole("button",{name:"บันทึก",exact:true}).click();
+    await expect(admin.locator(".toast-notice")).toContainText("บันทึกข้อมูลบนเซิร์ฟเวอร์แล้ว");
+    await nav(admin,"AI Knowledge Base");
+    await admin.getByRole("button",{name:"สร้างดัชนีใหม่ qa-evidence.txt",exact:true}).click();
+    await expect(admin.locator(".toast-notice")).toContainText("จัดส่วนข้อความ");
+    await admin.getByRole("button",{name:"ดู qa-map.jpg",exact:true}).click();
+    await expect(admin.getByRole("dialog",{name:"ตัวอย่างเอกสาร"}).locator("img")).toBeVisible();
+    await admin.getByRole("button",{name:"ปิดตัวอย่างเอกสาร",exact:true}).click();
+    await admin.getByRole("button",{name:"นำออก qa-map.jpg",exact:true}).click();
+    await expect(admin.locator(".knowledge-list")).not.toContainText("qa-map.jpg");
+    await student.goto(base+"/app?screen=cases");
+    await student.getByLabel("ค้นหากรณีศึกษา").fill("no-matching-case-qa");
+    await expect(student.getByRole("status")).toContainText("ไม่พบกรณีศึกษา");
+    await student.getByLabel("ค้นหากรณีศึกษา").fill("");
+    await student.getByLabel("ประเทศของกรณีศึกษา").selectOption({index:1});
+    await expect(student.locator(".case-timeline-row").first()).toBeVisible();
+    await student.getByRole("button",{name:"เรียนกรณีนี้"}).first().click();
+    await expect(student.locator(".eco-native-reading")).toBeVisible();
+    await admin.goto(base+"/app?screen=members");
+  });
   await check("admin grants teacher and admin roles, revokes old sessions and restores student access", async () => {
     const row = admin.locator(".school-user-row").filter({hasText: qa.studentUsername});
     const role = row.getByRole("combobox");

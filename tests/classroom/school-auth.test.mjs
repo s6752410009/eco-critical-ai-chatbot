@@ -597,3 +597,35 @@ test("opening a completed lesson changes last activity without rewriting its com
     db.close();
   }
 });
+
+
+test("image uploads enforce account, role, format and persisted lesson references", async () => {
+  const {env,db}=await setup();
+  const admin=await owner(env);
+  const upload=(image,cookie=admin)=>request(env,"/api/school/images",{method:"POST",cookie,body:{image}});
+  assert.equal((await upload("data:image/svg+xml;base64,PHN2Zz4=")).status,400);
+  assert.equal((await upload("data:image/png;base64,ZmFrZQ==")).status,400);
+  const image="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=";
+  assert.equal((await upload(image,"")).status,401);
+  const response=await upload(image);
+  assert.equal(response.status,200);
+  const {image:saved}=await response.json();
+  const url="/api/school/images/"+saved.id;
+  const learner=await student(env);
+  db.prepare("UPDATE school_users SET status='active' WHERE id=?").run(learner.user.id);
+  const learnerCookie=await loginStudent(env);
+  assert.equal((await upload(image,learnerCookie)).status,403);
+  assert.equal((await request(env,url,{cookie:learnerCookie})).status,404);
+
+  assert.equal((await request(env,url)).status,401);
+  const loaded=await request(env,url,{cookie:admin});
+  assert.equal(loaded.headers.get("Content-Type"),"image/png");
+  assert.equal((await loaded.arrayBuffer()).byteLength,atob(image.split(",")[1]).length);
+  const state=await (await request(env,"/api/school/data",{cookie:admin})).json();
+  state.data.lessons[0].images=[{id:"00000000-0000-0000-0000-000000000000",caption:"missing"}];
+  assert.equal((await request(env,"/api/school/data",{method:"PUT",cookie:admin,body:state})).status,400);
+  state.data.lessons[0].images=[saved];
+  assert.equal((await request(env,"/api/school/data",{method:"PUT",cookie:admin,body:state})).status,200);
+  assert.equal((await request(env,url,{cookie:learnerCookie})).status,200);
+  db.close();
+});

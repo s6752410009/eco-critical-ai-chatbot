@@ -1549,7 +1549,7 @@ body:has(.teacher-editor-dialog[open], .teacher-document-dialog[open]) {
 }
 .mentingo-root .teacher-editor-dialog .editor-form > .row-between {
   position: sticky;
-  top: -24px;
+  top: 0;
   z-index: 2;
   background: white;
   padding: 12px 0;
@@ -1559,7 +1559,7 @@ body:has(.teacher-editor-dialog[open], .teacher-document-dialog[open]) {
   justify-content: flex-end;
   gap: 12px;
   position: sticky;
-  bottom: -24px;
+  bottom: 0;
   padding: 16px 0;
   background: white;
   border-top: 1px solid #dce4ee;
@@ -1580,7 +1580,7 @@ body:has(.teacher-editor-dialog[open], .teacher-document-dialog[open]) {
 }
 .mentingo-root .teacher-document-dialog .document-preview > .row-between {
   position: sticky;
-  top: -24px;
+  top: 0;
   padding: 16px 0;
   background: white;
 }
@@ -1610,10 +1610,10 @@ body:has(.teacher-editor-dialog[open], .teacher-document-dialog[open]) {
     padding: 16px;
   }
   .mentingo-root .teacher-editor-actions {
-    bottom: -16px;
+    bottom: 0;
   }
   .mentingo-root .teacher-editor-dialog .editor-form > .row-between {
-    top: -16px;
+    top: 0;
   }
 }
 
@@ -1625,3 +1625,20 @@ body:has(.teacher-editor-dialog[open], .teacher-document-dialog[open]) {
   width: 100%;
   box-sizing: border-box;
 }
+
+.teacher-image-editor { grid-column: 1 / -1; min-width: 0; display: grid; gap: 12px; }
+.teacher-image-editor p, .teacher-image-editor small { color: #52657a; }
+.teacher-image-editor .upload-button { width: fit-content; }
+.teacher-image-item { display: grid; grid-template-columns: 160px 1fr auto; align-items: center; gap: 16px; padding: 12px; border: 1px solid #dce5ee; border-radius: 8px; }
+.lesson-image-gallery { display: grid; gap: 20px; min-width: 0; margin-block: 20px; }
+.lesson-image-gallery figure { margin: 0; min-width: 0; }
+.lesson-image-gallery img { display: block; max-width: 100%; max-height: 650px; width: auto; height: auto; object-fit: contain; border-radius: 6px; }
+.lesson-image-gallery figcaption { margin-top: 8px; color: #52657a; overflow-wrap: anywhere; }
+.teacher-image-item .lesson-image-gallery { margin: 0; }
+.teacher-image-item img { max-height: 110px; }
+.teacher-image-item figcaption { display: none; }
+@media(max-width:760px) { .teacher-image-item { grid-template-columns: 1fr; } .teacher-image-item img { max-height: 180px; } }
+
+.school-member-detail[open] { padding: 24px; }
+.school-member-detail .board-form-heading { position: sticky; top: 0; background: white; padding-block: 16px; z-index: 1; }
+.mentingo-root .editor-form label.upload-button { display: inline-flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 16px; color: white; font-size: 16px; }

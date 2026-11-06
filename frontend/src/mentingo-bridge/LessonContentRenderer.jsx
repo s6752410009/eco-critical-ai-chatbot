@@ -7,6 +7,7 @@ import {
   WasteSorting,
 } from "../pages/Classroom/Activities";
 import EcoChat from "../pages/Classroom/Chat";
+import Images from "../pages/Classroom/Images";
 import LessonDocuments from "../pages/Classroom/LessonDocuments";
 export function LessonContentRenderer({ lesson: nativeLesson }) {
   const bridge = useEcoData();
@@ -50,6 +51,7 @@ export function LessonContentRenderer({ lesson: nativeLesson }) {
             </section>
           ))}
         </div>
+        <Images images={lesson.images} />
         <LessonDocuments
           documents={bridge.data.documents}
           classroom={bridge.classroom}

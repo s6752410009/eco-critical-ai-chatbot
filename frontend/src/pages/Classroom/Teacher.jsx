@@ -25,6 +25,7 @@ import {
 } from "@/mentingo/components/ui/table";
 import { PageWrapper } from "@/mentingo/components/PageWrapper";
 import { chunkText, TOPICS } from "./data";
+import Images, { uploadImageFile } from "./Images";
 import Workspace from "@/models/workspace";
 import { uploadLesson } from "./api";
 
@@ -45,6 +46,8 @@ export default function Teacher({
   const [description, setDescription] = useState("");
   const [lessonBody, setLessonBody] = useState("");
   const [quizDraft, setQuizDraft] = useState([]);
+  const [images, setImages] = useState([]);
+  const [imageBusy, setImageBusy] = useState(false);
   const [topic, setTopic] = useState("air");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -77,6 +80,7 @@ export default function Teacher({
     setForm({ kind, id: item?.id });
     setName(item?.name || item?.title || "");
     setDescription(item?.description || "");
+    setImages(item?.images || []);
     setTopic(item?.topic || "air");
     setLessonBody(
       (item?.concepts || []).map((c) => `${c.title}\n${c.body}`).join("\n\n")
@@ -86,7 +90,7 @@ export default function Teacher({
   }
   async function submit(event) {
     event.preventDefault();
-    if (!name.trim() || busy) return;
+    if (!name.trim() || busy || imageBusy) return;
     setBusy(true);
     setError("");
     try {
@@ -161,6 +165,7 @@ export default function Teacher({
                       description,
                       topic,
                       concepts,
+                      images,
                       quiz,
                     }
                   : entry
@@ -175,6 +180,7 @@ export default function Teacher({
                   minutes: null,
                   objectives: [],
                   concepts,
+                  images,
                   quiz,
                 },
               ],
@@ -193,6 +199,16 @@ export default function Teacher({
       setBusy(false);
     }
   }
+  async function addImage(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setImageBusy(true); setError("");
+    try {
+      const image = await uploadImageFile(file, school);
+      setImages(current => [...current, image]);
+    } catch (failure) { setError(failure.message); }
+    finally { setImageBusy(false); event.target.value = ""; }
+  }
   async function upload(event) {
     const file = event.target.files?.[0];
     if (!file || !classroom) return;
@@ -200,7 +216,13 @@ export default function Teacher({
     setBusy(true);
     setStage("กำลังอ่านเอกสาร…");
     try {
-      if (demo) {
+      if (school && /^image\//.test(file.type)) {
+        setStage("กำลังย่อและอัปโหลดรูป…");
+        const image = await uploadImageFile(file, school);
+        const document = {id: crypto.randomUUID(), name: file.name, text: file.name, images: [image], chunks: [], type: "IMAGE", status: "ready", classroomId: classroom.id, lessonId: uploadLessonId || null};
+        await commit(previous => ({...previous, documents: [...previous.documents, document]}));
+        onNotice("บันทึกรูปบนเซิร์ฟเวอร์แล้ว");
+      } else if (demo) {
         if (!/\.(txt|md)$/i.test(file.name))
           throw new Error(
             school
@@ -362,7 +384,7 @@ export default function Teacher({
           }
           onCancel={(event) => {
             event.preventDefault();
-            if (!busy) setForm(null);
+            if (!busy && !imageBusy) setForm(null);
           }}
         >
           <form className="editor-form" onSubmit={submit}>
@@ -381,7 +403,7 @@ export default function Teacher({
                 className="icon-button"
                 aria-label="ปิดฟอร์ม"
                 onClick={() => setForm(null)}
-                disabled={busy}
+                disabled={busy || imageBusy}
               >
                 <X size={19} />
               </NativeButton>
@@ -432,6 +454,20 @@ export default function Teacher({
                     placeholder="หัวข้อส่วนแรก แล้วขึ้นบรรทัดใหม่เพื่อเขียนเนื้อหา เว้นบรรทัดว่างเพื่อเริ่มส่วนถัดไป"
                   />
                 </label>
+                {school && <section className="teacher-image-editor">
+                  <h3>รูปประกอบบทเรียน</h3>
+                  <p>JPG, PNG, WebP ไม่เกิน 10 MB · ย่อรูปให้อัตโนมัติ · สูงสุด 8 รูป</p>
+                  <label className="button upload-button">
+                    <Upload size={17} /> {imageBusy ? "กำลังอัปโหลด…" : "เพิ่มรูป"}
+                    <NativeInput aria-label="อัปโหลดรูปบทเรียน" type="file" accept="image/jpeg,image/png,image/webp" disabled={busy || imageBusy || images.length >= 8} onChange={addImage} />
+                  </label>
+                  {images.map((image, index) => <div className="teacher-image-item" key={image.id}>
+                    <Images images={[image]} />
+                    <label>คำบรรยายรูป {index + 1}<NativeInput maxLength={500} value={image.caption} onChange={e => setImages(current => current.map(item => item.id === image.id ? {...item, caption:e.target.value} : item))} /></label>
+                    <NativeButton type="button" variant="outline" disabled={busy || imageBusy} onClick={() => setImages(current => current.filter(item => item.id !== image.id))}>นำรูป {index + 1} ออก</NativeButton>
+                  </div>)}
+                  <small>รูปจะแสดงให้นักเรียนเห็นเมื่อกดบันทึก · ระบบค้นคำตอบจากข้อความ ยังไม่อ่านข้อความในรูป</small>
+                </section>}
                 <section className="teacher-quiz-editor">
                   <h3>แบบทดสอบท้ายบท</h3>
                   {quizDraft.map((question, index) => (
@@ -562,7 +598,7 @@ export default function Teacher({
               <NativeButton
                 type="submit"
                 className="button"
-                disabled={busy || !name.trim()}
+                disabled={busy || imageBusy || !name.trim()}
               >
                 {busy ? (
                   <LoaderCircle size={17} className="spin" />
@@ -755,7 +791,7 @@ export default function Teacher({
               <p>
                 {demo
                   ? school
-                    ? "TXT, Markdown · ไม่เกิน 1 MB ต่อไฟล์ · บันทึกบนเซิร์ฟเวอร์"
+                    ? "TXT, Markdown ไม่เกิน 1 MB · รูป JPG, PNG, WebP ไม่เกิน 10 MB (ย่ออัตโนมัติ) · รูปใช้เปิดดู ยังไม่มีการอ่านข้อความจากภาพ"
                     : "TXT, Markdown · ไม่เกิน 1 MB · ประมวลผลในเครื่อง"
                   : "PDF, DOCX, TXT, Markdown · ไม่เกิน 20 MB · ใช้ collector และ embedding จริง"}
               </p>
@@ -786,7 +822,7 @@ export default function Teacher({
                 aria-label="อัปโหลดเอกสารการสอน"
                 type="file"
                 disabled={!classroom || busy}
-                accept={demo ? ".txt,.md" : ".pdf,.docx,.txt,.md"}
+                accept={school ? ".txt,.md,.jpg,.jpeg,.png,.webp" : demo ? ".txt,.md" : ".pdf,.docx,.txt,.md"}
                 onChange={upload}
               />
             </label>
@@ -830,11 +866,11 @@ export default function Teacher({
                     <TableCell>
                       <span className="native-document-status">
                         <Check size={13} />
-                        {doc.status === "ready"
+                        {doc.type === "IMAGE" ? "พร้อมเปิดดู" : doc.status === "ready"
                           ? "พร้อมค้นหา"
                           : "กำลังประมวลผล"}
                       </span>
-                      {demo && (
+                      {demo && doc.type !== "IMAGE" && (
                         <small className="native-document-chunks">
                           {doc.chunks.length} ส่วนข้อความ
                         </small>
@@ -857,6 +893,7 @@ export default function Teacher({
                             <NativeButton
                               variant="ghost"
                               size="icon"
+                              disabled={doc.type === "IMAGE"}
                               aria-label={`สร้างดัชนีใหม่ ${doc.name}`}
                               onClick={() => reindex(doc)}
                             >
@@ -906,6 +943,7 @@ export default function Teacher({
                     <X size={18} />
                   </NativeButton>
                 </div>
+                <Images images={viewed.images} />
                 <p>{viewed.text}</p>
               </section>
             </dialog>

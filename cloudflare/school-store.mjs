@@ -14,6 +14,7 @@ import {
   audit,
   budget,
 } from "./school-auth.mjs";
+import { imageRefs, uploadImage, readImage } from "./school-images.mjs";
 const encoder = new TextEncoder();
 export async function curriculum(env) {
   const select = env.BOARD_DB.prepare(
@@ -96,6 +97,7 @@ function validateCurriculum(input) {
         .slice(0, 10)
         .map((x) => String(x).slice(0, 500)),
       concepts,
+      images: imageRefs(item.images),
       quiz,
       reference,
       ...(item.caseStudyId ? { caseStudyId: String(item.caseStudyId) } : {}),
@@ -106,7 +108,8 @@ function validateCurriculum(input) {
   const documents = input.documents.map((doc) => {
     if (doc.lessonId && !lessons.some((l) => l.id === doc.lessonId))
       throw new ApiError("เอกสารเชื่อมกับบทเรียนที่ไม่มีอยู่");
-    const text = clean(doc.text, "เอกสาร", 1, 1000000);
+    const images = imageRefs(doc.images);
+    const text = clean(doc.text || (images.length ? doc.name : ""), "เอกสาร", 1, 1000000);
     return {
       id: clean(doc.id, "รหัสเอกสาร", 1, 100),
       classroomId: "eco-m5",
@@ -115,7 +118,8 @@ function validateCurriculum(input) {
       text,
       chunks: chunkText(text),
       status: "ready",
-      type: doc.type === "MD" ? "MD" : "TXT",
+      type: images.length ? "IMAGE" : doc.type === "MD" ? "MD" : "TXT",
+      images,
       sample: !!doc.sample,
     };
   });
@@ -235,6 +239,16 @@ export async function callGemini(env, question, sources) {
   return { answer, model: config.model };
 }
 export async function storeRoute(request, env, user, path) {
+  if (path === "/images" && request.method === "POST") return uploadImage(request, env, user);
+  if (/^\/images\/[a-f0-9-]{36}$/.test(path) && request.method === "GET") {
+    const id = path.split("/").pop();
+    if (!["teacher", "admin"].includes(user.role)) {
+      const {data} = await curriculum(env);
+      if (![...data.lessons, ...data.documents].some(item => item.images?.some(image => image.id === id)))
+        throw new ApiError("ไม่พบรูปในบทเรียน", 404);
+    }
+    return readImage(env, id);
+  }
   if (path === "/data" && request.method === "GET") {
     const state = await curriculum(env),
       { results } = await env.BOARD_DB.prepare(
@@ -322,6 +336,9 @@ export async function storeRoute(request, env, user, path) {
         ...data,
         documents: data.documents.map(({ chunks, ...doc }) => doc),
       });
+    for (const id of new Set([...data.lessons, ...data.documents].flatMap(item => (item.images || []).map(image => image.id)))) {
+      if (!await env.BOARD_DB.prepare("SELECT id FROM school_images WHERE id=?").bind(id).first()) throw new ApiError("รูปภาพยังอัปโหลดไม่สำเร็จ กรุณาเลือกรูปใหม่");
+    }
     if (encoder.encode(text).length > 1800000)
       throw new ApiError(
         "เนื้อหาเอกสารรวมใหญ่เกิน 1.8 MB กรุณาแบ่งหรือลดเอกสาร",
@@ -449,7 +466,7 @@ export async function storeRoute(request, env, user, path) {
         ),
       }));
     const sources = retrieve(
-      [...data.documents, ...notes],
+      [...data.documents.filter(doc => doc.type !== "IMAGE"), ...notes],
       question,
       "eco-m5",
       value.lessonId || null
