@@ -4,7 +4,7 @@
 
 React/Vite ใน repository เดิม ใช้ **ซอร์ส Mentingo จริง** สำหรับหน้าบทเรียน แค็ตตาล็อก และองค์ประกอบหน้าครู พร้อม backend บัญชีและข้อมูลบน Cloudflare Pages + D1. เก็บซอร์ส AnythingLLM/collector เดิมไว้เป็นอีกเส้นทางหนึ่ง ดู [ที่มาและใบอนุญาต](third_party/mentingo/README.md).
 
-**สถานะรุ่นนี้:** ระบบบัญชีจริงผ่านการทดสอบกับ Worker/D1 ภายในเครื่องแล้ว การเผยแพร่รุ่นบัญชีจริงที่ `eco-critical.pages.dev` ยังรออนุญาตบันทึก secrets บน Cloudflare; อย่าใช้ public deployment รุ่นก่อนหน้าเป็นหลักฐานว่ารุ่นนี้ขึ้นระบบแล้ว ดู [สถานะเผยแพร่](docs/DEPLOYMENT.md).
+**เปิดใช้งานแล้ว** [เข้าห้องเรียน](https://eco-critical.pages.dev) · [สถานะเผยแพร่](docs/DEPLOYMENT.md)
 
 ![หน้าทางเข้าห้องเรียน](docs/screenshots/school-login-desktop.png)
 

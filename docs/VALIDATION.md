@@ -19,7 +19,7 @@ Evidence: [authenticated browser JSON](school-app-qa.json), [desktop login](scre
 
 ## Limits and pending release checks
 
-- The authenticated build has **not yet been deployed** to the primary Pages hostname. Cloudflare secret transfer is pending explicit owner approval after automatic approval review rejected it. Production smoke checks must follow the deployment.
+- Production release 9210ff5c serves the authenticated app. Desktop login, mobile registration and anonymous API denial were verified on the public hostname.
 - No test administrator was seeded remotely; full browser fixtures use a temporary local database, random secrets and local accounts only.
 - No real Gemini key was provided. Missing-key handling, encryption and permissions are tested; actual inference, answer accuracy and paid requests are not verified.
 - Docker/collector runtime and physical iOS/Android devices were not tested. Pages does not deploy the retained Express/collector stack.
