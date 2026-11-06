@@ -195,7 +195,7 @@ export async function authRoute(request, env, path) {
   const input = await bodyJson(request);
   const network = await sha(request.headers.get("CF-Connecting-IP") || "local");
   if (path === "/register") {
-    await budget(env, `register:${network}`, 10, 3600000);
+    await budget(env, `register:${network}`, 120, 3600000);
     const username = clean(input.username, "ชื่อผู้ใช้", 3, 32).toLowerCase();
     if (!/^[a-z0-9._-]+$/.test(username) || username === "admin")
       throw new ApiError(
@@ -228,7 +228,7 @@ export async function authRoute(request, env, path) {
   }
   if (path === "/login") {
     const username = clean(input.username, "ชื่อผู้ใช้", 1, 32).toLowerCase();
-    await budget(env, `login-ip:${network}`, 40, 600000);
+    await budget(env, `login-ip:${network}`, 120, 600000);
     await budget(env, `login-user:${await sha(username)}`, 12, 600000);
     const user = await env.BOARD_DB.prepare(
       "SELECT * FROM school_users WHERE username=?"
