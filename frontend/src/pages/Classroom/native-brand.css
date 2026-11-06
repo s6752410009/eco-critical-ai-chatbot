@@ -1475,10 +1475,153 @@
     font-size: 11px;
   }
 }
-.mentingo-root .learning-sidebar nav {flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
-.mentingo-root .learning-sidebar .product-brand,.mentingo-root .learning-sidebar .sidebar-bottom {flex-shrink:0}
+.mentingo-root .learning-sidebar nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.mentingo-root .learning-sidebar .product-brand,
+.mentingo-root .learning-sidebar .sidebar-bottom {
+  flex-shrink: 0;
+}
 
 /* Match the native compact rail: keep account text available to assistive technology. */
-.mentingo-root .sidebar-settings { width: 44px; min-height: 44px; padding: 10px; justify-content: center; gap: 0; }
-.mentingo-root .sidebar-settings > span { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
-.mentingo-root .sidebar-settings > svg { flex-shrink: 0; }
+.mentingo-root .sidebar-settings {
+  width: 44px;
+  min-height: 44px;
+  padding: 10px;
+  justify-content: center;
+  gap: 0;
+}
+.mentingo-root .sidebar-settings > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+.mentingo-root .sidebar-settings > svg {
+  flex-shrink: 0;
+}
+
+/* Bounded teacher workspaces keep actions and preview content within reach. */
+.mentingo-root .teacher-editor-dialog,
+.mentingo-root .teacher-document-dialog {
+  width: min(1100px, calc(100vw - 48px));
+  max-height: calc(100dvh - 48px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid #cbdced;
+  border-radius: 12px;
+  background: #fff;
+  color: #14283a;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.mentingo-root dialog::backdrop {
+  background: rgb(15 32 48 / 48%);
+}
+body:has(.teacher-editor-dialog[open], .teacher-document-dialog[open]) {
+  overflow: hidden;
+}
+.mentingo-root .teacher-editor-dialog .editor-form {
+  max-width: none;
+  margin: 0;
+  border: 0;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 28px;
+}
+.mentingo-root .teacher-editor-dialog .editor-form > .row-between,
+.mentingo-root .teacher-editor-dialog .editor-form > .inline-error,
+.mentingo-root
+  .teacher-editor-dialog
+  .editor-form
+  > label:has(textarea[rows="8"]),
+.mentingo-root .teacher-quiz-editor,
+.mentingo-root .teacher-editor-actions {
+  grid-column: 1 / -1;
+}
+.mentingo-root .teacher-editor-dialog .editor-form > .row-between {
+  position: sticky;
+  top: -24px;
+  z-index: 2;
+  background: white;
+  padding: 12px 0;
+}
+.mentingo-root .teacher-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  position: sticky;
+  bottom: -24px;
+  padding: 16px 0;
+  background: white;
+  border-top: 1px solid #dce4ee;
+  z-index: 2;
+}
+.mentingo-root .teacher-quiz-draft {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.mentingo-root .teacher-quiz-draft > label:first-child {
+  grid-column: 1 / -1;
+}
+.mentingo-root .teacher-document-dialog .document-preview {
+  margin: 0;
+  padding: 24px;
+  border: 0;
+}
+.mentingo-root .teacher-document-dialog .document-preview > .row-between {
+  position: sticky;
+  top: -24px;
+  padding: 16px 0;
+  background: white;
+}
+.mentingo-root .document-preview p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.9;
+}
+.mentingo-root .learning-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 25;
+}
+@media (max-width: 760px) {
+  .mentingo-root .teacher-editor-dialog,
+  .mentingo-root .teacher-document-dialog {
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+  .mentingo-root .teacher-editor-dialog .editor-form {
+    display: flex;
+    padding: 16px;
+    gap: 16px;
+  }
+  .mentingo-root .teacher-quiz-draft {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+  .mentingo-root .teacher-editor-actions {
+    bottom: -16px;
+  }
+  .mentingo-root .teacher-editor-dialog .editor-form > .row-between {
+    top: -16px;
+  }
+}
+
+.mentingo-root :is(.teacher-editor-dialog, .teacher-document-dialog)[open] {
+  display: block;
+}
+.mentingo-root .teacher-editor-dialog .editor-form,
+.mentingo-root .teacher-document-dialog .document-preview {
+  width: 100%;
+  box-sizing: border-box;
+}

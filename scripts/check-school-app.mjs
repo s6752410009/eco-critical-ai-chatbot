@@ -215,6 +215,20 @@ try {
       await admin
         .getByRole("button", { name: "เพิ่มบทเรียน", exact: true })
         .click();
+      const editor=admin.getByRole("dialog",{name:"แก้ไขเนื้อหาบทเรียน",exact:true});
+      await admin.getByRole("button",{name:"เพิ่มคำถาม",exact:true}).click();
+      await editor.evaluate(el=>{el.scrollTop=el.scrollHeight});
+      await expect(editor.getByRole("button",{name:"บันทึก",exact:true})).toBeInViewport();
+      await expect(editor.getByRole("button",{name:"ปิดฟอร์ม",exact:true})).toBeInViewport();
+      await editor.evaluate(el=>{el.scrollTop=0});
+      await snapshot(admin, "teacher-editor-desktop");
+      await admin.setViewportSize({width:390,height:844});
+      await snapshot(admin, "teacher-editor-mobile");
+      await editor.evaluate(el=>{el.scrollTop=el.scrollHeight});
+      await expect(editor.getByRole("button",{name:"บันทึก",exact:true})).toBeInViewport();
+      if(await editor.evaluate(el=>el.scrollWidth>el.clientWidth+1))throw new Error("Editor horizontal overflow");
+      await admin.getByRole("button",{name:"นำคำถามนี้ออก",exact:true}).click();
+      await admin.setViewportSize({width:1440,height:900});
       await admin.getByLabel("ชื่อบทเรียน", { exact: true }).fill(lessonTitle);
       await admin
         .getByLabel("คำอธิบายสั้นๆ")
@@ -229,6 +243,10 @@ try {
       await expect(admin.locator(".toast-notice")).toContainText(
         "บันทึกข้อมูลบนเซิร์ฟเวอร์แล้ว"
       );
+      const previewRow=admin.locator(".teacher-lesson-list tr").filter({hasText:lessonTitle});
+      await previewRow.getByRole("button",{name:"ดูแบบนักเรียน",exact:true}).click();
+      await expect(admin.locator(".eco-native-reading")).toContainText("ช่วงเวลาเดียวกัน");
+      await snapshot(admin,"teacher-lesson-preview");
       await nav(admin, "AI Knowledge Base");
       await admin
         .getByLabel("เชื่อมกับบทเรียน")
@@ -268,6 +286,13 @@ try {
       await expect(student.locator(".toast-notice")).toContainText(
         "บันทึกผลการเรียนตามบัญชี"
       );
+      await admin.getByRole("button",{name:"ดู qa-evidence.txt",exact:true}).click();
+      const documentPreview=admin.getByRole("dialog",{name:"ตัวอย่างเอกสาร",exact:true});
+      await expect(documentPreview).toBeVisible();
+      await expect(documentPreview).toContainText("ตำแหน่งสถานี");
+      await snapshot(admin,"teacher-document-preview");
+      await admin.keyboard.press("Escape");
+      await expect(documentPreview).toHaveCount(0);
       await snapshot(admin, "school-knowledge-desktop");
     }
   );

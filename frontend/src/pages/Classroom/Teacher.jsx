@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Check,
   Eye,
@@ -51,6 +51,14 @@ export default function Teacher({
   const [stage, setStage] = useState("");
   const [uploadLessonId, setUploadLessonId] = useState("");
   const [viewed, setViewed] = useState(null);
+  const editorDialog = useRef(null);
+  const documentDialog = useRef(null);
+  useEffect(() => {
+    if (form) editorDialog.current?.showModal();
+  }, [form]);
+  useEffect(() => {
+    if (viewed) documentDialog.current?.showModal();
+  }, [viewed]);
   const lessons = data.lessons.filter((lesson) =>
     classroom?.lessonIds.includes(lesson.id)
   );
@@ -200,7 +208,11 @@ export default function Teacher({
               : "โหมดสาธิตอ่าน TXT และ Markdown ในเบราว์เซอร์เท่านั้น PDF/DOCX ใช้ตัวประมวลผลในโหมดระบบจริง"
           );
         if (file.size > 1024 * 1024)
-          throw new Error(school ? "เอกสารต้องไม่เกิน 1 MB ต่อไฟล์" : "เอกสารสาธิตต้องไม่เกิน 1 MB เพื่อเก็บในเบราว์เซอร์");
+          throw new Error(
+            school
+              ? "เอกสารต้องไม่เกิน 1 MB ต่อไฟล์"
+              : "เอกสารสาธิตต้องไม่เกิน 1 MB เพื่อเก็บในเบราว์เซอร์"
+          );
         const text = await file.text();
         const chunks = chunkText(text);
         if (!chunks.length)
@@ -342,193 +354,226 @@ export default function Teacher({
         </div>
       )}
       {form && (
-        <form className="editor-form" onSubmit={submit}>
-          <div className="row-between">
-            <h2>
-              {form.id ? "แก้ไข" : "เพิ่ม"}
-              {form.kind === "classroom" ? "ห้องเรียน" : "บทเรียน"}
-            </h2>
-            <NativeButton
-              type="button"
-              className="icon-button"
-              aria-label="ปิดฟอร์ม"
-              onClick={() => setForm(null)}
-              disabled={busy}
-            >
-              <X size={19} />
-            </NativeButton>
-          </div>
-          <label>
-            {form.kind === "classroom" ? "ชื่อห้องเรียน" : "ชื่อบทเรียน"}
-            <NativeInput
-              autoFocus
-              required
-              maxLength={255}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
-          </label>
-          <label>
-            คำอธิบายสั้นๆ
-            <NativeTextarea
-              rows={2}
-              maxLength={1000}
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-            />
-          </label>
-          {form.kind === "lesson" && (
-            <label>
-              หัวข้อ
-              <select
-                value={topic}
-                onChange={(event) => setTopic(event.target.value)}
+        <dialog
+          ref={editorDialog}
+          className="teacher-editor-dialog"
+          aria-label={
+            form.kind === "lesson" ? "แก้ไขเนื้อหาบทเรียน" : "แก้ไขห้องเรียน"
+          }
+          onCancel={(event) => {
+            event.preventDefault();
+            if (!busy) setForm(null);
+          }}
+        >
+          <form className="editor-form" onSubmit={submit}>
+            {error && (
+              <div className="inline-error" role="alert">
+                {error}
+              </div>
+            )}
+            <div className="row-between">
+              <h2>
+                {form.id ? "แก้ไข" : "เพิ่ม"}
+                {form.kind === "classroom" ? "ห้องเรียน" : "บทเรียน"}
+              </h2>
+              <NativeButton
+                type="button"
+                className="icon-button"
+                aria-label="ปิดฟอร์ม"
+                onClick={() => setForm(null)}
+                disabled={busy}
               >
-                {TOPICS.map((entry) => (
-                  <option key={entry.id} value={entry.id}>
-                    {entry.title}
-                  </option>
-                ))}
-              </select>
+                <X size={19} />
+              </NativeButton>
+            </div>
+            <label>
+              {form.kind === "classroom" ? "ชื่อห้องเรียน" : "ชื่อบทเรียน"}
+              <NativeInput
+                autoFocus
+                required
+                maxLength={255}
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+              />
             </label>
-          )}
-          {form.kind === "lesson" && (
-            <>
+            <label>
+              คำอธิบายสั้นๆ
+              <NativeTextarea
+                rows={2}
+                maxLength={1000}
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+              />
+            </label>
+            {form.kind === "lesson" && (
               <label>
-                เนื้อหาบทเรียน
-                <NativeTextarea
-                  rows={8}
-                  maxLength={50000}
-                  value={lessonBody}
-                  onChange={(event) => setLessonBody(event.target.value)}
-                  placeholder="หัวข้อส่วนแรก แล้วขึ้นบรรทัดใหม่เพื่อเขียนเนื้อหา เว้นบรรทัดว่างเพื่อเริ่มส่วนถัดไป"
-                />
+                หัวข้อ
+                <select
+                  value={topic}
+                  onChange={(event) => setTopic(event.target.value)}
+                >
+                  {TOPICS.map((entry) => (
+                    <option key={entry.id} value={entry.id}>
+                      {entry.title}
+                    </option>
+                  ))}
+                </select>
               </label>
-              <section className="teacher-quiz-editor">
-                <h3>แบบทดสอบท้ายบท</h3>
-                {quizDraft.map((question, index) => (
-                  <div className="teacher-quiz-draft" key={index}>
-                    <label>
-                      คำถามที่ {index + 1}
-                      <NativeInput
-                        required
-                        maxLength={1000}
-                        value={question.question}
-                        onChange={(e) =>
-                          setQuizDraft((current) =>
-                            current.map((q, i) =>
-                              i === index
-                                ? { ...q, question: e.target.value }
-                                : q
-                            )
-                          )
-                        }
-                      />
-                    </label>
-                    {question.options.map((option, optionIndex) => (
-                      <label key={optionIndex}>
-                        ตัวเลือก {optionIndex + 1}
+            )}
+            {form.kind === "lesson" && (
+              <>
+                <label>
+                  เนื้อหาบทเรียน
+                  <NativeTextarea
+                    rows={8}
+                    maxLength={50000}
+                    value={lessonBody}
+                    onChange={(event) => setLessonBody(event.target.value)}
+                    placeholder="หัวข้อส่วนแรก แล้วขึ้นบรรทัดใหม่เพื่อเขียนเนื้อหา เว้นบรรทัดว่างเพื่อเริ่มส่วนถัดไป"
+                  />
+                </label>
+                <section className="teacher-quiz-editor">
+                  <h3>แบบทดสอบท้ายบท</h3>
+                  {quizDraft.map((question, index) => (
+                    <div className="teacher-quiz-draft" key={index}>
+                      <label>
+                        คำถามที่ {index + 1}
                         <NativeInput
                           required
                           maxLength={1000}
-                          value={option}
+                          value={question.question}
                           onChange={(e) =>
                             setQuizDraft((current) =>
                               current.map((q, i) =>
                                 i === index
-                                  ? {
-                                      ...q,
-                                      options: q.options.map((old, j) =>
-                                        j === optionIndex ? e.target.value : old
-                                      ),
-                                    }
+                                  ? { ...q, question: e.target.value }
                                   : q
                               )
                             )
                           }
                         />
                       </label>
-                    ))}
-                    <label>
-                      คำตอบที่ถูกต้อง
-                      <select
-                        value={question.answer}
-                        onChange={(e) =>
-                          setQuizDraft((current) =>
-                            current.map((q, i) =>
-                              i === index
-                                ? { ...q, answer: Number(e.target.value) }
-                                : q
+                      {question.options.map((option, optionIndex) => (
+                        <label key={optionIndex}>
+                          ตัวเลือก {optionIndex + 1}
+                          <NativeInput
+                            required
+                            maxLength={1000}
+                            value={option}
+                            onChange={(e) =>
+                              setQuizDraft((current) =>
+                                current.map((q, i) =>
+                                  i === index
+                                    ? {
+                                        ...q,
+                                        options: q.options.map((old, j) =>
+                                          j === optionIndex
+                                            ? e.target.value
+                                            : old
+                                        ),
+                                      }
+                                    : q
+                                )
+                              )
+                            }
+                          />
+                        </label>
+                      ))}
+                      <label>
+                        คำตอบที่ถูกต้อง
+                        <select
+                          value={question.answer}
+                          onChange={(e) =>
+                            setQuizDraft((current) =>
+                              current.map((q, i) =>
+                                i === index
+                                  ? { ...q, answer: Number(e.target.value) }
+                                  : q
+                              )
                             )
+                          }
+                        >
+                          {question.options.map((_, i) => (
+                            <option key={i} value={i}>
+                              ตัวเลือก {i + 1}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        คำอธิบายเฉลย
+                        <NativeTextarea
+                          maxLength={2000}
+                          value={question.explanation}
+                          onChange={(e) =>
+                            setQuizDraft((current) =>
+                              current.map((q, i) =>
+                                i === index
+                                  ? { ...q, explanation: e.target.value }
+                                  : q
+                              )
+                            )
+                          }
+                        />
+                      </label>
+                      <NativeButton
+                        type="button"
+                        variant="ghost"
+                        onClick={() =>
+                          setQuizDraft((current) =>
+                            current.filter((_, i) => i !== index)
                           )
                         }
                       >
-                        {question.options.map((_, i) => (
-                          <option key={i} value={i}>
-                            ตัวเลือก {i + 1}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label>
-                      คำอธิบายเฉลย
-                      <NativeTextarea
-                        maxLength={2000}
-                        value={question.explanation}
-                        onChange={(e) =>
-                          setQuizDraft((current) =>
-                            current.map((q, i) =>
-                              i === index
-                                ? { ...q, explanation: e.target.value }
-                                : q
-                            )
-                          )
-                        }
-                      />
-                    </label>
-                    <NativeButton
-                      type="button"
-                      variant="ghost"
-                      onClick={() =>
-                        setQuizDraft((current) =>
-                          current.filter((_, i) => i !== index)
-                        )
-                      }
-                    >
-                      นำคำถามนี้ออก
-                    </NativeButton>
-                  </div>
-                ))}
-                <NativeButton
-                  type="button"
-                  variant="outline"
-                  disabled={quizDraft.length >= 30}
-                  onClick={() =>
-                    setQuizDraft((current) => [
-                      ...current,
-                      {
-                        question: "",
-                        options: ["", "", ""],
-                        answer: 0,
-                        explanation: "",
-                      },
-                    ])
-                  }
-                >
-                  <Plus size={16} /> เพิ่มคำถาม
-                </NativeButton>
-              </section>
-            </>
-          )}
-          <NativeButton className="button" disabled={busy || !name.trim()}>
-            {busy ? (
-              <LoaderCircle size={17} className="spin" />
-            ) : (
-              <Check size={17} />
+                        นำคำถามนี้ออก
+                      </NativeButton>
+                    </div>
+                  ))}
+                  <NativeButton
+                    type="button"
+                    variant="outline"
+                    disabled={quizDraft.length >= 30}
+                    onClick={() =>
+                      setQuizDraft((current) => [
+                        ...current,
+                        {
+                          question: "",
+                          options: ["", "", ""],
+                          answer: 0,
+                          explanation: "",
+                        },
+                      ])
+                    }
+                  >
+                    <Plus size={16} /> เพิ่มคำถาม
+                  </NativeButton>
+                </section>
+              </>
             )}
-            บันทึก
-          </NativeButton>
-        </form>
+            <footer className="teacher-editor-actions">
+              <NativeButton
+                type="button"
+                variant="outline"
+                disabled={busy}
+                onClick={() => setForm(null)}
+              >
+                ยกเลิก
+              </NativeButton>
+              <NativeButton
+                type="submit"
+                className="button"
+                disabled={busy || !name.trim()}
+              >
+                {busy ? (
+                  <LoaderCircle size={17} className="spin" />
+                ) : (
+                  <Check size={17} />
+                )}
+                บันทึก
+              </NativeButton>
+            </footer>
+          </form>
+        </dialog>
       )}
       {["dashboard", "classrooms"].includes(screen) && (
         <div className="native-teacher-table classroom-grid">
@@ -841,22 +886,29 @@ export default function Teacher({
             </p>
           )}
           {viewed && (
-            <section className="document-preview">
-              <div className="row-between">
-                <h2>
-                  <FileText size={18} />
-                  {viewed.name}
-                </h2>
-                <NativeButton
-                  className="icon-button"
-                  aria-label="ปิดตัวอย่างเอกสาร"
-                  onClick={() => setViewed(null)}
-                >
-                  <X size={18} />
-                </NativeButton>
-              </div>
-              <p>{viewed.text}</p>
-            </section>
+            <dialog
+              ref={documentDialog}
+              className="teacher-document-dialog"
+              aria-label="ตัวอย่างเอกสาร"
+              onCancel={() => setViewed(null)}
+            >
+              <section className="document-preview">
+                <div className="row-between">
+                  <h2>
+                    <FileText size={18} />
+                    {viewed.name}
+                  </h2>
+                  <NativeButton
+                    className="icon-button"
+                    aria-label="ปิดตัวอย่างเอกสาร"
+                    onClick={() => setViewed(null)}
+                  >
+                    <X size={18} />
+                  </NativeButton>
+                </div>
+                <p>{viewed.text}</p>
+              </section>
+            </dialog>
           )}
         </>
       )}
