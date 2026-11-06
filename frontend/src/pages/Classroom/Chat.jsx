@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import {
   ArrowUp,
   BookOpen,
-  ChevronDown,
+  X,
   CircleStop,
   FileText,
   LoaderCircle,
   MessageCircle,
   RotateCcw,
-  Sparkles,
+  Send,
 } from "lucide-react";
 import Workspace from "@/models/workspace";
 import { retrieve, SUGGESTIONS } from "./data";
@@ -38,6 +38,15 @@ export default function EcoChat({
   const requestController = useRef(null);
   const messagesContainer = useRef(null);
   const textarea = useRef(null);
+  const sourceDialog = useRef(null);
+  useEffect(() => {
+    if (activeSource) sourceDialog.current?.showModal();
+  }, [activeSource]);
+  useEffect(() => {
+    if (!textarea.current) return;
+    textarea.current.style.height = "auto";
+    textarea.current.style.height = `${Math.min(textarea.current.scrollHeight, 120)}px`;
+  }, [input]);
   useEffect(() => {
     const counter = generation;
     const activeStream = streamState;
@@ -164,12 +173,12 @@ export default function EcoChat({
   }
   return (
     <section
-      className={`eco-chat ${compact ? "compact" : ""} ${dashboard ? "dashboard-chat" : ""}`}
+      className={`eco-chat messenger-chat ${compact ? "compact" : ""} ${dashboard ? "dashboard-chat" : ""}`}
       aria-label="ผู้ช่วย Eco AI"
     >
       <header className="chat-heading">
         <span className="ai-mark">
-          <Sparkles size={19} />
+          <MessageCircle size={22} />
         </span>
         <div>
           <h2>
@@ -183,9 +192,7 @@ export default function EcoChat({
                 : "ถามจากบทเรียนของคุณครู"}
           </p>
         </div>
-        <span className={`chat-mode ${demo ? "is-demo" : ""}`}>
-          {demo ? "สาธิต" : "ระบบจริง"}
-        </span>
+        {demo && <span className="chat-mode is-demo">สาธิต</span>}
       </header>
       <div className="chat-context">
         <BookOpen size={15} />
@@ -257,7 +264,7 @@ export default function EcoChat({
                     onClick={() => setActiveSource(source)}
                   >
                     <FileText size={14} />
-                    <span>{source.title}</span>
+                    <span>{source.title}{source.page ? ` · หน้า ${source.page}` : ""}</span>
                     <span className="source-number">{index + 1}</span>
                   </button>
                 ))}
@@ -291,30 +298,7 @@ export default function EcoChat({
             </button>
           </div>
         )}
-        {activeSource && (
-          <section
-            className="source-detail"
-            aria-label="รายละเอียดแหล่งอ้างอิง"
-          >
-            <div>
-              <FileText size={17} />
-              <strong>{activeSource.title}</strong>
-              <button
-                className="icon-button"
-                aria-label="ปิดแหล่งอ้างอิง"
-                onClick={() => setActiveSource(null)}
-              >
-                <ChevronDown size={18} />
-              </button>
-            </div>
-            <small>
-              {activeSource.page
-                ? `หน้า ${activeSource.page}`
-                : activeSource.section || "ข้อความที่ระบบส่งกลับ"}
-            </small>
-            <p>{activeSource.text}</p>
-          </section>
-        )}
+
       </div>
       <form
         className="chat-composer"
@@ -332,7 +316,7 @@ export default function EcoChat({
         <textarea
           id={`chat-input-${compact ? "side" : "main"}`}
           ref={textarea}
-          rows={2}
+          rows={1}
           maxLength={2000}
           placeholder="ถามเรื่องที่อยากเข้าใจ…"
           value={input}
@@ -355,6 +339,7 @@ export default function EcoChat({
             {
               documents.filter(
                 (doc) =>
+                  doc.status === "ready" &&
                   doc.classroomId === classroom?.id &&
                   (!lesson || !doc.lessonId || doc.lessonId === lesson.id)
               ).length
@@ -382,11 +367,39 @@ export default function EcoChat({
               aria-label="ส่งคำถาม"
               disabled={!input.trim() || !classroom}
             >
-              <ArrowUp size={19} />
+              <Send size={20} />
             </button>
           )}
         </div>
       </form>
+        {activeSource && (
+          <dialog
+            ref={sourceDialog}
+            onCancel={() => setActiveSource(null)}
+            onClick={(event) => { if (event.target === event.currentTarget) setActiveSource(null); }}
+            className="source-detail messenger-source-dialog"
+            aria-label="รายละเอียดแหล่งอ้างอิง"
+          >
+            <div>
+              <FileText size={17} />
+              <strong>{activeSource.title}</strong>
+              <button
+                className="icon-button"
+                aria-label="ปิดแหล่งอ้างอิง"
+                onClick={() => setActiveSource(null)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <small>
+              {activeSource.page
+                ? `หน้า ${activeSource.page}`
+                : activeSource.section || "ข้อความที่ระบบส่งกลับ"}
+            </small>
+            <p>{activeSource.quote || activeSource.text}</p>
+            {activeSource.originalUrl?.startsWith("/api/school/ocr/") && <a href={activeSource.originalUrl} target="_blank" rel="noreferrer">เปิดต้นฉบับ · หน้า {activeSource.page || 1}</a>}
+          </dialog>
+        )}
       <p className="chat-disclosure">
         {demo
           ? "ค้นข้อความในเบราว์เซอร์ · ไม่ได้เรียก Gemini · ไม่ใช่คำตอบจากโมเดล"

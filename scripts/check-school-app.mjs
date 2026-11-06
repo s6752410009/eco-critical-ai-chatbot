@@ -291,10 +291,9 @@ try {
       ).toContainText("ตำแหน่งสถานี");
       await expect(student.getByAltText("ภาพประกอบหลักฐานควันจากคุณครู")).toBeVisible();
       if(!await student.getByAltText("ภาพประกอบหลักฐานควันจากคุณครู").evaluate(image=>image.complete && image.naturalWidth>0))throw new Error("Saved lesson image did not load");
-      await student.getByRole("button",{name:"qa-map.jpg",exact:true}).click();
-      const imageRegion=student.getByRole("region",{name:"เนื้อหาไฟล์ qa-map.jpg",exact:true});
-      await expect(imageRegion.locator("img")).toBeVisible();
-      await expect.poll(()=>imageRegion.locator("img").evaluate(image=>image.naturalWidth)).toBeGreaterThan(0);
+      // This isolated suite intentionally has no provider key: pending OCR must not be offered as searchable material.
+      await expect(student.getByRole("button",{name:"qa-map.jpg",exact:true})).toHaveCount(0);
+      await expect(admin.locator(".knowledge-list").locator("tr").filter({hasText:"qa-map.jpg"})).toContainText("รออ่านข้อความ");
       await snapshot(student, "school-materials-mobile");
       await student
         .getByRole("button", { name: "บันทึกว่าเรียนจบแล้ว", exact: true })

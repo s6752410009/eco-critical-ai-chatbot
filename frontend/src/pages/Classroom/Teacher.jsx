@@ -25,6 +25,7 @@ import {
 } from "@/mentingo/components/ui/table";
 import { PageWrapper } from "@/mentingo/components/PageWrapper";
 import { chunkText, TOPICS } from "./data";
+import OcrDocumentContent, { extractFile, readPdfData } from "./OcrDocuments";
 import Images, { uploadImageFile } from "./Images";
 import Workspace from "@/models/workspace";
 import { uploadLesson } from "./api";
@@ -205,9 +206,22 @@ export default function Teacher({
     setImageBusy(true); setError("");
     try {
       const image = await uploadImageFile(file, school);
-      setImages(current => [...current, image]);
+      const ocr=await extractFile(school,{imageId:image.id,name:file.name});
+      setImages(current => [...current, {...image,extractionId:ocr.extractionId,ocr}]);
+      if(ocr.ocrError)setError(`บันทึกรูปแล้ว แต่ยังอ่านข้อความไม่ได้: ${ocr.ocrError}`);
     } catch (failure) { setError(failure.message); }
     finally { setImageBusy(false); event.target.value = ""; }
+  }
+  async function readLessonImage(image) {
+    setImageBusy(true);setError("");
+    try {
+      const ocr=image.extractionId
+        ? (await school.request(`/ocr/${image.extractionId}/process`,{method:"POST"})).document
+        : await extractFile(school,{imageId:image.id,name:image.caption || "รูปประกอบบทเรียน"});
+      setImages(current=>current.map(item=>item.id===image.id ? {...item,extractionId:ocr.extractionId,ocr} : item));
+      if(ocr.ocrError)setError(ocr.ocrError);
+    } catch(error){setError(error.message);}
+    finally{setImageBusy(false);}
   }
   async function upload(event) {
     const file = event.target.files?.[0];
@@ -219,9 +233,16 @@ export default function Teacher({
       if (school && /^image\//.test(file.type)) {
         setStage("กำลังย่อและอัปโหลดรูป…");
         const image = await uploadImageFile(file, school);
-        const document = {id: crypto.randomUUID(), name: file.name, text: file.name, images: [image], chunks: [], type: "IMAGE", status: "ready", classroomId: classroom.id, lessonId: uploadLessonId || null};
+        const ocr=await extractFile(school,{imageId:image.id,name:file.name},setStage);
+        const document = {...ocr,id: crypto.randomUUID(), images: [image], classroomId: classroom.id, lessonId: uploadLessonId || null};
         await commit(previous => ({...previous, documents: [...previous.documents, document]}));
-        onNotice("บันทึกรูปบนเซิร์ฟเวอร์แล้ว");
+        onNotice(ocr.ocrStatus === "ready" ? "บันทึกรูปและอ่านข้อความแล้ว พร้อมค้นหา" : "บันทึกรูปบนเซิร์ฟเวอร์แล้ว · ยังไม่พร้อมค้นหา");
+        if(ocr.ocrError)setError(ocr.ocrError);
+      } else if (school && /\.pdf$/i.test(file.name)) {
+        const ocr=await extractFile(school,{name:file.name,file:await readPdfData(file)},setStage);
+        await commit(previous=>({...previous,documents:[...previous.documents,{...ocr,id:crypto.randomUUID(),images:[],classroomId:classroom.id,lessonId:uploadLessonId || null}]}));
+        onNotice(ocr.ocrStatus === "ready" ? "บันทึก PDF และอ่านข้อความแล้ว พร้อมค้นหา" : "บันทึก PDF แล้ว · ยังไม่พร้อมค้นหา");
+        if(ocr.ocrError)setError(ocr.ocrError);
       } else if (demo) {
         if (!/\.(txt|md)$/i.test(file.name))
           throw new Error(
@@ -318,6 +339,19 @@ export default function Teacher({
   }
   async function reindex(doc) {
     setError("");
+    if(doc.extractionId || doc.images?.length){
+      setBusy(true);setStage("GPT กำลังอ่านข้อความ…");
+      try {
+        const document=doc.extractionId
+          ? (await school.request(`/ocr/${doc.extractionId}/process`,{method:"POST"})).document
+          : await extractFile(school,{imageId:doc.images[0].id,name:doc.name},setStage);
+        await commit(previous=>({...previous,documents:previous.documents.map(entry=>entry.id===doc.id ? {...entry,...document} : entry)}));
+        if(document.ocrError)setError(document.ocrError);
+        else onNotice("อ่านข้อความแล้ว พร้อมค้นหาและอ้างอิง");
+      } catch(error){setError(error.message);}
+      finally{setBusy(false);setStage("");}
+      return;
+    }
     try {
       await commit((previous) => ({
         ...previous,
@@ -464,9 +498,12 @@ export default function Teacher({
                   {images.map((image, index) => <div className="teacher-image-item" key={image.id}>
                     <Images images={[image]} />
                     <label>คำบรรยายรูป {index + 1}<NativeInput maxLength={500} value={image.caption} onChange={e => setImages(current => current.map(item => item.id === image.id ? {...item, caption:e.target.value} : item))} /></label>
-                    <NativeButton type="button" variant="outline" disabled={busy || imageBusy} onClick={() => setImages(current => current.filter(item => item.id !== image.id))}>นำรูป {index + 1} ออก</NativeButton>
+                    <div className="teacher-image-actions">
+                      <NativeButton type="button" variant="outline" disabled={busy || imageBusy || image.ocr?.ocrStatus === "ready"} onClick={()=>readLessonImage(image)}>{image.ocr?.ocrStatus === "ready" ? "อ่านข้อความแล้ว" : "อ่านข้อความในรูป"}</NativeButton>
+                    <NativeButton type="button" variant="outline" disabled={busy || imageBusy} onClick={() => setImages(current => current.filter(item => item.id !== image.id))}>นำรูป {index + 1} ออก</NativeButton></div>
+                    {image.ocr?.pages?.length > 0 && <details className="teacher-image-text"><summary>ตรวจข้อความที่อ่านได้</summary><OcrDocumentContent document={{...image.ocr,images:[]}} /></details>}
                   </div>)}
-                  <small>รูปจะแสดงให้นักเรียนเห็นเมื่อกดบันทึก · ระบบค้นคำตอบจากข้อความ ยังไม่อ่านข้อความในรูป</small>
+                  <small>รูปและข้อความ OCR จะแสดงเมื่อกดบันทึก · ตรวจเทียบต้นฉบับก่อนใช้ข้อมูลสำคัญ</small>
                 </section>}
                 <section className="teacher-quiz-editor">
                   <h3>แบบทดสอบท้ายบท</h3>
@@ -791,7 +828,7 @@ export default function Teacher({
               <p>
                 {demo
                   ? school
-                    ? "TXT, Markdown ไม่เกิน 1 MB · รูป JPG, PNG, WebP ไม่เกิน 10 MB (ย่ออัตโนมัติ) · รูปใช้เปิดดู ยังไม่มีการอ่านข้อความจากภาพ"
+                    ? "TXT/Markdown 1 MB · รูป 10 MB · PDF 5 MB ไม่เกิน 20 หน้า · GPT อ่านข้อความและแยกหน้าให้"
                     : "TXT, Markdown · ไม่เกิน 1 MB · ประมวลผลในเครื่อง"
                   : "PDF, DOCX, TXT, Markdown · ไม่เกิน 20 MB · ใช้ collector และ embedding จริง"}
               </p>
@@ -822,7 +859,7 @@ export default function Teacher({
                 aria-label="อัปโหลดเอกสารการสอน"
                 type="file"
                 disabled={!classroom || busy}
-                accept={school ? ".txt,.md,.jpg,.jpeg,.png,.webp" : demo ? ".txt,.md" : ".pdf,.docx,.txt,.md"}
+                accept={school ? ".pdf,.txt,.md,.jpg,.jpeg,.png,.webp" : demo ? ".txt,.md" : ".pdf,.docx,.txt,.md"}
                 onChange={upload}
               />
             </label>
@@ -866,11 +903,11 @@ export default function Teacher({
                     <TableCell>
                       <span className="native-document-status">
                         <Check size={13} />
-                        {doc.type === "IMAGE" ? "พร้อมเปิดดู" : doc.status === "ready"
+                        {doc.extractionId && doc.ocrStatus !== "ready" ? "รออ่านข้อความ" : doc.type === "IMAGE" && !doc.extractionId ? "พร้อมเปิดดู" : doc.status === "ready"
                           ? "พร้อมค้นหา"
                           : "กำลังประมวลผล"}
                       </span>
-                      {demo && doc.type !== "IMAGE" && (
+                      {demo && (doc.type !== "IMAGE" || doc.extractionId) && (
                         <small className="native-document-chunks">
                           {doc.chunks.length} ส่วนข้อความ
                         </small>
@@ -893,8 +930,8 @@ export default function Teacher({
                             <NativeButton
                               variant="ghost"
                               size="icon"
-                              disabled={doc.type === "IMAGE"}
-                              aria-label={`สร้างดัชนีใหม่ ${doc.name}`}
+                              disabled={busy}
+                              aria-label={doc.extractionId || doc.images?.length ? `อ่านข้อความ ${doc.name}` : `สร้างดัชนีใหม่ ${doc.name}`}
                               onClick={() => reindex(doc)}
                             >
                               <RefreshCw size={16} />
@@ -943,8 +980,7 @@ export default function Teacher({
                     <X size={18} />
                   </NativeButton>
                 </div>
-                <Images images={viewed.images} />
-                <p>{viewed.text}</p>
+                <OcrDocumentContent document={viewed} />
               </section>
             </dialog>
           )}

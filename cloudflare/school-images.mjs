@@ -1,10 +1,11 @@
+import { extractionId } from "./school-ocr.mjs";
 import { ApiError, bodyJson, requireTeacher, sameOrigin, reply } from "./school-auth.mjs";
 export function imageRefs(value) {
   if (value == null) return [];
   if (!Array.isArray(value) || value.length > 8) throw new ApiError("เพิ่มรูปได้ไม่เกิน 8 รูปต่อบทเรียน");
   return value.map(image => {
     if (!/^[a-f0-9-]{36}$/.test(image?.id || "")) throw new ApiError("รหัสรูปไม่ถูกต้อง");
-    return { id: image.id, caption: String(image.caption || "").slice(0, 500) };
+    return { id: image.id, caption: String(image.caption || "").slice(0, 500), ...(image.extractionId ? {extractionId:extractionId(image.extractionId)} : {}) };
   });
 }
 export async function uploadImage(request, env, user) {

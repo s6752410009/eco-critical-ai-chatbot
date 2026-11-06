@@ -1,3 +1,4 @@
+import { PDFDocument } from "../../frontend/node_modules/pdf-lib/cjs/index.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
@@ -452,29 +453,29 @@ test("cross-site mutation is rejected and logout invalidates the session", async
     db.close();
   }
 });
-test("Gemini keys are encrypted at rest and never returned by the settings API", async () => {
+test("OpenAI keys are encrypted at rest and never returned by the settings API", async () => {
   const { env, db } = await setup();
   try {
     const admin = await owner(env),
-      key = "unit-test-gemini-key-never-a-real-key";
+      key = "unit-test-openai-key-never-a-real-key";
     assert.equal(
       (
         await request(env, "/api/school/settings", {
           method: "POST",
           cookie: admin,
-          body: { apiKey: key, model: "gemini-3.8-flash" },
+          body: { apiKey: key, model: "gpt-6-luna" },
         })
       ).status,
       200
     );
     const row = db
-      .prepare("SELECT value FROM school_settings WHERE key='gemini_key'")
+      .prepare("SELECT value FROM school_settings WHERE key='openai_key'")
       .get();
     assert.equal(row.value.includes(key), false);
     const settings = await (
       await request(env, "/api/school/settings", { cookie: admin })
     ).json();
-    assert.deepEqual(settings, { configured: true, model: "gemini-3.8-flash" });
+    assert.deepEqual(settings, { configured: true, model: "gpt-6-luna" });
   } finally {
     db.close();
   }
@@ -627,5 +628,76 @@ test("image uploads enforce account, role, format and persisted lesson reference
   state.data.lessons[0].images=[saved];
   assert.equal((await request(env,"/api/school/data",{method:"PUT",cookie:admin,body:state})).status,200);
   assert.equal((await request(env,url,{cookie:learnerCookie})).status,200);
+  db.close();
+});
+
+test("PDF OCR persists pages, keeps failed/pending files out of retrieval, and grounds chat in page citations", async t => {
+  const {env,db}=await setup(), admin=await owner(env);
+  env.OPENAI_API_KEY="unit-test-openai-key";
+  let calls=0, fail=false;
+  t.mock.method(globalThis,"fetch",async (url,options)=>{
+    assert.equal(url,"https://api.openai.com/v1/responses");
+    const body=JSON.parse(options.body); assert.equal(body.store,false); calls++;
+    if(fail)return Response.json({error:{}},{status:429});
+    const result=body.text.format.name === "document_ocr"
+      ? {totalPages:2,pages:[{page:1,text:"รายงานสถานีทดสอบ วันที่ 10 เมษายน"},{page:2,text:"เชียงใหม่ เมษายน ตรวจวัดฝุ่น PM2.5 ได้ 63 ไมโครกรัมต่อลูกบาศก์เมตร"}]}
+      : {answer:"สถานีเชียงใหม่ตรวจวัดได้ 63 ไมโครกรัมต่อลูกบาศก์เมตร",insufficient:false,citations:[{source:1,quote:"เชียงใหม่ เมษายน ตรวจวัดฝุ่น PM2.5 ได้ 63"}]};
+    return Response.json({status:"completed",output:[{type:"message",content:[{type:"output_text",text:JSON.stringify(result)}]}]});
+  });
+  const pdf=await PDFDocument.create();pdf.addPage();pdf.addPage();
+  const file="data:application/pdf;base64,"+Buffer.from(await pdf.save()).toString("base64");
+  const upload=await request(env,"/api/school/ocr/files",{method:"POST",cookie:admin,body:{name:"evidence.pdf",file}});
+  assert.equal(upload.status,200);
+  const {document}=await upload.json(),id=document.extractionId;
+  const state=await (await request(env,"/api/school/data",{cookie:admin})).json();
+  state.data.documents.push({...document,id:"ocr-test",classroomId:"eco-m5",lessonId:"air-1",text:"forged ready text",status:"ready"});
+  assert.equal((await request(env,"/api/school/data",{method:"PUT",cookie:admin,body:state})).status,200);
+  let data=await (await request(env,"/api/school/data",{cookie:admin})).json();
+  assert.equal(data.data.documents.find(d=>d.id==="ocr-test").status,"ocr_pending");
+  assert.equal((await request(env,`/api/school/documents/ocr-test`,{cookie:admin})).status,404);
+  const learner=await student(env); db.prepare("UPDATE school_users SET status='active' WHERE id=?").run(learner.user.id);
+  const studentCookie=await loginStudent(env);
+  assert.equal((await request(env,`/api/school/ocr/${id}/process`,{method:"POST",cookie:studentCookie})).status,403);
+  assert.equal((await request(env,`/api/school/ocr/${id}/file`)).status,401);
+  fail=true;
+  assert.equal((await request(env,`/api/school/ocr/${id}/process`,{method:"POST",cookie:admin})).status,502);
+  assert.equal(db.prepare("SELECT status FROM school_ocr WHERE id=?").get(id).status,"failed");
+  fail=false;
+  assert.equal((await request(env,`/api/school/ocr/${id}/process`,{method:"POST",cookie:admin})).status,200);
+  const count=calls;
+  assert.equal((await request(env,`/api/school/ocr/${id}/process`,{method:"POST",cookie:admin})).status,200);
+  assert.equal(calls,count,"ready OCR must be cached");
+  const response=await request(env,"/api/school/chat",{method:"POST",cookie:studentCookie,body:{question:"เชียงใหม่ เมษายน",lessonId:"air-1"}});
+  assert.equal(response.status,200);
+  const answer=await response.json();
+  assert.match(answer.answer,/63.*\[1\]/);
+  assert.equal(answer.sources[0].page,2);
+  assert.equal(answer.sources[0].documentId,"ocr-test");
+  assert.equal(answer.sources[0].originalUrl,`/api/school/ocr/${id}/file#page=2`);
+  const original=await request(env,`/api/school/ocr/${id}/file`,{cookie:studentCookie});
+  assert.equal(original.status,200); assert.match(await original.text(),/^%PDF/);
+  data=await(await request(env,"/api/school/data",{cookie:admin})).json();
+  data.data.documents=data.data.documents.filter(d=>d.id!=="ocr-test");
+  await request(env,"/api/school/data",{method:"PUT",cookie:admin,body:data});
+  assert.equal((await request(env,`/api/school/ocr/${id}/file`,{cookie:studentCookie})).status,404);
+  db.close();
+});
+
+test("OCR rejects invalid PDF, missing keys, blank results, and partial page output",async t=>{
+  const {env,db}=await setup(),admin=await owner(env);
+  assert.equal((await request(env,"/api/school/ocr/files",{method:"POST",cookie:admin,body:{name:"fake.pdf",file:"data:application/pdf;base64,"+Buffer.from("not a PDF").toString("base64")}})).status,400);
+  const pdf=await PDFDocument.create();pdf.addPage();
+  const upload=await request(env,"/api/school/ocr/files",{method:"POST",cookie:admin,body:{name:"test.pdf",file:"data:application/pdf;base64,"+Buffer.from(await pdf.save()).toString("base64")}});
+  const {document}=await upload.json();
+  const path=`/api/school/ocr/${document.extractionId}/process`;
+  assert.equal((await request(env,path,{method:"POST",cookie:admin})).status,503);
+  env.OPENAI_API_KEY="unit-test-key";
+  let result={totalPages:2,pages:[{page:2,text:"incomplete"}]};
+  t.mock.method(globalThis,"fetch",async()=>Response.json({status:"completed",output:[{content:[{type:"output_text",text:JSON.stringify(result)}]}]}));
+  assert.equal((await request(env,path,{method:"POST",cookie:admin})).status,422);
+  result={totalPages:1,pages:[{page:1,text:""}]};
+  assert.equal((await request(env,path,{method:"POST",cookie:admin})).status,422);
+  result={totalPages:21,pages:[]};
+  assert.equal((await request(env,path,{method:"POST",cookie:admin})).status,422);
   db.close();
 });

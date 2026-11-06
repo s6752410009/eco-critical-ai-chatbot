@@ -1642,3 +1642,59 @@ body:has(.teacher-editor-dialog[open], .teacher-document-dialog[open]) {
 .school-member-detail[open] { padding: 24px; }
 .school-member-detail .board-form-heading { position: sticky; top: 0; background: white; padding-block: 16px; z-index: 1; }
 .mentingo-root .editor-form label.upload-button { display: inline-flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 16px; color: white; font-size: 16px; }
+
+.teacher-image-actions {display:flex;flex-wrap:wrap;gap:8px;}
+.teacher-image-text {grid-column:1/-1;white-space:pre-wrap;overflow-wrap:anywhere;}
+.teacher-image-text summary {cursor:pointer;padding:12px 0;font-weight:600;}
+.ocr-page {padding:16px 0;border-top:1px solid #dce5ee;}
+.ocr-page p {white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8;}
+.ocr-document-note {background:#edf5ff;padding:16px;border-radius:6px;margin-block:16px;}
+.ocr-document-note a,.source-detail a {color:#065fcb;text-decoration:underline;}
+
+/* Conversation UI: compact composer, distinct speakers, readable citations. */
+.mentingo-root .eco-chat.messenger-chat {border:1px solid #e3e7ed;border-radius:18px;background:#fff;box-shadow:0 6px 24px #152c4810;isolation:isolate;}
+.messenger-chat .chat-heading {padding:15px 18px;border-bottom:1px solid #edf0f3;flex-shrink:0;}
+.mentingo-root .messenger-chat .ai-mark {width:42px;height:42px;border-radius:50%;background:#0866ff;color:white;display:grid;place-items:center;}
+.messenger-chat .chat-heading h2 {font-size:17px;color:#16202c;line-height:1.4;}
+.messenger-chat .chat-heading p {font-size:12px;color:#697484;}
+.mentingo-root .messenger-chat .chat-context {padding:9px 18px;background:white;color:#687487;border-color:#edf0f3;font-size:12px;flex-shrink:0;}
+.messenger-chat .chat-messages {padding:20px 16px;scroll-padding:16px;}
+.messenger-chat .chat-message {margin:0 0 18px;max-width:87%;width:fit-content;}
+.messenger-chat .chat-message.user {margin-left:auto;}
+.messenger-chat .message-author {display:block;font-size:11px;color:#596778;margin:0 10px 5px;}
+.messenger-chat .user .message-author {text-align:right;}
+.mentingo-root .messenger-chat .message-text {padding:12px 16px;border:0;border-radius:19px;background:#f0f2f5;color:#17212c;font-size:15px;line-height:1.7;overflow-wrap:anywhere;white-space:pre-wrap;}
+.mentingo-root .messenger-chat .user .message-text {background:#0866ff;color:#fff;border-radius:19px 19px 5px 19px;}
+.mentingo-root .messenger-chat .assistant .message-text {border-radius:19px 19px 19px 5px;}
+.messenger-chat .message-sources {margin-top:9px;display:flex;flex-direction:column;gap:6px;}
+.messenger-chat .message-sources small {font-size:11px;color:#6a7584;margin-left:8px;}
+.mentingo-root .messenger-chat .message-sources button {padding:9px 11px;background:#fff;border:1px solid #e0e6ed;border-radius:12px;color:#1760ac;font-size:12px;gap:7px;text-align:left;}
+.messenger-chat .message-sources button > span:first-of-type {overflow-wrap:anywhere;min-width:0;}
+.mentingo-root .messenger-chat .chat-composer {display:flex;align-items:flex-end;gap:8px;margin:0;padding:12px 14px 6px;background:white;border:0;border-top:1px solid #f0f2f5;border-radius:0;box-shadow:none;flex-shrink:0;}
+.mentingo-root .messenger-chat .chat-composer textarea {flex:1;min-width:0;width:100%;min-height:44px;max-height:120px;padding:11px 16px;resize:none;border:0;border-radius:23px;background:#f0f2f5;color:#17212c;font-size:16px;line-height:22px;overflow-y:auto;}
+.mentingo-root .messenger-chat .chat-composer textarea:focus {outline:2px solid #87b5ff;outline-offset:1px;}
+.messenger-chat .chat-composer > div {display:flex;flex-shrink:0;}
+.messenger-chat .chat-composer > div > span {display:none;}
+.mentingo-root .messenger-chat .send-button {height:44px;width:44px;min-width:44px;display:grid;place-items:center;border:0;border-radius:50%;background:#0866ff;color:white;transition:transform .15s,background .15s;}
+.mentingo-root .messenger-chat .send-button:disabled {background:#e9eff7;color:#8594a6;opacity:1;}
+.messenger-chat .send-button:active {transform:scale(.92);}
+.messenger-chat .chat-disclosure {font-size:11px;padding:3px 12px 10px;margin:0;text-align:center;color:#596778;flex-shrink:0;}
+.messenger-chat .chat-empty {padding:20px 4px;}
+.messenger-chat .chat-empty h3 {font-size:19px;color:#17212c;}
+.messenger-chat .chat-empty p {font-size:13px;}
+.mentingo-root .messenger-chat .suggested-questions button {border-radius:16px;background:#f5f8ff;border-color:#e4ecfc;font-size:13px;padding:12px;text-align:left;}
+.mentingo-root .messenger-chat .messenger-source-dialog {position:fixed;inset:0;margin:auto;width:min(560px,calc(100vw - 32px));max-height:75dvh;overflow:auto;padding:24px;border:1px solid #e1e6ed;border-radius:20px;background:#fff;color:#17212c;box-shadow:0 24px 90px #14253840;}
+.mentingo-root .messenger-chat .messenger-source-dialog::backdrop {background:#17243270;backdrop-filter:blur(3px);}
+.mentingo-root .messenger-chat .messenger-source-dialog > div {display:flex;align-items:center;gap:10px;}
+.mentingo-root .messenger-chat .messenger-source-dialog strong {overflow-wrap:anywhere;flex:1;}
+.mentingo-root .messenger-chat .messenger-source-dialog .icon-button {min-width:44px;min-height:44px;border-radius:50%;background:#f0f2f5;color:#263548;}
+.mentingo-root .messenger-chat .messenger-source-dialog > p {white-space:pre-wrap;line-height:1.8;font-size:16px;margin:16px 0;}
+.mentingo-root .messenger-chat .messenger-source-dialog > small {display:block;color:#64758a;margin-top:12px;}
+@media(max-width:600px) {
+ .mentingo-root .eco-chat.messenger-chat {border-radius:14px;min-height:350px;height:calc(100dvh - 210px);}
+ .messenger-chat .chat-heading {padding:12px 14px;}
+ .messenger-chat .chat-messages {padding:16px 12px;}
+ .messenger-chat .chat-message {max-width:90%;}
+ .mentingo-root .messenger-chat .messenger-source-dialog {inset:auto 0 0;width:100%;max-height:82dvh;border-radius:22px 22px 0 0;padding:20px 20px max(24px,env(safe-area-inset-bottom));}
+}
+@media(prefers-reduced-motion:reduce){.messenger-chat *{transition:none!important;scroll-behavior:auto!important;}}

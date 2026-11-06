@@ -289,7 +289,7 @@ export function Members({ school, lessons }) {
   );
 }
 export function AISettings() {
-  const [model, setModel] = useState("gemini-3.8-flash"),
+  const [model, setModel] = useState("gpt-6-luna"),
     [key, setKey] = useState(""),
     [configured, setConfigured] = useState(false),
     [busy, setBusy] = useState(false),
@@ -329,7 +329,7 @@ export function AISettings() {
     setNotice("");
     try {
       await schoolRequest("/settings/test", { method: "POST" });
-      setNotice("เรียก Gemini จริงสำเร็จ พร้อมตอบจากเอกสารบทเรียน");
+      setNotice("เรียก OpenAI GPT จริงสำเร็จ พร้อมตอบจากเอกสารบทเรียน");
     } catch (e) {
       setError(e.message);
     } finally {
@@ -369,16 +369,16 @@ export function AISettings() {
           </strong>
         </p>
         <label>
-          ชื่อโมเดล Gemini
+          ชื่อโมเดล OpenAI GPT
           <Input
             required
             value={model}
             onChange={(e) => setModel(e.target.value)}
-            placeholder="gemini-3.8-flash"
+            placeholder="gpt-6-luna"
           />
         </label>
         <label>
-          Gemini API key
+          OpenAI GPT API key
           <Input
             type="password"
             value={key}
@@ -387,7 +387,7 @@ export function AISettings() {
             placeholder={
               configured
                 ? "เว้นว่างเพื่อใช้ key เดิม"
-                : "ใส่ key ของบัญชี Google AI Studio"
+                : "ใส่ key ของบัญชี OpenAI Platform"
             }
           />
         </label>
@@ -405,7 +405,7 @@ export function AISettings() {
           ) : (
             <Check size={17} />
           )}{" "}
-          ทดสอบเรียก Gemini จริง
+          ทดสอบเรียก OpenAI GPT จริง
         </Button>
         <p>
           จำกัดคำถาม 8 ครั้งต่อนาที และ 80 ครั้งต่อวันต่อบัญชี

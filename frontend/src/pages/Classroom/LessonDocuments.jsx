@@ -1,4 +1,4 @@
-import Images from "./Images";
+import OcrDocumentContent from "./OcrDocuments";
 import { useState } from "react";
 import { ChevronDown, FileText, LoaderCircle } from "lucide-react";
 export default function LessonDocuments({
@@ -29,7 +29,7 @@ export default function LessonDocuments({
         : { document: doc };
       setFiles((previous) => ({
         ...previous,
-        [doc.id]: { text: result.document.text, images: result.document.images, loading: false },
+        [doc.id]: { ...result.document, loading: false },
       }));
     } catch (error) {
       setFiles((previous) => ({
@@ -72,7 +72,7 @@ export default function LessonDocuments({
               ) : files[doc.id]?.error ? (
                 <p role="alert">{files[doc.id].error}</p>
               ) : (
-                <><Images images={files[doc.id]?.images} /><p>{files[doc.id]?.text}</p></>
+                <OcrDocumentContent document={files[doc.id] || {}} />
               )}
             </div>
           )}
