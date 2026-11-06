@@ -1724,3 +1724,4 @@ body:has(.teacher-editor-dialog[open], .teacher-document-dialog[open]) {
 .usage-budget progress::-webkit-progress-bar{background:#e5edf7;border-radius:8px;}
 .usage-budget progress::-webkit-progress-value{background:#0866ff;border-radius:8px;}
 .usage-budget progress::-moz-progress-bar{background:#0866ff;border-radius:8px;}
+.usage-toolbar input[type=month]{display:block;}
